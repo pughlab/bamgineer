@@ -261,15 +261,6 @@ def main():
             
             mergeSegments("/".join(['/mnt/work1/users/pughlab/projects/BAMgineer/inputs/TCGA-SEGS/',file]), eval(frawname+"_gain"), eval(frawname+'_loss'))
             
-            
-            
-            #sample_events("/".join(['/mnt/work1/users/pughlab/projects/BAMgineer/TCGA-SEGS/',file]), eval(frawname+"_gain"), eval(frawname+'_loss'))
-    
 if __name__ == '__main__':
    main()
    
-#def findUniqIDs(segfile, outseg):
-#    ID =  bf1 = sub('.seg$', '_IDs',basename(segfile))
-#    command= "cut -f 1 "+ segfile + " | uniq > " + "/".join([intermediatePath, ID])
-#    runCommand(command)
-

@@ -1066,7 +1066,6 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='adds CN spikes to reads, outputs modified reads as .bam along with mates')
     
-    
     parser.add_argument('-outbam', dest='outBamFile', required=True,
                         help='.bam file name for output')  
     parser.add_argument('-ref', dest='refFastaFile', required=True,
