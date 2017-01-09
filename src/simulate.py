@@ -37,9 +37,7 @@ import fnmatch
 global bases
 bases = ('A','T','C','G')
 chromosome_list = ['chr1','chr2','chr3','chr4', 'chr5', 'chr6','chr7','chr8','chr9', 'chr10','chr11','chr12', 'chr13','chr14','chr15','chr16', 'chr17', 'chr18','chr19','chr20','chr21', 'chr22']
-
 purity = [ '0.2', '0.4', '0.6','0.8','1.0']
-#haplotype_list=['hap1','mat']
 event_list=['gain','loss']
 cancer_list = ['brca','crc','gbm']
 
@@ -71,7 +69,7 @@ def gzipFile(filename):
     with open(filename, 'rb') as f_in, gzip.open(filename+'.gz', 'wb') as f_out:
         shutil.copyfileobj(f_in, f_out)
 
-#filter vcf so that all SNPs are at least 100bp apart:    
+#filter vcf so that all SNPs are at least 20bp apart:    
 def thinVCF(invcf, outvcf):
    command = " ".join(["vcftools --vcf", invcf, "--thin 20 --out", outvcf,  "--recode"])
    print("thin VCF called with command: "+command )
@@ -79,7 +77,6 @@ def thinVCF(invcf, outvcf):
 
 def extractPairedReadfromROI(inbamfn, bedfn, outbamfn, flag = "either"):
     
-    #command = " ".join(["bedtools pairtobed -abam", inbamfn,"-b",bedfn, "-type", flag])
     command = " ".join(["bedtools pairtobed -abam", inbamfn,"-b",bedfn, "-type", flag,">", outbamfn])
     runCommand(command)
     
@@ -93,8 +90,6 @@ def dedupBam(inbamfn, outbamfn):
 
 def bamDiff(bamfn1, bamfn2,path):
     command = " ".join(["bam diff", "--in1", bamfn1, "--in2", bamfn2, "--out" ,"/".join([path,"diff.bam"])]) # ("roi.bam - vcf.bam"; seperate reads that do not overlap SNP regions from the ones that do)
-    print(command)
-    #logger.debug('____ diff command is ____  ' +command)
     runCommand(command ) #this is in fact from BamUtil package
 
 #phase unphased VCF into Hap1 and Hap2 phased alleles using BEAGLE
@@ -588,26 +583,8 @@ def splitAndRePair(inbamfn, outbamfn, chr,param=None):
             delta =   abs(read2.pos - read1.pos) + 1
             deltanext =   abs(read2next.pos - read1next.pos) + 1
             
-            #ratio = float( delta / deltanext )
-            #if (ratio > 0.01 and ratio < 100):
-            
             if(abs(read1.pos - read2next.pos) < 12100 and read1.mapping_quality >= 20 and read2next.mapping_quality >= 20):
-               #and read2next.tlen * read2.tlen > 0):
-                   
-                #update read flags
-                #if(read1.is_reverse and read2next.is_reverse):
-                #    read1.flag = 179
-                #    read2next.flag = 179
-                #elif (not read1.is_reverse and not read2next.is_reverse):
-                #    read1.flag = 131
-                #    read2next.flag = 131
-                #elif (not read1.is_reverse and read2next.is_reverse):
-                #    read1.flag = 163
-                #    read2next.flag = 147
-                #elif (read1.is_reverse and not read2next.is_reverse):
-                #    read1.flag = 147
-                #    read2next.flag = 163
-                  
+               
                 tlen1 = -20000
                 if(read1.tlen > 0 and read2next.tlen < 0):
                     tlen1 = abs(read2next.pos - read1.pos) + abs(read2next.qlen)
@@ -626,21 +603,7 @@ def splitAndRePair(inbamfn, outbamfn, chr,param=None):
                     writtencount = writtencount + 1
         
             if(abs(read1next.pos - read2.pos) < 12100 and read2.mapping_quality >= 20 and read1next.mapping_quality >= 20):
-               # and read1next.tlen * read1.tlen > 0):
-                
-                
-                #if(read1next.is_reverse and read2.is_reverse):
-                #    read1next.flag = 179
-                #    read2.flag = 179
-                #elif (not read1next.is_reverse and not read2.is_reverse):
-                #    read1next.flag = 131
-                #    read2.flag = 131
-                #elif (not read1next.is_reverse and read2.is_reverse):
-                #    read1next.flag = 163
-                #    read2.flag = 147
-                #elif (read1next.is_reverse and not read2.is_reverse):
-                #    read1next.flag = 147
-                #    read2.flag = 163
+               
                 tlen1 = -20000
                 if(read1next.tlen > 0 and read2.tlen < 0):
                     tlen1 = abs(read2.pos - read1next.pos) + abs(read2.qlen)
@@ -669,149 +632,6 @@ def splitAndRePair(inbamfn, outbamfn, chr,param=None):
         print(' % of kept reads for '+param+ ' : '+str(percentkept))
         return(0.5/percentkept)
  
-
-#def splitAndRePair(inbamfn, outbamfn,chr, param=None):
-#    print(" calling splitAndRePair" )
-#    f_splitfn1 = '/'.join([splittmpbams,chr+'F_sp1_nh.bam'])
-#    f_splitfn2 = '/'.join([splittmpbams,chr+'F_sp2_nh.bam'])
-#    
-#    r_splitfn1 = '/'.join([splittmpbams,chr+'R_sp1_nh.bam'])
-#    r_splitfn2 = '/'.join([splittmpbams,chr+'R_sp2_nh.bam'])
-#    
-#    logh = open('log.txt', 'w')
-#    
-#    splitPairs(inbamfn, f_splitfn1, f_splitfn2 , r_splitfn1, r_splitfn2)
-#    inbam = pysam.Samfile(inbamfn, 'rb')
-#    
-#    f_splt1sortedfn = sub('.bam$', '.sorted', f_splitfn1)
-#    f_splt2sortedfn = sub('.bam$', '.sorted', f_splitfn2)
-#    r_splt1sortedfn = sub('.bam$', '.sorted', r_splitfn1)
-#    r_splt2sortedfn = sub('.bam$', '.sorted', r_splitfn2)
-#    
-#    pysam.sort(f_splitfn1 , f_splt1sortedfn )
-#    pysam.sort(f_splitfn2 , f_splt2sortedfn)
-#    pysam.sort(r_splitfn1 , r_splt1sortedfn )
-#    pysam.sort(r_splitfn2 , r_splt2sortedfn)
-#    
-#    f_splt1 = pysam.Samfile(f_splt1sortedfn + ".bam", 'rb') 
-#    f_splt2 = pysam.Samfile(f_splt2sortedfn + ".bam", 'rb')
-#    r_splt1 = pysam.Samfile(r_splt1sortedfn + ".bam", 'rb') 
-#    r_splt2 = pysam.Samfile(r_splt2sortedfn + ".bam", 'rb')
-#    
-#    spltcount = pysam.Samfile(inbamfn , 'rb')
-#    num_reads_to_write = 0
-#    for row in spltcount:
-#        num_reads_to_write+=1
-#    
-#    num_reads_to_write = num_reads_to_write/2 # paired
-#    writtencount = 0
-#    samplerate = 0
-#    
-#    
-#    outbam = pysam.Samfile(outbamfn, 'wb', template=inbam)  
-#    
-#    itr1 = f_splt1.fetch(until_eof=True)
-#    itr2 = f_splt2.fetch(until_eof=True)
-#    itr3 = r_splt1.fetch(until_eof=True)
-#    itr4 = r_splt2.fetch(until_eof=True)
-#    
-#    ### Forward strand ### 
-#    for read1, read2 in  izip(itr1, itr2):
-#        
-#        try:
-#            read2next = itr2.next()
-#            read1next = itr1.next()
-#       
-#            if(read2.rnext == read2.tid and read1.rnext == read1.tid and read1.qname != read2.qname and read2.tid == read1.tid and
-#               read2next.rnext == read2next.tid and read1next.rnext == read1next.tid and read1next.qname != read2next.qname and read2next.tid == read1next.tid):
-#                    
-#                    if (  abs(read2next.pos - read1.pos)< 10000 and read1next.pos - read1.pos > -100 ):
-#                        tlen1 = read2next.pos - read1.pos + 101
-#                        read1.tlen = tlen1
-#                        read2next.tlen = -tlen1
-#                        read1.pnext = read2next.pos
-#                        read2next.pnext = read1.pos
-#                        read2next.qname = read1.qname
-#                        outbam.write(read1)
-#                        outbam.write(read2next)
-#                        writtencount = writtencount + 1
-#                        logh.write(str(tlen1)+ '\n')
-#                        
-#                    if (  abs(read2.pos - read1next.pos )  < 10000 and read2.pos - read1next.pos > -100 ):
-#                        
-#                        tlen1 = read2.pos-read1next.pos + 101
-#                        read1next.tlen = tlen1
-#                        read2.tlen = -tlen1
-#                        read2.qname = read1next.qname
-#                        read2.pnext = read1next.pos
-#                        read1next.pnext = read2.pos
-#                        outbam.write(read1next)
-#                        outbam.write(read2)
-#                        writtencount = writtencount + 1
-#                        logh.write(str(tlen1)+ '\n')
-#                        
-#        except StopIteration:
-#            pass      
-#    
-#        logh.flush()
-#        
-#    ### Reverse strand ### 
-#    for read1, read2 in  izip(itr3, itr4):
-#        
-#        try:
-#            read2next = itr4.next()
-#            read1next = itr3.next()
-#       
-#            if(read2.rnext == read2.tid and read1.rnext == read1.tid and read1.qname != read2.qname and read2.tid == read1.tid and
-#               read2next.rnext == read2next.tid and read1next.rnext == read1next.tid and read1next.qname != read2next.qname and read2next.tid == read1next.tid):
-#                    
-#                    if ( read1.pos - read2next.pos  < 10000 and read2next.pos < read1.pos +100  ):
-#                         +++
-#                        tlen1 = read1.pos - read2next.pos +101
-#                        read1.tlen = -tlen1
-#                        read2next.tlen = tlen1
-#                        read2next.qname = read1.qname
-#                        read1.pnext = read2next.pos
-#                        read2next.pnext = read1.pos
-#                        outbam.write(read1)
-#                        outbam.write(read2next)
-#                        writtencount = writtencount + 1
-#                        logh.write(str(tlen1)+ '\n')
-#                        
-#                    if ( read1next.pos - read2.pos   < 10000 and read2.pos < read1next.pos+100 ):
-#                        
-#                        tlen1 = read1next.pos - read2.pos +101
-#                        read1next.tlen = -tlen1
-#                        read2.tlen = tlen1
-#                        read2.qname = read1next.qname
-#                        read2.pnext = read1next.pos
-#                        read1next.pnext = read2.pos
-#                        outbam.write(read1next)
-#                        outbam.write(read2)
-#                        writtencount = writtencount + 1
-#                        logh.write(str(tlen1)+ '\n')
-#                        
-#        except StopIteration:
-#            pass      
-#               
-#        logh.flush()
-#                       
-#    inbam.close()         
-#    f_splt1.close()
-#    f_splt2.close()
-#    r_splt1.close()
-#    r_splt2.close()
-#    outbam.close()
-#    logh.close()
-#    
-#    if(num_reads_to_write > 0):
-#        percentkept = float(writtencount)/float(num_reads_to_write)
-#        print(' % of kept reads for '+param+ ' : '+str(percentkept))
-#        return(0.5/percentkept)
- 
- 
- 
-    
 def removeReadsOverlappingHetRegion(inbamfn, bedfn,outbamfn,path):
     print "___ removing reads overlapping heterozygous region ___"
     inbamsorted =  sub('.bam$','.sorted',inbamfn)
@@ -857,51 +677,6 @@ def getMeanSTD(inbam):
     command = " ".join([awk, inbam])
     runCommand(command )
 
-
-
-
-
-#def splitPairs(inbamfn,fpair1fn, fpair2fn,rpair1fn, rpair2fn):
-#    
-#    pysam.index(inbamfn)
-#    inbam = pysam.Samfile(inbamfn, "rb" )
-#    
-#    sp1_f = pysam.Samfile(fpair1fn, 'wb', template=inbam)
-#    sp2_f = pysam.Samfile(fpair2fn, 'wb', template=inbam) 
-#    
-#    sp1_r = pysam.Samfile(rpair1fn, 'wb', template=inbam)
-#    sp2_r = pysam.Samfile(rpair2fn, 'wb', template=inbam) 
-#    
-#    
-#    alignmentfile = pysam.AlignmentFile(inbamfn, "rb" )
-#    cnt=0
-#    
-#    for shortread in inbam.fetch(until_eof=True):
-#        try:
-#            cnt+=1
-#            
-#            if((shortread.is_paired and shortread.is_proper_pair and not shortread.is_duplicate  and not shortread.is_secondary and shortread.mapping_quality >= 30 and shortread.cigarstring == "101M")):
-#                    mate = alignmentfile.mate(shortread)
-#                    if(mate and shortread.is_read1 and mate.cigarstring == "101M"):
-#                        
-#                        if(not shortread.is_reverse):
-#                            sp1_f.write(shortread)
-#                            sp2_f.write(mate)
-#                        else:
-#                            sp1_r.write(shortread)
-#                            sp2_r.write(mate)
-#                    
-#        except (KeyError,ValueError) as e :
-#            print e
-#            continue     
-#     
-#  
-#    print cnt
-#    inbam.close()         
-#    sp1_f.close()
-#    sp2_f.close()
-#    sp1_r.close()
-#    sp2_r.close()
 
 def splitPairs(inbamfn,pair1fn, pair2fn):
     command1 = " ".join(["samtools view -u -h -f 0x0043", inbamfn, ">", pair1fn])
@@ -1069,7 +844,6 @@ def initPool(queue, level, terminating_):
     This causes the logging module to be initialized with the necessary info
     in pool threads to work correctly.
     """
-    #logging.getLogger('').addHandler(MultiProcessingLogHandler(logging.StreamHandler(), queue, child=True)) #commented to avoid duplication 
     logging.getLogger('').setLevel(level)
     global terminating
     terminating = terminating_
