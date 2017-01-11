@@ -106,7 +106,7 @@ def phaseVCF(vcf, phasevcffn):
     runCommand (command)
     return phasevcffn
 
-def getVCFPaternalMaternal(phasedvcf, hap1, hap2):
+def getVCFHaplotypes(phasedvcf, hap1, hap2):
     out_hap1 = open(hap1, 'w')
     out_mat = open(hap2, 'w')
     
@@ -746,7 +746,6 @@ def sortByName(inbamfn, outbamfn):
     print(command)
     runCommand(command)
 
-#VERY UGLY!!!
 def splitBed(bedfn, event):
     path, filename = os.path.split(bedfn)
     
@@ -871,8 +870,6 @@ def sortByNamemp(chr):
 
 
 def createHaplotypes(hetsnp_orig_bed, hetsnp_hap1_bed ):
-    #path_orig, name_orig = os.path.split(hetsnp_orig_bed)
-    #path_hap1, name_hap1 = os.path.split(hetsnp_hap1_bed)
     try:
         inbedh = open(hetsnp_orig_bed, 'r')
         inbedh2 = open(hetsnp_hap1_bed, 'r')
@@ -913,7 +910,7 @@ def initialize(tmpdir):
             phased_bed =  "/".join([RESULTS, "PHASED.BED"])
               
             phaseVCF(vcfpath, phasedvcf)
-            getVCFPaternalMaternal(phasedvcf, hap1vcf, hap2vcf)
+            getVCFHaplotypes(phasedvcf, hap1vcf, hap2vcf)
             thinVCF(hap1vcf, hap1vcffiltered)
             thinVCF(hap2vcf, hap2vcffiltered)
             convertvcftobed(hap1vcffiltered+".recode.vcf", hap1vcffilteredtobed)
@@ -1084,11 +1081,8 @@ if __name__ == '__main__':
                         help='Exon .bed file name')
     parser.add_argument('-cancertype', dest='cancerType', required=False,
                         help='acronyms for cancer type')
-   # parser.add_argument('-modelpurity', dest='purity',action="store_false")
     
     parser.add_argument('-phase',dest= 'phase', action="store_true")
-    #parser.add_argument('-wgd',dest= 'wgd', action="store_false")
-    
     
     
     args = parser.parse_args()
