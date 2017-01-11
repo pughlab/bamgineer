@@ -320,9 +320,9 @@ def MutateReads(bedfn, bamfn, outfn):
                                     continue       
                         elif(haplotype == "hap2"  ):
                             if(nuecleotide == refbase and nuecleotide != altbase):
-                                refbam.write(shortread)#SOROUSH
+                                refbam.write(shortread)
                                 refbam.write(mate)
-                                hapbam.write(shortread)#SOROUSH
+                                hapbam.write(shortread)
                                 hapbam.write(mate)
                                 
                                 outbam.write(shortread)
@@ -333,7 +333,7 @@ def MutateReads(bedfn, bamfn, outfn):
                                     
                             elif(nuecleotide != refbase ): 
                                 tmpread = shortread.query_sequence
-                                altbam.write(shortread)#SOROUSH
+                                altbam.write(shortread)
                                 altbam.write(mate)
                                                                       
                                 if ((abs(shortread.tlen) > 200)):
@@ -378,7 +378,6 @@ def MutateReads(bedfn, bamfn, outfn):
     refbam.close()
     altbam.close()
     hapbam.close()
-    #hap2bam.close()
     covfile.close()
     snpaltratiofile.close()
     os.remove(bamfn)
@@ -652,7 +651,6 @@ def removeReadsOverlappingHetRegion(inbamfn, bedfn,outbamfn,path):
             start = int(c[1])
             end   = int(c[2])
         else :
-            #print(len(c))
             continue
         
         try:
@@ -748,7 +746,6 @@ def sortByName(inbamfn, outbamfn):
 
 def splitBed(bedfn, event):
     path, filename = os.path.split(bedfn)
-    
     command=  "".join(["""awk '($1 ~ "chr"){print $0 >> """ ,'"{}"'.format(event), """$1".bed"}' """, bedfn])
     os.chdir(path)
     runCommand(command)
@@ -872,10 +869,7 @@ def sortByNamemp(chr):
 def createHaplotypes(hetsnp_orig_bed, hetsnp_hap1_bed ):
     try:
         inbedh = open(hetsnp_orig_bed, 'r')
-        inbedh2 = open(hetsnp_hap1_bed, 'r')
-        #outbedh = open('out.bed', 'w')
-        
-        
+        inbedh2 = open(hetsnp_hap1_bed, 'r')  
         for line in inbedh:
             c = line.strip('\n').split("\t")
             c2 = ""
@@ -946,9 +940,7 @@ def initialize(tmpdir):
                 
                 splitBed(hetsnpbed, event+'_het_snp_')
                 splitBed(hetbed, event+'_het_')
-                splitBed(nonhetbed, event+'_non_het_')  
-                
-            
+                splitBed(nonhetbed, event+'_non_het_')             
             
     except:
         logger.error('Initialization error ', sys.exc_info()[0])
@@ -989,8 +981,6 @@ def main(args):
     gaincnv = args.cnvAmpFile
     losscnv = args.cnvDelFile
         
-   
-    
     path, filename = os.path.split(inbam)
     RESULTS = "/".join([os.path.abspath(os.path.dirname(__file__)), 'RESULTS'])
     createDirectory(RESULTS)
@@ -1000,15 +990,12 @@ def main(args):
     createDirectory(cancerDir)
     
     path, filename = os.path.split(inbam)
-    
-    
     haplotypedir = "/".join([cancerDir, "haplotypedir"])
     logdir = "/".join([cancerDir, "logs"])
     splitbams = "/".join([os.path.abspath(os.path.dirname(__file__)), "splitbams"])
     tmpbams = "/".join([cancerDir, "tmpbams"])
     splittmpbams = "/".join([tmpbams,"splittmpbams"])
     finalbams = "/".join([cancerDir, "finalbams"])
-    
     
     createDirectory(haplotypedir)
     createDirectory(logdir)
@@ -1017,7 +1004,6 @@ def main(args):
     createDirectory(splittmpbams)
     createDirectory(finalbams)
         
-    
     if( args.phase):    
         terminating = multiprocessing.Event()
         result = []
@@ -1033,7 +1019,6 @@ def main(args):
         filehandler.setLevel(logging.DEBUG)
         
         initialize(haplotypedir)
-        
         pool1 = multiprocessing.Pool(processes=16, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating] ) 
         
         try:
