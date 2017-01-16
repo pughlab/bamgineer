@@ -4,11 +4,15 @@ from helpers import parameters as params
 from helpers import handlers as handle
 from helpers import bamgineerHelpers as bamhelp
 from utils import *
+
 import multiprocessing, threading, logging, sys, traceback,  StringIO, Queue
 
 global bases
 bases = ('A','T','C','G')
+
+##temporary
 purity = [ '0.2', '0.4', '0.6','0.8','1.0']
+chromosome_event =   [ 'chr21_gain', 'chr22_gain','chr21_loss', 'chr22_loss']
 cancer_list = ['brca','crc','gbm']
 
 global results_path,haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path,log_path, logfile
@@ -23,15 +27,9 @@ def initPool(queue, level, terminating_):
     logging.getLogger('').setLevel(level)
     terminating = terminating_
 
-def bamDiff(bamfn1, bamfn2, path, logfile):
-    command = " ".join(["bam diff", "--in1", bamfn1, "--in2", bamfn2, "--out" ,"/".join([path,"diff.bam"])]) # ("roi.bam - vcf.bam"; seperate reads that do not overlap SNP regions from the ones that do)
-    runCommand(command ) 
 
-
-def initialize(results_path,haplotype_path,cancer_dir_path,logger):
-    results_path = results_path   
-    haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path,log_path, logfile = handle.GetProjectPaths(results_path)
-    terminating,logger,logQueue = handle.GetLoggings(logfile)
+def initialize(results_path,haplotype_path,cancer_dir_path):
+    
     try:
         event_list=['gain','loss']
         gaincnv = params.GetGainCNV()
@@ -78,9 +76,6 @@ def initialize(results_path,haplotype_path,cancer_dir_path,logger):
             nonhetbed = "/".join([haplotype_path, event + "_non_het.bed"])
             hetbed = "/".join([haplotype_path, event + "_het.bed"])
             hetsnpbed = "/".join([haplotype_path,  event + "_het_snp.bed"])
-            
-            logger.debug("Calling initialization for " + str(event))
-    
             intersectBed( exons_path, locals()[event + 'cnv'], exonsinroibed, wa=True)
             intersectBed( exonsinroibed, phased_bed, exonsinhetbed, wa=True)  
             intersectBed(phased_bed, exonsinroibed, hetsnpbed, wa=True)
@@ -93,19 +88,15 @@ def initialize(results_path,haplotype_path,cancer_dir_path,logger):
             splitBed(nonhetbed, event+'_non_het_')             
         
     except:
-        logger.error('Initialization error ', sys.exc_info()[0])
+        logger.error('Initialization error !')
         raise
     
-    logger.debug("initialization complete")    
+    logger.debug("--- initialization complete ---")    
     return 
 
 
+def mutate_reads(bedfn, bamfn, outfn, haplotypedir):
 
-
-def mutate_reads(bedfn, bamfn, outfn):
-    #logfile = handle.GetProjectPaths()[6]
-    #haplotypedir = handle.GetProjectPaths()[1]
-    
     logger.debug("___ mutating reads and finding reads not matching hg19 at germline SNP locations ___")
     
     try:
@@ -278,7 +269,6 @@ def mutate_reads(bedfn, bamfn, outfn):
     return        
 
     
-    
 def init_file_names(chr, event,tmpbams_path, haplotypedir):
     
     flist=[]
@@ -309,8 +299,6 @@ def init_file_names(chr, event,tmpbams_path, haplotypedir):
 
 def find_roi_bam(chromosome_event):
     chr,event = chromosome_event .split("_")
-    #results_path,haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path,log_path, logfile = handle.GetProjectPaths()
-    #terminating,logger,logQueue = handle.GetLoggings(logfile)
     
     hetroi,hetroisort,hetaltroi,nonhetroi, overlaps,sortbyname,sortbyCoord,hetaltsort,ref,alt,refsort, altsort,hap,hapsort,nonhetsort,hetbed,nonhetbed,hetsnp = init_file_names(chr, event, tmpbams_path, haplotype_path)
     HET,NHET = handle.GetHetBamPaths(tmpbams_path,chr, event)
@@ -322,7 +310,7 @@ def find_roi_bam(chromosome_event):
             extractPairedReadfromROI(sortbyname, nonhetbed, nonhetroi)
             removeIfEmpty(tmpbams_path,ntpath.basename(hetroi))
             if (os.path.isfile(hetroi)):
-                mutate_reads(hetsnp, hetroi, hetaltroi)
+                mutate_reads(hetsnp, hetroi, hetaltroi,haplotype_path)
                 pysam.sort(hetaltroi,hetaltsort)
                 os.remove(hetaltroi)
             
@@ -358,11 +346,7 @@ def find_roi_bam(chromosome_event):
 
 
 def implement_gain_loss( chromosome_event ):
-    #results_path,haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path,log_path, logfile = handle.GetProjectPaths()
-    #terminating,logger,logQueue = handle.GetLoggings(logfile)
-  
     chr,event = chromosome_event .split("_")
-
 
     hetroi,hetroisort,hetaltroi,nonhetroi, overlaps,sortbyname,sortbyCoord,hetaltsort,ref,alt,refsort, altsort,hap,hapsort,nonhetsort,hetbed,nonhetbed,hetsnp = init_file_names(chr, event, tmpbams_path, haplotype_path)
     HET,NHET = handle.GetHetBamPaths(tmpbams_path,chr, event)
@@ -439,7 +423,6 @@ def implement_gain_loss( chromosome_event ):
     
 def splitAndRePair(inbamfn, outbamfn, chr,param=None):
     print(" calling splitAndRePair non_het version" )
-    #tmpbams_path = handle.GetProjectPaths()[3]
     splitfn1 = '/'.join([tmpbams_path,chr+'sp1_nh.bam'])
     splitfn2 = '/'.join([tmpbams_path,chr+'sp2_nh.bam'])
     
@@ -572,3 +555,60 @@ def removeReadsOverlappingHetRegion(inbamfn, bedfn,outbamfn,path):
     pysam.sort(outbamfn, outbamsorted)
     bamDiff(inbamsorted+'.bam', outbamsorted +'.bam', path )
     outbam.close()           
+
+def removeIfEmpty(bamdir,file):
+    try:
+        if not terminating.is_set():   
+            if file.endswith(".bam"):
+               command = " ".join(["samtools view", "/".join([bamdir, file]), "| less | head -1 | wc -l" ])
+               nline= subprocess.check_output(command, shell = True)  
+               if (os.path.isfile( "/".join([bamdir, file])) and (int(nline) == 0)):
+                       os.remove("/".join([bamdir, file]))
+                       logger.debug(' removing ' + "/".join([bamdir, file]))
+    except (KeyboardInterrupt):
+        logger.error('Exception Crtl+C pressed in the child process  in removeIfEmpty ')
+        terminating.set()
+        return
+    except Exception as e:   
+        logger.exception("Exception in removeIfEmpty %s" ,e )
+        terminating.set()
+        return
+    return                       
+
+def run_pipeline(results_path):
+    print('running pipeline')
+    global haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path,log_path, logfile
+    global terminating,logger,logQueue
+    
+    haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path,log_path, logfile = handle.GetProjectPaths(results_path)
+    terminating,logger,logQueue = handle.GetLoggings(logfile)
+    
+    #initialize(results_path,haplotype_path,cancer_dir_path)
+    
+    pool1 = multiprocessing.Pool(processes=16, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating] ) 
+    try:
+    #    result1 = pool1.map_async(find_roi_bam, chromosome_event ).get(9999999)
+        result2 = pool1.map_async(implement_gain_loss, chromosome_event ).get(9999999)
+      
+        pool1.close()
+    except KeyboardInterrupt:  
+        logger.debug('You cancelled the program!')
+        pool1.terminate()
+    except Exception as e:     
+        logger.exception("Exception in main %s" , e)
+        pool1.terminate()
+    finally:
+        pool1.join()
+    time.sleep(.1)
+    
+    #mergeSortBamFiles(outbamfn , finalbams_path )
+    logging.shutdown()
+    #shutil.rmtree(.tmpbams)
+    logger.debug(' ***** Multi-processing phase took %f ' %(t1 - t0) +' seconds to finish ***** ')
+
+    
+    
+
+
+
+

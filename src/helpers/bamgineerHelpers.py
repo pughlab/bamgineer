@@ -14,6 +14,5 @@ def GetVCF():
     return vcf_path
     
 def GetResultsPath():
-    #results_path = configReader.get('RESULTS', 'results_path')
-    #return results_path
-    return configReader.get('RESULTS', 'results_path')
+    results_path = configReader.get('RESULTS', 'results_path')
+    return results_path

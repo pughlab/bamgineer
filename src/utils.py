@@ -1,19 +1,12 @@
 #!/usr/bin/env python
-
-import pysam
 import sys
 import pybedtools
 import os
 import subprocess
-from random import random
-import random
-import argparse
 from uuid import uuid4
 from re import sub
 from itertools import izip
-import commands
 
-import vcf
 import gzip
 import shutil
 import traceback
@@ -28,27 +21,16 @@ import ntpath
 import fnmatch
 
 from threading import Thread
-import settings
- 
+from helpers import handlers as handle
+from helpers import parameters as params
 
+configReader = params.GetConfigReader()
 #modify later
 java_path="/mnt/work1/software/java/8/jdk1.8.0_45/bin/java"
 beagle_jar="/mnt/work1/users/pughlab/projects/Benchmarking/Beagle/beagle.09Nov15.d2a.jar"
 samtool_path = "/cluster/tools/software/samtools/0.1.18/samtools"
 
-def runCommand(cmd):
-    try:
-        thread = Thread(group=None, target=lambda:os.system(cmd))
-        thread.run()
-        if not thread.is_alive():
-            return 0
-        else:
-            return 1
-    except OSError as e:
-        
-        logger.debug("Execution failed %s", e)
-        return -1
-        
+
 def gzipFile(filename):
     with open(filename, 'rb') as f_in, gzip.open(filename+'.gz', 'wb') as f_out:
         shutil.copyfileobj(f_in, f_out)
@@ -70,9 +52,17 @@ def dedupBam(inbamfn, outbamfn):
     command = " ".join([samtool_path, "rmdup", inbamfn, outbamfn])
     runCommand(command)
 
-def bamDiff(bamfn1, bamfn2,path):
-    command = " ".join(["bam diff", "--in1", bamfn1, "--in2", bamfn2, "--out" ,"/".join([path,"diff.bam"])]) # ("roi.bam - vcf.bam"; seperate reads that do not overlap SNP regions from the ones that do)
-    runCommand(command ) #from BamUtil package
+def runCommand(cmd):
+    try:
+        thread = Thread(group=None, target=lambda:os.system(cmd))
+        thread.run()
+        if not thread.is_alive():
+            return 0
+        else:
+            return 1
+    except OSError as e:
+        #logger.debug("Execution failed %s", e)
+        sys.exit(1)
 
 #phase unphased VCF into Hap1 and Hap2 phased alleles using BEAGLE
 def phaseVCF(vcfpath, phasevcfpath):
@@ -85,19 +75,16 @@ def phaseVCF(vcfpath, phasevcfpath):
     path2, vcffn2 = os.path.split(phasevcfpath)
     phasevcffn = sub('.vcf.gz$', '_phased', vcffn)
     command = " ".join([java_path,"-Xmx4g -jar", beagle_jar, "gt="+vcfpath, "out="+"/".join([path2, phasevcffn])])
-    print(command)
-    runCommand (command)
+    runCommand(command)
     return phasevcffn
 
 def getVCFHaplotypes(phasedvcf, hap1, hap2):
     out_hap1 = open(hap1, 'w')
     out_hap2 = open(hap2, 'w')
     
-    
     if(phasedvcf.endswith('.vcf.gz')):
         vcfh = gzip.GzipFile(phasedvcf, 'rb')
-        
-                
+          
         for line in vcfh:
             c = line.strip('\n').split("\t")
             if (len(c) == 10 ):
@@ -162,6 +149,10 @@ def subtractBeds(bedfn1, bedfn2, diffn):
     f = open(diffn, 'w')
     print >> f, bed1.subtract(bed2, A = True)
     f.close()
+
+def bamDiff(bamfn1, bamfn2, path):
+    command = " ".join(["bam diff", "--in1", bamfn1, "--in2", bamfn2, "--out" ,"/".join([path,"diff.bam"])]) # ("roi.bam - vcf.bam"; seperate reads that do not overlap SNP regions from the ones that do)
+    runCommand(command ) 
 
 
 def intersectBed(bed1fn, bed2fn, intersectfile, wa=False):
@@ -232,18 +223,6 @@ def renamereads(inbamfn, outbamfn):
     outbam.close()
     inbam.close()
 
-def mergeBamFiles(mergedbamfn, inbamfn1, inbamfn2, inbamfn3):
-    command = " ".join(["samtools merge", mergedbamfn, inbamfn1, inbamfn2, inbamfn3])
-    runCommand(command)
-    sortedmerged = sub('.bam$', '.sorted', mergedbamfn)
-    pysam.sort(mergedbamfn, sortedmerged)
-    pysam.index(sortedmerged+".bam")
-    
-    try:
-        os.remove(mergedbamfn)
-    except OSError:
-        pass
-
 
 def subsample(bamfn1, bamfn2, samplingrate = 0.5):
     command = " ".join(["samtools view -s", samplingrate ,"-b", bamfn1, ">", bamfn2])
@@ -302,45 +281,6 @@ def mergeSortBamFiles(mergedBamfn, finalbamdir):
     print(command2)
     runCommand(command2)
     
-    
-def removeReadsOverlappingHetRegion(inbamfn, bedfn,outbamfn,path):
-    print "___ removing reads overlapping heterozygous region ___"
-    inbamsorted =  sub('.bam$','.sorted',inbamfn)
-    pysam.sort(inbamfn, inbamsorted)
-    pysam.index(inbamsorted+'.bam')
-    
-    alignmentfile = pysam.AlignmentFile(inbamsorted+'.bam', "rb" )
-    outbam = pysam.Samfile(outbamfn, 'wb', template=alignmentfile )
-    
-    bedfile = open(bedfn, 'r')
-    
-    for bedline in bedfile:
-        c = bedline.strip().split()
-        
-        if (len(c) == 3 ):
-            chr2 = c[0]
-            chr = c[0].strip("chr")
-            start = int(c[1])
-            end   = int(c[2])
-        else :
-            continue
-        
-        try:
-            readmappings = alignmentfile.fetch(chr2, start, end)
-        except  ValueError as e:
-            print("problem fetching the read ")
-        
-        
-        for shortread in readmappings:
-            try:
-                outbam.write(shortread)
-            except ValueError as e:
-                print ("problem removing read :" + shortread.qname)
-    outbamsorted =  sub('.bam$','.sorted',outbamfn)            
-    pysam.sort(outbamfn, outbamsorted)
-    bamDiff(inbamsorted+'.bam', outbamsorted +'.bam', path )
-    outbam.close()           
-
 def getMeanSTD(inbam):
     """ awk '{ if ($9 > 0) { N+=1; S+=$9; S2+=$9*$9 }} END { M=S/N; print "n="N", mean="M", stdev="sqrt ((S2-M*M*N)/(N-1))}' """
     command = " ".join([awk, inbam])
@@ -371,4 +311,40 @@ def createHaplotypes(hetsnp_orig_bed, hetsnp_hap1_bed ):
     except:
         print('exception')
    
-
+#def removeIfEmpty(bamdir,file):
+#    
+#    
+#    terminating,logger,logQueue = handle.GetLoggings(logfile)
+#    try:
+#        if not terminating.is_set():   
+#            if file.endswith(".bam"):
+#               command = " ".join(["samtools view", "/".join([bamdir, file]), "| less | head -1 | wc -l" ])
+#               nline= subprocess.check_output(command, shell = True)  
+#               if (os.path.isfile( "/".join([bamdir, file])) and (int(nline) == 0)):
+#                       os.remove("/".join([bamdir, file]))
+#                       logger.debug(' removing ' + "/".join([bamdir, file]))
+#    except (KeyboardInterrupt):
+#        logger.error('Exception Crtl+C pressed in the child process  in removeIfEmpty ')
+#        terminating.set()
+#        return
+#    except Exception as e:   
+#        logger.exception("Exception in removeIfEmpty %s" ,e )
+#        terminating.set()
+#        return
+#    return                       
+                
+#def sortSamba(bamdir,file):
+#    try:
+#        if not .terminating.is_set():   
+#            command = " ".join(["sambamba sort", "/".join([bamdir, file]), "--tmpdir",bamdir])
+#            subprocess.check_output(command, shell = True)
+#    
+#    except (KeyboardInterrupt):
+#        .logger.error('Exception Crtl+C pressed in the child process  in removeIfEmpty for chr ' + chr)
+#        .terminating.set()
+#        return
+#    except Exception as e:   
+#        .logger.exception("Exception in sortSamba %s" ,e )
+#        .terminating.set()
+#        return
+#    return             
