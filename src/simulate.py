@@ -5,7 +5,6 @@ import time
 from helpers import parameters as params
 from methods import *
 
-
 def main(args):
     outbamfn = args.outBamFile
     configReader = params.GetConfigReader()
@@ -18,7 +17,6 @@ def main(args):
     results_path = configReader.get('RESULTS', 'results_path')
     
     if( args.phase):    
-        
         run_pipeline(results_path)
         
 if __name__ == '__main__':

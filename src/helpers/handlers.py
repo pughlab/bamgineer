@@ -1,6 +1,5 @@
 import os
 from helpers import parameters as params
-#from helpers import bamgineerHelpers as bamhelp
 import logging.handlers
 from pathos.multiprocessing import ProcessingPool 
 import multiprocessing
@@ -15,7 +14,6 @@ def createDirectory(path):
 def GetProjectPaths(results_path):
     
     cancer_type = params.GetCancerType() 
-    #results_path = bamhelp.GetResultsPath()
     cancer_dir_path = "/".join([results_path, cancer_type])
     haplotype_path = "/".join([cancer_dir_path, "haplotypedir"])
     log_path = "/".join([cancer_dir_path, "logs"])
@@ -28,16 +26,7 @@ def GetProjectPaths(results_path):
     createDirectory(haplotype_path)
     createDirectory(log_path)
     createDirectory(tmpbams_path)
-    createDirectory(finalbams_path)
-  
-    terminating = multiprocessing.Event()
-    logger = logging.getLogger('')
-    logger.setLevel(logging.DEBUG)
-    logQueue = multiprocessing.Queue(16)
-    filehandler = MultiProcessingLogHandler(logging.FileHandler(logfile), logQueue)
-    logger.addHandler(filehandler)
-    filehandler.setLevel(logging.DEBUG)
-    
+    createDirectory(finalbams_path)  
     return (haplotype_path,cancer_dir_path,tmpbams_path,finalbams_path,log_path, logfile)
 
 def GetLoggings(logfile):

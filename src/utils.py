@@ -279,7 +279,6 @@ def mergeSortBamFiles(mergedBamfn, finalbamdir):
                 command = " ".join([path, command])
             
     command2 = " ".join(["sambamba merge", mergedBamfn, command ])
-    print(command2)
     runCommand(command2)
     
 def getMeanSTD(inbam):
@@ -312,40 +311,11 @@ def createHaplotypes(hetsnp_orig_bed, hetsnp_hap1_bed ):
     except:
         print('exception')
    
-#def removeIfEmpty(bamdir,file):
-#    
-#    
-#    terminating,logger,logQueue = handle.GetLoggings(logfile)
-#    try:
-#        if not terminating.is_set():   
-#            if file.endswith(".bam"):
-#               command = " ".join(["samtools view", "/".join([bamdir, file]), "| less | head -1 | wc -l" ])
-#               nline= subprocess.check_output(command, shell = True)  
-#               if (os.path.isfile( "/".join([bamdir, file])) and (int(nline) == 0)):
-#                       os.remove("/".join([bamdir, file]))
-#                       logger.debug(' removing ' + "/".join([bamdir, file]))
-#    except (KeyboardInterrupt):
-#        logger.error('Exception Crtl+C pressed in the child process  in removeIfEmpty ')
-#        terminating.set()
-#        return
-#    except Exception as e:   
-#        logger.exception("Exception in removeIfEmpty %s" ,e )
-#        terminating.set()
-#        return
-#    return                       
-                
-#def sortSamba(bamdir,file):
-#    try:
-#        if not .terminating.is_set():   
-#            command = " ".join(["sambamba sort", "/".join([bamdir, file]), "--tmpdir",bamdir])
-#            subprocess.check_output(command, shell = True)
-#    
-#    except (KeyboardInterrupt):
-#        .logger.error('Exception Crtl+C pressed in the child process  in removeIfEmpty for chr ' + chr)
-#        .terminating.set()
-#        return
-#    except Exception as e:   
-#        .logger.exception("Exception in sortSamba %s" ,e )
-#        .terminating.set()
-#        return
-#    return             
+#chr 21 and 22 for test, change it to 1
+def create_chr_event_list():
+    chrom_event= []
+    for c in range(21,23):
+        for e in ['gain','loss']:
+            chev = "_".join(['chr'+str(c), e])
+            chrom_event.append(chev)
+    return chrom_event       

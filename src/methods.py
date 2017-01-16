@@ -4,15 +4,10 @@ from helpers import parameters as params
 from helpers import handlers as handle
 from helpers import bamgineerHelpers as bamhelp
 from utils import *
-
-import multiprocessing, threading, logging, sys, traceback,  StringIO, Queue
+import logging, sys
 
 global bases
 bases = ('A','T','C','G')
-
-##temporary
-purity = [ '0.2', '0.4', '0.6','0.8','1.0']
-cancer_list = ['brca','crc','gbm']
 
 def initPool(queue, level, terminating_):
     """
@@ -20,16 +15,8 @@ def initPool(queue, level, terminating_):
     in pool threads to work correctly.
     """
     logging.getLogger('').setLevel(level)
+    global terminating
     terminating = terminating_
-
-#chr 21 and 22 for test, change it to 1
-def create_chr_event_list():
-    chrom_event= []
-    for c in range(21,23):
-        for e in ['gain','loss']:
-            chev = "_".join(['chr'+str(c), e])
-            chrom_event.append(chev)
-    return chrom_event        
 
 def initialize(results_path,haplotype_path,cancer_dir_path):
     
@@ -627,17 +614,16 @@ def removeIfEmpty(bamdir,file):
     return                       
 
 def run_pipeline(results_path):
-    print('running pipeline')
-    global haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path,log_path, logfile
-    global terminating,logger,logQueue
-    
+    global haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path,log_path, logfile ,terminating,logger,logQueue
     haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path,log_path, logfile = handle.GetProjectPaths(results_path)
     terminating,logger,logQueue = handle.GetLoggings(logfile)
+    
     t0 = time.time()
     outbamfn=params.GetOutputFileName() 
     chromosome_event=create_chr_event_list()
-    initialize(results_path,haplotype_path,cancer_dir_path)
+    logger.debug('pipeline started!')
     
+    initialize(results_path,haplotype_path,cancer_dir_path)
     pool1 = multiprocessing.Pool(processes=16, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating] ) 
     try:
         result1 = pool1.map_async(find_roi_bam, chromosome_event ).get(9999999)
@@ -655,14 +641,8 @@ def run_pipeline(results_path):
     time.sleep(.1)
     
     mergeSortBamFiles(outbamfn, finalbams_path )
-    logging.shutdown()
+    
     t1 = time.time()
-    #shutil.rmtree(.tmpbams)
-    logger.debug(' ***** Multi-processing phase took %f ' + str((t1 - t0)/60.0) +' minutes to finish ***** ')
-
-    
-    
-
-
-
-
+    shutil.rmtree(tmpbams_path)
+    logger.debug(' ***** pipeline finished in ' + str((t1 - t0)/60.0) +' minutes ***** ')
+    logging.shutdown()
