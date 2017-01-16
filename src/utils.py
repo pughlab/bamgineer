@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import sys
 import pybedtools
+import pysam
 import os
 import subprocess
 from uuid import uuid4
@@ -151,7 +152,7 @@ def subtractBeds(bedfn1, bedfn2, diffn):
     f.close()
 
 def bamDiff(bamfn1, bamfn2, path):
-    command = " ".join(["bam diff", "--in1", bamfn1, "--in2", bamfn2, "--out" ,"/".join([path,"diff.bam"])]) # ("roi.bam - vcf.bam"; seperate reads that do not overlap SNP regions from the ones that do)
+    command = " ".join(["bam diff", "--in1", bamfn1, "--in2", bamfn2, "--out" ,"/".join([path,"diff.bam"])]) 
     runCommand(command ) 
 
 

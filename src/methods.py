@@ -12,12 +12,7 @@ bases = ('A','T','C','G')
 
 ##temporary
 purity = [ '0.2', '0.4', '0.6','0.8','1.0']
-chromosome_event =   [ 'chr21_gain', 'chr22_gain','chr21_loss', 'chr22_loss']
 cancer_list = ['brca','crc','gbm']
-
-global results_path,haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path,log_path, logfile
-global terminating,logger,logQueue  
-
 
 def initPool(queue, level, terminating_):
     """
@@ -27,6 +22,14 @@ def initPool(queue, level, terminating_):
     logging.getLogger('').setLevel(level)
     terminating = terminating_
 
+#chr 21 and 22 for test, change it to 1
+def create_chr_event_list():
+    chrom_event= []
+    for c in range(21,23):
+        for e in ['gain','loss']:
+            chev = "_".join(['chr'+str(c), e])
+            chrom_event.append(chev)
+    return chrom_event        
 
 def initialize(results_path,haplotype_path,cancer_dir_path):
     
@@ -94,7 +97,6 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
     logger.debug("--- initialization complete ---")    
     return 
 
-
 def mutate_reads(bedfn, bamfn, outfn, haplotypedir):
 
     logger.debug("___ mutating reads and finding reads not matching hg19 at germline SNP locations ___")
@@ -110,7 +112,6 @@ def mutate_reads(bedfn, bamfn, outfn, haplotypedir):
             altbamfn = sub('_het_alt_roi.bam$',"_alt_reads.bam", outfn)
             hapbamfn = sub('_het_alt_roi.bam$',"_hap.bam", outfn)
                
-            
             refbam = pysam.Samfile(refbamfn, 'wb', template=samfile) 
             altbam = pysam.Samfile( altbamfn, 'wb', template=samfile) 
             hapbam = pysam.Samfile(hapbamfn, 'wb', template=samfile) 
@@ -196,7 +197,36 @@ def mutate_reads(bedfn, bamfn, outfn, haplotypedir):
                                             outbam.write(mate)
                                             writtenreads.append(shortread.qname)
                                             num_reads_written += 2
-                                            continue       
+                                            continue
+                                        
+                                        elif(shortread.is_read1 and shortread.pos + index < mate.pos):
+                                            tmpread = shortread.query_sequence
+                                            basetomutate = altbase
+                                        
+                                            for i in range(0, len(tmpread) - 1):              
+                                                mutated = tmpread[:index] +  basetomutate + tmpread[index + 1:]
+                                            
+                                            shortread.query_sequence = mutated
+                                            outbam.write(shortread)
+                                            outbam.write(mate)
+                                            writtenreads.append(shortread.qname)
+                                            num_reads_written += 2
+                                            continue
+                                        
+                                        elif(shortread.is_read2 and shortread.pos + index > mate.pos+ 101):
+                                            tmpread = shortread.query_sequence
+                                            basetomutate = altbase
+                                        
+                                            for i in range(0, len(tmpread) - 1):              
+                                                mutated = tmpread[:index] +  basetomutate + tmpread[index + 1:]
+                                            
+                                            shortread.query_sequence = mutated
+                                            outbam.write(shortread)
+                                            outbam.write(mate)
+                                            writtenreads.append(shortread.qname)
+                                            num_reads_written += 2
+                                            continue    
+                                            
                                 elif(haplotype == "hap2"  ):
                                     if(nuecleotide == refbase and nuecleotide != altbase):
                                         refbam.write(shortread)
@@ -216,7 +246,6 @@ def mutate_reads(bedfn, bamfn, outfn, haplotypedir):
                                         altbam.write(mate)
                                         
                                         if ((abs(shortread.tlen) > 200)):
-                                                                     
                                             tmpread = shortread.query_sequence
                                             basetomutate = refbase
                                         
@@ -228,8 +257,30 @@ def mutate_reads(bedfn, bamfn, outfn, haplotypedir):
                                             outbam.write(mate)
                                             writtenreads.append(shortread.qname)
                                             num_reads_written += 2
-                                            continue       
-                                
+                                            continue
+                                        elif(shortread.is_read1 and shortread.pos + index < mate.pos):
+                                             tmpread = shortread.query_sequence
+                                             basetomutate = refbase
+                                        
+                                             for i in range(0, len(tmpread) - 1):              
+                                                mutated = tmpread[:index] +  basetomutate + tmpread[index + 1:]
+                                            
+                                             shortread.query_sequence = mutated
+                                             outbam.write(shortread)
+                                             outbam.write(mate)
+                                             writtenreads.append(shortread.qname)
+                                             num_reads_written += 2
+                                             continue
+                                        elif(shortread.is_read2 and shortread.pos + index > mate.pos+ 101):    
+                                            for i in range(0, len(tmpread) - 1):              
+                                                mutated = tmpread[:index] +  basetomutate + tmpread[index + 1:]
+                                            
+                                            shortread.query_sequence = mutated
+                                            outbam.write(shortread)
+                                            outbam.write(mate)
+                                            writtenreads.append(shortread.qname)
+                                            num_reads_written += 2
+                                            continue
                         except (KeyError,ValueError) as e :
                             pass  
                 
@@ -582,12 +633,14 @@ def run_pipeline(results_path):
     
     haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path,log_path, logfile = handle.GetProjectPaths(results_path)
     terminating,logger,logQueue = handle.GetLoggings(logfile)
-    
-    #initialize(results_path,haplotype_path,cancer_dir_path)
+    t0 = time.time()
+    outbamfn=params.GetOutputFileName() 
+    chromosome_event=create_chr_event_list()
+    initialize(results_path,haplotype_path,cancer_dir_path)
     
     pool1 = multiprocessing.Pool(processes=16, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating] ) 
     try:
-    #    result1 = pool1.map_async(find_roi_bam, chromosome_event ).get(9999999)
+        result1 = pool1.map_async(find_roi_bam, chromosome_event ).get(9999999)
         result2 = pool1.map_async(implement_gain_loss, chromosome_event ).get(9999999)
       
         pool1.close()
@@ -601,10 +654,11 @@ def run_pipeline(results_path):
         pool1.join()
     time.sleep(.1)
     
-    #mergeSortBamFiles(outbamfn , finalbams_path )
+    mergeSortBamFiles(outbamfn, finalbams_path )
     logging.shutdown()
+    t1 = time.time()
     #shutil.rmtree(.tmpbams)
-    logger.debug(' ***** Multi-processing phase took %f ' %(t1 - t0) +' seconds to finish ***** ')
+    logger.debug(' ***** Multi-processing phase took %f ' + str((t1 - t0)/60.0) +' minutes to finish ***** ')
 
     
     

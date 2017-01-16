@@ -21,7 +21,6 @@ def main(args):
         
         run_pipeline(results_path)
         
-
 if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='adds CN spikes to reads, outputs modified reads as .bam along with mates')
