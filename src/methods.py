@@ -204,14 +204,6 @@ def mutate_reads(bamsortfn,chr, event):
                 bamDiff(bamsortfn,outbamsortfn+'.bam', tmpbams_path )
                 
                 merge_bams("/".join([tmpbams_path,  'diff_only1_' +  os.path.basename(bamsortfn)]), outbamsortfn+'.bam', mergedsortfn)
-                #extract_proper_paired_reads("/".join([tmpbams_path,  'diff_only1_' +  os.path.basename(bamsortfn)]))
-                
-                #os.rename("/".join([tmpbams_path,  'diff_only1_' +  os.path.basename(bamsortfn)]),
-                #          "/".join([tmpbams_path,  sub('.sorted.bam$', '',  os.path.basename(bamsortfn)) +'_nonhet.sorted.bam']))
-                #properfn = sub('.bam$', '_proper.bam', os.path.basename(bamsortfn))
-                #os.rename("/".join([tmpbams_path,  'diff_only1_' +  properfn]),
-                #          "/".join([tmpbams_path,  sub('.sorted.bam$', '',  os.path.basename(bamsortfn)) +'_nonhet.sorted.bam']))
-                
                 os.remove("/".join([tmpbams_path,  'diff_only1_' +  os.path.basename(bamsortfn)]))
                 os.remove(outbamfn)
                 os.remove(outbamsortfn+'.bam')
@@ -247,7 +239,7 @@ def implement_cnv(chromosome_event):
                     bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
                     mergedsortfn = sub('.sorted.bam$',".mutated_merged.sorted.bam", bamrepairedsortfn)
                     mergedrenamedfn = sub('.sorted.bam$',".mutated_merged_renamed.sorted.bam", bamrepairedsortfn)
-                    #mergedsortsampledfn = sub('.sorted.bam$',".mutated_merged.sampled.sorted.bam", bamsortfn)
+            
                     GAIN_FINAL = "/".join([finalbams_path,  str(chr).upper() +'_GAIN.bam'])
                     if(os.path.isfile(bamsortfn)):
                         re_pair_reads(bamsortfn)
@@ -300,7 +292,7 @@ def implement_cnv(chromosome_event):
 def re_pair_reads(bamsortfn):    
     try:
         if not terminating.is_set():
-            #logger.debug(" calling  re-pair-reads version" )
+            logger.debug(" calling  re-pair-reads version" )
             bamrepairedfn = sub('.sorted.bam$',  ".re_paired.bam", bamsortfn)
             bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
             
@@ -333,9 +325,9 @@ def re_pair_reads(bamsortfn):
                 for read1, read2 in  izip(itr1, itr2):
                     
                     try:
-                        if(read1.mapping_quality < 30):
+                        if(read1.mapping_quality < 30 or read1.is_duplicate or read1.is_secondary):
                             read1=itr1.next()
-                        if(read2.mapping_quality < 30):
+                        if(read2.mapping_quality < 30 or read2.is_duplicate or read2.is_secondary):
                             read2=itr2.next()
                         
                         if(read2.qname != read1.qname and start):
@@ -344,15 +336,18 @@ def re_pair_reads(bamsortfn):
                             continue
                         
                         read2next = itr2.next()
+                        if(read2next.mapping_quality < 30 or read2next.is_duplicate or read2next.is_secondary):
+                            read2next = itr2.next()
+                        
+                        if(read1next.mapping_quality < 30 or read1next.is_duplicate or read1next.is_secondary):
+                            read1next = itr1.next()
                         read1next = itr1.next()
                       
                         tlenabs1 = read2next.pos - read1.pos + abs(read2next.qlen)
                         tlenabs2 =  read2.pos - read1next.pos  + abs(read2.qlen)  
                         tlenmean = (abs(read1.tlen) + abs(read1next.tlen))/2
    
-                        #if(tlenabs1 > 0.2*read1.tlen and tlenabs1 < 5*read1.tlen and tlenabs1 > 0 and read2next.qname != read1.qname):
-                        if(tlenabs1 > 0.2*tlenmean and tlenabs1 < 5*tlenmean and tlenabs1 > 0 and read2next.qname != read1.qname):
-                        #if(abs(tlenabs1-tlenmean) < 300  and tlenabs1 > 0 and read2next.qname != read1.qname):    
+                        if(tlenabs1 > 0.2*tlenmean and tlenabs1 < 5*tlenmean and tlenabs1 > 0 and read2next.qname != read1.qname):   
                             read1.tlen = tlenabs1
                             read2next.tlen = -tlenabs1
                             read1.pnext = read2next.pos
@@ -361,10 +356,8 @@ def re_pair_reads(bamsortfn):
                             outbam.write(read1)
                             outbam.write(read2next)
                             writtencount = writtencount + 1
-                             
-                        #if(tlenabs2 > 0.2*read1next.tlen and tlenabs2 < 5*read1next.tlen and tlenabs2 > 0 and read1next.qname != read2.qname):
+                            
                         if(tlenabs2 > 0.2*tlenmean and tlenabs2 < 5*tlenmean and tlenabs2 > 0 and read1next.qname != read2.qname):
-                        #if(abs(tlenabs2 - tlenmean) < 300 and tlenabs2 > 0 and read1next.qname != read2.qname):
                             read1next.tlen = tlenabs2
                             read2.tlen = -tlenabs2 
                             read2.pnext = read1next.pos
@@ -398,9 +391,7 @@ def re_pair_reads(bamsortfn):
                         tlenabs2 = read1next.pos -read2.pos + abs(read1next.qlen)
                         tlenmean = (abs(read1.tlen) + abs(read1next.tlen))/2
                        
-                        #if(tlenabs1 > 0.2*abs(read1.tlen) and tlenabs1 < 5*abs(read1.tlen) and tlenabs1 > 0 and read2next.qname != read1.qname):
                         if(tlenabs1 > 0.2*tlenmean and tlenabs1 < 5*tlenmean and tlenabs1 > 0 and read2next.qname != read1.qname):
-                        #if(abs(tlenabs1 - tlenmean) < 300  and tlenabs1 > 0 and read2next.qname != read1.qname):
                             read2next = itr2.next()
                             read1.tlen = -tlenabs1
                             read2next.tlen = tlenabs1
@@ -411,9 +402,7 @@ def re_pair_reads(bamsortfn):
                             outbam.write(read2next)
                             writtencount = writtencount + 1
                       
-                        #if(tlenabs2 > 0.2*abs(read1next.tlen) and tlenabs2 < 5*abs(read1next.tlen) and tlenabs2 > 0 and read1next.qname != read2.qname):
-                        if(tlenabs2 > 0.2*tlenmean and tlenabs2 < 5*tlenmean and tlenabs2 > 0 and read1next.qname != read2.qname):
-                        #if((tlenabs2 - tlenmean < 300) and tlenabs2 > 0 and read1next.qname != read2.qname):    
+                        if(tlenabs2 > 0.2*tlenmean and tlenabs2 < 5*tlenmean and tlenabs2 > 0 and read1next.qname != read2.qname): 
                             read1next = itr1.next()
                             read1next.tlen = -tlenabs2
                             read2.tlen = tlenabs2
@@ -425,8 +414,7 @@ def re_pair_reads(bamsortfn):
                             writtencount = writtencount + 1
                     except StopIteration:
                         break
-                
-
+            
                 splt1_pos.close();splt1_neg.close();splt2_pos.close();splt2_neg.close()
                 inbam.close()
                 outbam.close() 
@@ -516,13 +504,6 @@ def run_pipeline(results_path):
     initialize(results_path,haplotype_path,cancer_dir_path)
     pool1 = multiprocessing.Pool(processes=12, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating] ) 
     try:
-        #result1 = pool1.map_async(find_roi_bam, chromosome_event ).get(9999999)
-        #result2 = pool1.map_async(mutate_reads, chromosome_event ).get(9999999)
-        #result3 = pool1.map_async(split_reads_extract_strands, chromosomes_bamfiles ).get(9999999)
-        #result4 = pool1.map_async(re_pair_reads, chromosomes_bamfiles).get(9999999)
-        #result4 = pool1.map_async(implement_gain_loss, chromosome_event ).get(9999999)
-        
-        
         result1 = pool1.map_async(find_roi_bam, chromosome_event ).get(9999999)
         result2 = pool1.map_async(implement_cnv, chromosome_event ).get(9999999)
       
