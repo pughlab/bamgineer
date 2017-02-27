@@ -248,28 +248,34 @@ def implement_cnv(chromosome_event):
                         
                         ratio_kept1 = float(countReads(bamsortfn))/float(countReads(bamfn))
                         ratio_kept2 = float(countReads(bamrepairedsortfn))/float(countReads(bamsortfn))
-                        samplerate= round(0.5/(ratio_kept1*ratio_kept2*0.98),2)
-                        logger.debug("ratios kept for:"+ ntpath.basename(bamsortfn)+ ": "+ str(ratio_kept1) + "  "+ str(ratio_kept1))
-                        
+                        samplerate= round(0.5/(ratio_kept1*ratio_kept2),2)
+                        #logger.debug("ratios kept for:"+ ntpath.basename(bamsortfn)+ ": "+ str(ratio_kept1) + "  "+ str(ratio_kept2))
                         os.remove(bamfn)
-                        subsample(mergedrenamedfn, GAIN_FINAL,str(samplerate)) #calculate it later
-                    
+                        if(samplerate < 1.0):
+                            subsample(mergedrenamedfn, GAIN_FINAL,str(samplerate)) #calculate it later
+                            logger.debug("___ sampling rate for " + ntpath.basename(bamsortfn)  +" : "+ str(samplerate))
+                        elif(  samplerate > 1.05):
+                            logger.error('not enough reads ')
+                            success = False
+                            return
             elif(event== 'loss'):
+               
                 inbam_deletion = "/".join([finalbams_path , str(chr).upper() + '_LOSS.bam'])
                 if(os.path.isfile(bamsortfn)):
+                     
                     mutate_reads(bamsortfn, chr, 'loss')
                     mergedsortfn = sub('.sorted.bam$',".mutated_merged.sorted.bam", bamsortfn)
                     mergedsortsampledfn = sub('.sorted.bam$',".mutated_merged.sampled.sorted.bam", bamsortfn)
                     
                     ratio_kept = float(countReads(bamsortfn))/float(countReads(bamfn))
-                    samplerate= round(0.5/(ratio_kept*0.98),2)
+                    samplerate= round(0.5/(ratio_kept ),2)
                     LOSS_FINAL = "/".join([finalbams_path,  str(chr).upper() +'_LOSS.bam'])
                     logger.debug("ratios kept for:"+ ntpath.basename(bamsortfn)+ ": "+ str(ratio_kept))
                     subsample(mergedsortfn, mergedsortsampledfn,str(samplerate)) 
                     bamDiff(sortbyCoord, mergedsortsampledfn, tmpbams_path)
                     os.rename("/".join([tmpbams_path,  'diff_only1_' + chr + '.bam']), LOSS_FINAL)
 
-                elif(not os.path.isfile(inbam_deletion)):# if it exists from previous runs 
+                elif(not os.path.isfile(inbam_deletion) and os.path.isfile(sortbyCoord) ):# if it exists from previous runs 
                     
                     os.symlink(sortbyCoord, inbam_deletion)
                     
@@ -296,138 +302,106 @@ def re_pair_reads(bamsortfn):
             bamrepairedfn = sub('.sorted.bam$',  ".re_paired.bam", bamsortfn)
             bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
             
-            read1_strand1sortfn =  sub('.bam$', '.read1_pos.bam', bamsortfn)
-            read1_strand2sortfn =  sub('.bam$', '.read1_neg.bam', bamsortfn)
-            read2_strand1sortfn =  sub('.bam$', '.read2_pos.bam', bamsortfn)
-            read2_strand2sortfn =  sub('.bam$', '.read2_neg.bam', bamsortfn)
-            
-            if(not os.path.isfile(read1_strand1sortfn) or not os.path.isfile(read1_strand2sortfn) or not os.path.isfile(read2_strand1sortfn) or not os.path.isfile(read2_strand2sortfn)):
-                splitPairAndStrands(bamsortfn)
-                
             if(os.path.isfile(bamsortfn)):
-                splt1_pos = pysam.Samfile(read1_strand1sortfn , 'rb')
-                splt2_pos = pysam.Samfile(read2_strand1sortfn , 'rb')
-                splt1_neg = pysam.Samfile(read1_strand2sortfn , 'rb')
-                splt2_neg = pysam.Samfile(read2_strand2sortfn , 'rb') 
-                
+                  
                 inbam = pysam.Samfile(bamsortfn, 'rb')
                 outbam = pysam.Samfile(bamrepairedfn, 'wb', template=inbam)  
-        
-                itr1_pos = splt1_pos.fetch(until_eof=True)
-                itr2_pos = splt2_pos.fetch(until_eof=True)
-                itr1_neg = splt1_neg.fetch(until_eof=True)
-                itr2_neg = splt2_neg.fetch(until_eof=True)
     
-                itr1,itr2 =  itr1_pos, itr2_pos
                 writtencount = 0
-                start = True
-                #positive strand
-                for read1, read2 in  izip(itr1, itr2):
+             
+                #positive & negative strands
+                strands=['pos','neg']
+                
+                for strand in strands :
+                    read1fn= sub('.bam$', '.read1_'+strand+'.bam', bamsortfn)
+                    read2fn= sub('.bam$', '.read2_'+strand+'.bam', bamsortfn)
                     
-                    try:
-                        if(read1.mapping_quality < 30 or read1.is_duplicate or read1.is_secondary):
-                            read1=itr1.next()
-                        if(read2.mapping_quality < 30 or read2.is_duplicate or read2.is_secondary):
-                            read2=itr2.next()
-                        
-                        if(read2.qname != read1.qname and start):
-                            read2 = itr2.next()
-                            start = False
-                            continue
-                        
-                        read2next = itr2.next()
-                        if(read2next.mapping_quality < 30 or read2next.is_duplicate or read2next.is_secondary):
-                            read2next = itr2.next()
-                        
-                        read1next = itr1.next()
-                        if(read1next.mapping_quality < 30 or read1next.is_duplicate or read1next.is_secondary):
-                            read1next = itr1.next()
-                      
-                        tlenabs1 = read2next.pos - read1.pos + abs(read2next.qlen)
-                        tlenabs2 =  read2.pos - read1next.pos  + abs(read2.qlen)  
-                        tlenmean = (abs(read1.tlen) + abs(read1next.tlen))/2
-   
-                        if(tlenabs1 > 0.2*tlenmean and tlenabs1 < 5*tlenmean and tlenabs1 > 0 and read2next.qname != read1.qname):   
-                            read1.tlen = tlenabs1
-                            read2next.tlen = -tlenabs1
-                            read1.pnext = read2next.pos
-                            read2next.pnext = read1.pos
-                            read2next.qname = read1.qname 
-                            outbam.write(read1)
-                            outbam.write(read2next)
-                            writtencount = writtencount + 1
-                            
-                        if(tlenabs2 > 0.2*tlenmean and tlenabs2 < 5*tlenmean and tlenabs2 > 0 and read1next.qname != read2.qname):
-                            read1next.tlen = tlenabs2
-                            read2.tlen = -tlenabs2 
-                            read2.pnext = read1next.pos
-                            read1next.pnext = read2.pos
-                            read2.qname = read1next.qname
-                            outbam.write(read1next)
-                            outbam.write(read2)
-                            writtencount = writtencount + 1
-                            
-                    except StopIteration:
-                        break
-
-                #negative strand        
-                itr1,itr2 =  itr1_neg, itr2_neg
-                start = True
-                for read1, read2 in  izip(itr1, itr2):
-                    try:
-                        if(read1.mapping_quality < 30 or read1.is_duplicate or read1.is_secondary) :
-                            read1=itr1.next()
-                        if(read2.mapping_quality < 30 or read1.is_duplicate or read1.is_secondary):
-                            read2=itr2.next()        
-                        
-                        if(read2.qname != read1.qname and start):
-                            read2 = itr2.next()
-                            start = False
-                            continue
-                        
-                        read2next = itr2.next()
-                        if(read2next.mapping_quality < 30 or read2next.is_duplicate or read2next.is_secondary):
-                            read2next = itr2.next()
-                        
-                        read1next = itr1.next()
-                        if(read1next.mapping_quality < 30 or read1next.is_duplicate or read1next.is_secondary):
-                            read1next = itr1.next()
-                        
-                        tlenabs1 = read1.pos - read2next.pos + abs(read1.qlen)
-                        tlenabs2 = read1next.pos -read2.pos + abs(read1next.qlen)
-                        tlenmean = (abs(read1.tlen) + abs(read1next.tlen))/2
+                    if(not os.path.isfile(read1fn) or not os.path.isfile(read2fn)):
+                        splitPairAndStrands(bamsortfn)
+                    
+                    splt1 = pysam.Samfile(read1fn , 'rb')
+                    splt2 = pysam.Samfile(read2fn , 'rb')
+                    itr1 =   splt1.fetch(until_eof=True)
+                    itr2 =   splt2.fetch(until_eof=True)
+                    start = True
+                    for read1, read2 in  izip(itr1, itr2):
                        
-                        if(tlenabs1 > 0.2*tlenmean and tlenabs1 < 5*tlenmean and tlenabs1 > 0 and read2next.qname != read1.qname):
-                            read2next = itr2.next()
-                            read1.tlen = -tlenabs1
-                            read2next.tlen = tlenabs1
-                            read1.pnext = read2next.pos
-                            read2next.pnext = read1.pos
-                            read2next.qname = read1.qname
-                            outbam.write(read1)
-                            outbam.write(read2next)
-                            writtencount = writtencount + 1
-                      
-                        if(tlenabs2 > 0.2*tlenmean and tlenabs2 < 5*tlenmean and tlenabs2 > 0 and read1next.qname != read2.qname): 
-                            read1next = itr1.next()
-                            read1next.tlen = -tlenabs2
-                            read2.tlen = tlenabs2
-                            read2.pnext = read1next.pos
-                            read1next.pnext = read2.pos
-                            read2.qname = read1next.qname
-                            outbam.write(read1next)
-                            outbam.write(read2)
-                            writtencount = writtencount + 1
-                    except StopIteration:
-                        break
-            
-                splt1_pos.close();splt1_neg.close();splt2_pos.close();splt2_neg.close()
+                        try:
+                            if(read2.qname != read1.qname and start):
+                                read2 = itr2.next()
+                                start = False
+                                continue
+                            
+                            read1next=itr1.next()
+                            read2next=itr2.next()
+                    
+                            if(strand == 'pos'):
+                                
+                                tlenabs1 = read2next.pos - read1.pos + abs(read2next.qlen)
+                                tlenabs2 =  read2.pos - read1next.pos  + abs(read2.qlen)  
+                                tlenmean = (abs(read1.tlen) + abs(read1next.tlen))/2
+                                
+                                if(tlenabs1 > 0.25*tlenmean and tlenabs1 < 4*tlenmean and read2next.qname != read1.qname and tlenabs1 > 0):
+                                    
+                                    read1.tlen = tlenabs1
+                                    read2next.tlen = -tlenabs1
+                                    read1.pnext = read2next.pos
+                                    read2next.pnext = read1.pos
+                                    read2next.qname = read1.qname 
+                                    outbam.write(read1)
+                                    outbam.write(read2next)
+                                    writtencount = writtencount + 1
+                                    
+                                if(tlenabs2 > 0.25*tlenmean and tlenabs2 < 4*tlenmean and read1next.qname != read2.qname and tlenabs2 > 0):
+                              
+                                    read1next.tlen = tlenabs2
+                                    read2.tlen = -tlenabs2 
+                                    read2.pnext = read1next.pos
+                                    read1next.pnext = read2.pos
+                                    read2.qname = read1next.qname
+                                    outbam.write(read1next)
+                                    outbam.write(read2)
+                                    writtencount = writtencount + 1  
+                            
+                            elif(strand== 'neg'):
+                                
+                                tlenabs1 = read1.pos - read2next.pos + abs(read1.qlen)
+                                tlenabs2 = read1next.pos -read2.pos + abs(read1next.qlen)
+                                tlenmean = (abs(read1.tlen) + abs(read1next.tlen))/2
+                                
+                                if(tlenabs1 > 0.25*tlenmean and tlenabs1 < 4*tlenmean and read2next.qname != read1.qname and tlenabs1 > 0):
+                                    
+                                    read1.tlen = -tlenabs1
+                                    read2next.tlen = tlenabs1
+                                    read1.pnext = read2next.pos
+                                    read2next.pnext = read1.pos
+                                    read2next.qname = read1.qname
+                                    outbam.write(read1)
+                                    outbam.write(read2next)
+                                    writtencount = writtencount + 1
+                                if(tlenabs2 > 0.25*tlenmean and tlenabs2 < 4*tlenmean and read1next.qname != read2.qname and tlenabs2 > 0):
+                            
+                                    read1next.tlen = -tlenabs2
+                                    read2.tlen = tlenabs2
+                                    read2.pnext = read1next.pos
+                                    read1next.pnext = read2.pos
+                                    read2.qname = read1next.qname
+                                    outbam.write(read1next)
+                                    outbam.write(read2)
+                                    writtencount = writtencount + 1
+                        except StopIteration:
+                            break        
+                       
+                    splt1.close();splt2.close()
+                    os.remove(read1fn)
+                    os.remove(read2fn)
+                    
                 inbam.close()
                 outbam.close() 
+                
                 sortBam(bamrepairedfn, bamrepairedsortfn)
                 os.remove(bamrepairedfn)   
-                os.remove(read1_strand1sortfn);os.remove(read1_strand2sortfn)
-                os.remove(read2_strand1sortfn);os.remove(read2_strand2sortfn)
+                
             
     except (KeyboardInterrupt):
         logger.error('Exception Crtl+C pressed in the child process  in re_pair_reads')
@@ -513,6 +487,7 @@ def run_pipeline(results_path):
         result1 = pool1.map_async(find_roi_bam, chromosome_event ).get(9999999)
         result2 = pool1.map_async(implement_cnv, chromosome_event ).get(9999999)
       
+      
         pool1.close()
     except KeyboardInterrupt:  
         logger.debug('You cancelled the program!')
@@ -523,10 +498,9 @@ def run_pipeline(results_path):
     finally:
         pool1.join()
     time.sleep(.1)
-    
     mergeSortBamFiles(outbamfn, finalbams_path )
     
     t1 = time.time()
-    shutil.rmtree(tmpbams_path)
+    #shutil.rmtree(tmpbams_path)
     logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0)/60.0, 1)) +' minutes ***** ')
     logging.shutdown()

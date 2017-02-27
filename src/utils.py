@@ -37,12 +37,12 @@ def gzipFile(filename):
         shutil.copyfileobj(f_in, f_out)
 
 def thinVCF(invcf, outvcf):
-   command = " ".join(["vcftools --vcf", invcf, "--thin 10 --out", outvcf,  "--recode"])
+   command = " ".join(["vcftools --vcf", invcf, "--thin 50 --out", outvcf,  "--recode"])
    print("thin VCF called with command: "+command )
    runCommand(command)
 
 def extractPairedReadfromROI(inbamfn, bedfn, outbamfn, flag = "either"):
-    command = " ".join(["bedtools pairtobed -abam", inbamfn,"-b",bedfn, "-type", flag,">", outbamfn])
+    command = " ".join(["bedtools pairtobed -abam", inbamfn,"-b",bedfn, "-type", flag,">", outbamfn, "2> bedtool.log"])
     runCommand(command)
     
 def extractBAMfromROI_All(inbamfn, bedfn, outbamfn):
