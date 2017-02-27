@@ -37,8 +37,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--configFile', action='store', required=True, dest='configfile',
                         help='/path/to/config_file.cfg')
     parser.add_argument('-phase',dest= 'phase', action="store_true")
-    #parser.add_argument('-vcf', dest='vcfFile', required=False,
-    #                    help='input vcf file ')  
+    
     args = parser.parse_args()
     
     t0 = time.time()

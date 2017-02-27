@@ -37,7 +37,7 @@ def gzipFile(filename):
         shutil.copyfileobj(f_in, f_out)
 
 def thinVCF(invcf, outvcf):
-   command = " ".join(["vcftools --vcf", invcf, "--thin 20 --out", outvcf,  "--recode"])
+   command = " ".join(["vcftools --vcf", invcf, "--thin 10 --out", outvcf,  "--recode"])
    print("thin VCF called with command: "+command )
    runCommand(command)
 
@@ -233,6 +233,22 @@ def sortByName(inbamfn, outbamfn):
     command = " ".join(["sambamba sort -n", inbamfn, "-o", outbamfn])
     print(command)
     runCommand(command)
+    
+def sortIndexBam(inbamfn, outbamfn):
+    command = " ".join(["sambamba sort", inbamfn, "-o", outbamfn])
+    command2 = " ".join(["sambamba index", outbamfn])
+    
+    runCommand(command)
+    runCommand(command2)
+
+def sortBam(inbamfn, outbamfn):
+    command = " ".join(["sambamba sort", inbamfn, "-o", outbamfn])
+    runCommand(command)
+  
+def getProperPairs(inbamfn, outbamfn):
+    command = " ".join(["samtools view -u -h -f 0x0003", inbamfn ,">", outbamfn])
+    runCommand(command)  
+    
 
 def splitBed(bedfn, event):
     path, filename = os.path.split(bedfn)
@@ -262,6 +278,10 @@ def generatePurities(purity):
         return
     return          
 
+def merge_bams(bamfn1, bamfn2, mergefn):
+    command = " ".join(["sambamba merge", mergefn, bamfn1, bamfn2 ])
+    runCommand(command)
+
 def mergeSortBamFiles(mergedBamfn, finalbamdir):
     command = ""
     os.chdir(finalbamdir)
@@ -287,11 +307,62 @@ def getMeanSTD(inbam):
     runCommand(command )
 
 
-def splitPairs(inbamfn,pair1fn, pair2fn):
+def splitPairs(inbamfn):
+    pair1fn =  sub('.bam$', '_read1.bam', inbamfn)
+    pair2fn =  sub('.bam$', '_read2.bam', inbamfn)
     command1 = " ".join(["samtools view -u -h -f 0x0043", inbamfn, ">", pair1fn])
     command2 = " ".join(["samtools view -u -h -f 0x0083", inbamfn, ">", pair2fn])
     runCommand(command1)
     runCommand(command2)
+
+def getStrands(inbamfn):
+    outbamfn_forward =  sub('.bam$', '_forward.bam', inbamfn)
+    outbamfn_reverse =  sub('.bam$', '_reverse.bam', inbamfn)
+    command1 = " ".join(["samtools view -F 0x10", inbamfn, ">",outbamfn_forward])
+    command2 = " ".join(["samtools view -f 0x10", inbamfn, ">",outbamfn_reverse])    
+    runCommand(command1)
+    runCommand(command2)
+    
+    
+def countReads(inbamfn):
+    cmd = " ".join(["samtools view", inbamfn, "|wc -l"])
+    out,err= subprocess.Popen(cmd, 
+                            stdout=subprocess.PIPE, 
+                            stderr=subprocess.PIPE, 
+                            stdin=subprocess.PIPE, shell=True).communicate()
+    return "".join(out.split())
+ 
+def splitPairAndStrands(inbamfn):
+    read1_strand1sortfn =  sub('.bam$', '.read1_pos.bam', inbamfn)
+    read1_strand2sortfn =  sub('.bam$', '.read1_neg.bam', inbamfn)
+    read2_strand1sortfn =  sub('.bam$', '.read2_pos.bam', inbamfn)
+    read2_strand2sortfn =  sub('.bam$', '.read2_neg.bam', inbamfn)
+    
+    #command1 = " ".join(["samtools view -u -h -f 0x0063", inbamfn, ">", inbamfn+'R1S1.bam',";samtools sort", inbamfn+'R1S1.bam',read1_strand1sortfn])
+    #command2 = " ".join(["samtools view -u -h -f 0x0053", inbamfn, ">", inbamfn+'R1S2.bam',";samtools sort", inbamfn+'R1S2.bam',read1_strand2sortfn])
+    #command3 = " ".join(["samtools view -u -h -f 0x0093", inbamfn, ">", inbamfn+'R2S1.bam',";samtools sort", inbamfn+'R2S1.bam',read2_strand1sortfn])
+    #command4 = " ".join(["samtools view -u -h -f 0x00A3", inbamfn, ">", inbamfn+'R2S2.bam',";samtools sort", inbamfn+'R2S2.bam',read2_strand2sortfn])
+    
+    command1 = " ".join(["samtools view -u -h -f 0x0063", inbamfn, ">", read1_strand1sortfn])
+    command2 = " ".join(["samtools view -u -h -f 0x0053", inbamfn, ">", read1_strand2sortfn])
+    command3 = " ".join(["samtools view -u -h -f 0x0093", inbamfn, ">", read2_strand1sortfn])
+    command4 = " ".join(["samtools view -u -h -f 0x00A3", inbamfn, ">", read2_strand2sortfn])
+    
+
+    runCommand(command1)
+    runCommand(command2)
+    runCommand(command3)
+    runCommand(command4)
+    #os.remove(inbamfn+'R1S1.bam')
+    #os.remove(inbamfn+'R1S2.bam')
+    #os.remove(inbamfn+'R2S1.bam')
+    #os.remove(inbamfn+'R2S2.bam')
+ 
+def extract_proper_paired_reads(inbamfn):
+    properfn = sub('.bam$', '_proper.bam', inbamfn)
+    command = " ".join(["samtools view -f 0x03 -bSq 30", inbamfn, ">", properfn])
+    runCommand(command)
+    os.remove(inbamfn)
     
 def createHaplotypes(hetsnp_orig_bed, hetsnp_hap1_bed ):
     try:
@@ -314,8 +385,22 @@ def createHaplotypes(hetsnp_orig_bed, hetsnp_hap1_bed ):
 #chr 21 and 22 for test, change it to 1
 def create_chr_event_list():
     chrom_event= []
-    for c in range(21,23):
+    for c in range(1,23):
         for e in ['gain','loss']:
             chev = "_".join(['chr'+str(c), e])
             chrom_event.append(chev)
-    return chrom_event       
+    return chrom_event
+
+def create_chr_bam_list():
+    chrom_event= []
+    for c in range(1,23):
+        for e in ['nonhet','mutated']:
+            chev = "_".join(['chr'+str(c), e])
+            chrom_event.append(chev)
+    return chrom_event
+
+
+
+
+
+
