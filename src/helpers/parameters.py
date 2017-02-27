@@ -28,15 +28,6 @@ def GetConfigReader():
     """return the configreader"""
     return configReader
 
-#def GetVCF():
-#    return configReader.get('REFERENCE','vcf_path')
-#
-#def GetRef():
-#    return configReader.get('REFERENCE','reference_path')
-#
-#def GetExons():
-#    return configReader.get('REFERENCE','exons_path')
-#
 def GetResultsPath():
     return results_path
 
