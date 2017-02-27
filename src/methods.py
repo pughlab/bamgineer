@@ -339,9 +339,9 @@ def re_pair_reads(bamsortfn):
                         if(read2next.mapping_quality < 30 or read2next.is_duplicate or read2next.is_secondary):
                             read2next = itr2.next()
                         
+                        read1next = itr1.next()
                         if(read1next.mapping_quality < 30 or read1next.is_duplicate or read1next.is_secondary):
                             read1next = itr1.next()
-                        read1next = itr1.next()
                       
                         tlenabs1 = read2next.pos - read1.pos + abs(read2next.qlen)
                         tlenabs2 =  read2.pos - read1next.pos  + abs(read2.qlen)  
@@ -375,9 +375,9 @@ def re_pair_reads(bamsortfn):
                 start = True
                 for read1, read2 in  izip(itr1, itr2):
                     try:
-                        if(read1.mapping_quality < 30 ) :
+                        if(read1.mapping_quality < 30 or read1.is_duplicate or read1.is_secondary) :
                             read1=itr1.next()
-                        if(read2.mapping_quality < 30):
+                        if(read2.mapping_quality < 30 or read1.is_duplicate or read1.is_secondary):
                             read2=itr2.next()        
                         
                         if(read2.qname != read1.qname and start):
@@ -386,7 +386,13 @@ def re_pair_reads(bamsortfn):
                             continue
                         
                         read2next = itr2.next()
+                        if(read2next.mapping_quality < 30 or read2next.is_duplicate or read2next.is_secondary):
+                            read2next = itr2.next()
+                        
                         read1next = itr1.next()
+                        if(read1next.mapping_quality < 30 or read1next.is_duplicate or read1next.is_secondary):
+                            read1next = itr1.next()
+                        
                         tlenabs1 = read1.pos - read2next.pos + abs(read1.qlen)
                         tlenabs2 = read1next.pos -read2.pos + abs(read1next.qlen)
                         tlenmean = (abs(read1.tlen) + abs(read1next.tlen))/2
