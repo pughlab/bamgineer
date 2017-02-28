@@ -38,7 +38,7 @@ def gzipFile(filename):
 
 def thinVCF(invcf, outvcf):
    command = " ".join(["vcftools --vcf", invcf, "--thin 50 --out", outvcf,  "--recode"])
-   print("thin VCF called with command: "+command )
+   #print("thin VCF called with command: "+command )
    runCommand(command)
 
 def extractPairedReadfromROI(inbamfn, bedfn, outbamfn, flag = "either"):
@@ -75,7 +75,7 @@ def phaseVCF(vcfpath, phasevcfpath):
     path, vcffn = os.path.split(vcfpath)
     path2, vcffn2 = os.path.split(phasevcfpath)
     phasevcffn = sub('.vcf.gz$', '_phased', vcffn)
-    command = " ".join([java_path,"-Xmx4g -jar", beagle_jar, "gt="+vcfpath, "out="+"/".join([path2, phasevcffn])])
+    command = " ".join([java_path,"-Xmx4g -jar", beagle_jar, "gt="+vcfpath, "out="+"/".join([path2, phasevcffn]), "2> beagle.log"])
     runCommand(command)
     return phasevcffn
 
@@ -158,19 +158,17 @@ def bamDiff(bamfn1, bamfn2, path):
 
 def intersectBed(bed1fn, bed2fn, intersectfile, wa=False):
     cwd = os.path.dirname(__file__)
-    
     bed1fncompletepath = os.path.realpath(bed1fn.format(cwd))
     bed2fncompletepath = os.path.realpath(bed2fn.format(cwd))
       
     bed1 = pybedtools.example_bedtool(bed1fncompletepath)
     bed2 = pybedtools.example_bedtool(bed2fncompletepath)
-    
+      
     f = open(intersectfile, 'w')
     if(wa == False):
-        print("intersect bed called with wa=False")
+        
         print >> f, bed1.intersect(bed2,u=True)
     elif(wa==True):
-        print("intersect bed called with wa=True")
         print >> f, bed1.intersect(bed2,u=True,wa=True)
             
     f.close()
@@ -337,26 +335,15 @@ def splitPairAndStrands(inbamfn):
     read1_strand2sortfn =  sub('.bam$', '.read1_neg.bam', inbamfn)
     read2_strand1sortfn =  sub('.bam$', '.read2_pos.bam', inbamfn)
     read2_strand2sortfn =  sub('.bam$', '.read2_neg.bam', inbamfn)
-    
-    #command1 = " ".join(["samtools view -u -h -f 0x0063", inbamfn, ">", inbamfn+'R1S1.bam',";samtools sort", inbamfn+'R1S1.bam',read1_strand1sortfn])
-    #command2 = " ".join(["samtools view -u -h -f 0x0053", inbamfn, ">", inbamfn+'R1S2.bam',";samtools sort", inbamfn+'R1S2.bam',read1_strand2sortfn])
-    #command3 = " ".join(["samtools view -u -h -f 0x0093", inbamfn, ">", inbamfn+'R2S1.bam',";samtools sort", inbamfn+'R2S1.bam',read2_strand1sortfn])
-    #command4 = " ".join(["samtools view -u -h -f 0x00A3", inbamfn, ">", inbamfn+'R2S2.bam',";samtools sort", inbamfn+'R2S2.bam',read2_strand2sortfn])
-    
     command1 = " ".join(["samtools view -u -h -f 0x0063", inbamfn, ">", read1_strand1sortfn])
     command2 = " ".join(["samtools view -u -h -f 0x0053", inbamfn, ">", read1_strand2sortfn])
     command3 = " ".join(["samtools view -u -h -f 0x0093", inbamfn, ">", read2_strand1sortfn])
     command4 = " ".join(["samtools view -u -h -f 0x00A3", inbamfn, ">", read2_strand2sortfn])
-    
-
     runCommand(command1)
     runCommand(command2)
     runCommand(command3)
     runCommand(command4)
-    #os.remove(inbamfn+'R1S1.bam')
-    #os.remove(inbamfn+'R1S2.bam')
-    #os.remove(inbamfn+'R2S1.bam')
-    #os.remove(inbamfn+'R2S2.bam')
+   
  
 def extract_proper_paired_reads(inbamfn):
     properfn = sub('.bam$', '_proper.bam', inbamfn)

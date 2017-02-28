@@ -69,14 +69,14 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
             hetbed = "/".join([haplotype_path, event + "_het.bed"])
             hetsnpbed = "/".join([haplotype_path,  event + "_het_snp.bed"])
             
-            intersectBed( exons_path, locals()[event + 'cnv'], exonsinroibed, wa=True) 
+            intersectBed( exons_path, locals()[event + 'cnv'], exonsinroibed, wa=True)
             intersectBed(phased_bed, exonsinroibed, hetsnpbed, wa=True)
             splitBed(exonsinroibed, event+'_exons_in_roi_')
             splitBed(hetsnpbed, event+'_het_snp_')
             
         
-    except:
-        logger.error('Initialization error !')
+    except:  
+        logger.exception("Initialization error !")
         raise
     
     logger.debug("--- initialization complete ---")    
@@ -102,6 +102,8 @@ def find_roi_bam(chromosome_event):
         if not terminating.is_set():
             roisort = sub('.bam$', '.sorted', roi)
             if(os.path.isfile(exonsinroibed)):
+                 
+                 cmd=" ".join(["sort -u", exonsinroibed, "-o", exonsinroibed]); runCommand(cmd)
                  extractPairedReadfromROI(sortbyname, exonsinroibed, roi)
                  removeIfEmpty(tmpbams_path,ntpath.basename(roi))
                
@@ -127,7 +129,7 @@ def find_roi_bam(chromosome_event):
 def mutate_reads(bamsortfn,chr, event):
     
     fn,sortbyname,sortbyCoord, bedfn = init_file_names(chr, event, tmpbams_path, haplotype_path)
-   
+    cmd=" ".join(["sort -u", bedfn, "-o", bedfn]); runCommand(cmd)
     outbamfn = sub('.sorted.bam$',".mutated_het.bam", bamsortfn)
     outbamsortfn = sub('.sorted.bam$',".mutated_het.sorted", bamsortfn)
     
@@ -171,9 +173,13 @@ def mutate_reads(bamsortfn,chr, event):
                                 tmpread = shortread.query_sequence
                                 mutated_hap1 = tmpread[:index] +  altbase + tmpread[index + 1:]
                                 mutated_hap2 = tmpread[:index] +  refbase + tmpread[index + 1:]
+                                if(haplotype == "hap1"):
+                                    shortread.query_sequence = mutated_hap1 
+                                elif(haplotype == "hap2"):
+                                    shortread.query_sequence = mutated_hap2
                             except:
                                 continue
-                            
+                             
                             try:
                                 index_mate = mate.get_reference_positions().index(start)
                                 nuecleotide_mate = mate.seq[index_mate]
@@ -186,12 +192,7 @@ def mutate_reads(bamsortfn,chr, event):
                                      mate.query_sequence = mutated_mate_hap2
                             except (KeyError,ValueError) as e :
                                 pass
-                            
-                            if(haplotype == "hap1"):
-                                shortread.query_sequence = mutated_hap1 
-                            elif(haplotype == "hap2"):
-                                shortread.query_sequence = mutated_hap2
-                        
+
                             outbam.write(shortread)
                             outbam.write(mate)
                             writtenreads.append(shortread.qname)
@@ -203,7 +204,7 @@ def mutate_reads(bamsortfn,chr, event):
                 sortBam(outbamfn,outbamsortfn+'.bam')
                 bamDiff(bamsortfn,outbamsortfn+'.bam', tmpbams_path )
                 
-                merge_bams("/".join([tmpbams_path,  'diff_only1_' +  os.path.basename(bamsortfn)]), outbamsortfn+'.bam', mergedsortfn)
+                merge_bams("/".join([tmpbams_path, 'diff_only1_' +  os.path.basename(bamsortfn)]), outbamsortfn+'.bam', mergedsortfn)
                 os.remove("/".join([tmpbams_path,  'diff_only1_' +  os.path.basename(bamsortfn)]))
                 os.remove(outbamfn)
                 os.remove(outbamsortfn+'.bam')
@@ -220,9 +221,6 @@ def mutate_reads(bamsortfn,chr, event):
 
 #cn change is 1 for CN=1,3 and 2 for CN=0,4
 def calculate_sample_rate(inbam, outbam, cnchange, purity):
-    logger.debug("___ adjusting sample rate ___")
-    
-def calculate_sample_rate(inbam, outbam):
     logger.debug("___ adjusting sample rate ___")
 
 def implement_cnv(chromosome_event):
@@ -248,27 +246,30 @@ def implement_cnv(chromosome_event):
                         
                         ratio_kept1 = float(countReads(bamsortfn))/float(countReads(bamfn))
                         ratio_kept2 = float(countReads(bamrepairedsortfn))/float(countReads(bamsortfn))
-                        samplerate= round(0.5/(ratio_kept1*ratio_kept2),2)
+                        
+                        samplerate= round(0.5/(ratio_kept1*ratio_kept2*0.98),2)
                         #logger.debug("ratios kept for:"+ ntpath.basename(bamsortfn)+ ": "+ str(ratio_kept1) + "  "+ str(ratio_kept2))
                         os.remove(bamfn)
                         if(samplerate < 1.0):
                             subsample(mergedrenamedfn, GAIN_FINAL,str(samplerate)) #calculate it later
                             logger.debug("___ sampling rate for " + ntpath.basename(bamsortfn)  +" : "+ str(samplerate))
-                        elif(  samplerate > 1.05):
-                            logger.error('not enough reads ')
+                        elif(samplerate > 1.0 and samplerate< 1.1):
+                            os.rename(mergedrenamedfn, GAIN_FINAL)
+                        else:
+                            logger.error('not enough reads for '+ntpath.basename(bamsortfn)+ 'rate: '+str(samplerate) )
                             success = False
                             return
             elif(event== 'loss'):
                
                 inbam_deletion = "/".join([finalbams_path , str(chr).upper() + '_LOSS.bam'])
                 if(os.path.isfile(bamsortfn)):
-                     
+                    
                     mutate_reads(bamsortfn, chr, 'loss')
                     mergedsortfn = sub('.sorted.bam$',".mutated_merged.sorted.bam", bamsortfn)
                     mergedsortsampledfn = sub('.sorted.bam$',".mutated_merged.sampled.sorted.bam", bamsortfn)
                     
                     ratio_kept = float(countReads(bamsortfn))/float(countReads(bamfn))
-                    samplerate= round(0.5/(ratio_kept ),2)
+                    samplerate= round(0.5/(ratio_kept*0.98),2)
                     LOSS_FINAL = "/".join([finalbams_path,  str(chr).upper() +'_LOSS.bam'])
                     logger.debug("ratios kept for:"+ ntpath.basename(bamsortfn)+ ": "+ str(ratio_kept))
                     subsample(mergedsortfn, mergedsortsampledfn,str(samplerate)) 
@@ -294,7 +295,6 @@ def implement_cnv(chromosome_event):
     return           
 
   
-
 def re_pair_reads(bamsortfn):    
     try:
         if not terminating.is_set():
@@ -324,7 +324,9 @@ def re_pair_reads(bamsortfn):
                     itr1 =   splt1.fetch(until_eof=True)
                     itr2 =   splt2.fetch(until_eof=True)
                     start = True
-                    for read1, read2 in  izip(itr1, itr2):
+                    
+                    
+                    for read1, read2 in  izip(itr1, itr2):                   
                        
                         try:
                             if(read2.qname != read1.qname and start):
@@ -334,14 +336,15 @@ def re_pair_reads(bamsortfn):
                             
                             read1next=itr1.next()
                             read2next=itr2.next()
-                    
+                
                             if(strand == 'pos'):
                                 
                                 tlenabs1 = read2next.pos - read1.pos + abs(read2next.qlen)
                                 tlenabs2 =  read2.pos - read1next.pos  + abs(read2.qlen)  
                                 tlenmean = (abs(read1.tlen) + abs(read1next.tlen))/2
                                 
-                                if(tlenabs1 > 0.25*tlenmean and tlenabs1 < 4*tlenmean and read2next.qname != read1.qname and tlenabs1 > 0):
+                                if(tlenabs1 > 0.2*tlenmean and tlenabs1 < 5*tlenmean and read2next.qname != read1.qname and tlenabs1 > 0 and
+                                   not read1.is_duplicate and not read1.is_secondary and not read2next.is_duplicate and not read2next.is_secondary):
                                     
                                     read1.tlen = tlenabs1
                                     read2next.tlen = -tlenabs1
@@ -352,7 +355,8 @@ def re_pair_reads(bamsortfn):
                                     outbam.write(read2next)
                                     writtencount = writtencount + 1
                                     
-                                if(tlenabs2 > 0.25*tlenmean and tlenabs2 < 4*tlenmean and read1next.qname != read2.qname and tlenabs2 > 0):
+                                if(tlenabs2 > 0.2*tlenmean and tlenabs2 < 5*tlenmean and read1next.qname != read2.qname and tlenabs2 > 0 and
+                                   not read2.is_duplicate and not read2.is_secondary and not read1next.is_duplicate and not read1next.is_secondary ):
                               
                                     read1next.tlen = tlenabs2
                                     read2.tlen = -tlenabs2 
@@ -369,7 +373,8 @@ def re_pair_reads(bamsortfn):
                                 tlenabs2 = read1next.pos -read2.pos + abs(read1next.qlen)
                                 tlenmean = (abs(read1.tlen) + abs(read1next.tlen))/2
                                 
-                                if(tlenabs1 > 0.25*tlenmean and tlenabs1 < 4*tlenmean and read2next.qname != read1.qname and tlenabs1 > 0):
+                                if(tlenabs1 > 0.2*tlenmean and tlenabs1 < 5*tlenmean and read2next.qname != read1.qname and tlenabs1 > 0 and
+                                   not read1.is_duplicate and not read1.is_secondary and not read2next.is_duplicate and not read2next.is_secondary):
                                     
                                     read1.tlen = -tlenabs1
                                     read2next.tlen = tlenabs1
@@ -379,7 +384,8 @@ def re_pair_reads(bamsortfn):
                                     outbam.write(read1)
                                     outbam.write(read2next)
                                     writtencount = writtencount + 1
-                                if(tlenabs2 > 0.25*tlenmean and tlenabs2 < 4*tlenmean and read1next.qname != read2.qname and tlenabs2 > 0):
+                                if(tlenabs2 > 0.2*tlenmean and tlenabs2 < 5*tlenmean and read1next.qname != read2.qname and tlenabs2 > 0 and
+                                    not read2.is_duplicate and not read2.is_secondary and not read1next.is_duplicate and not read1next.is_secondary):
                             
                                     read1next.tlen = -tlenabs2
                                     read2.tlen = tlenabs2
@@ -389,9 +395,10 @@ def re_pair_reads(bamsortfn):
                                     outbam.write(read1next)
                                     outbam.write(read2)
                                     writtencount = writtencount + 1
+
                         except StopIteration:
                             break        
-                       
+               
                     splt1.close();splt2.close()
                     os.remove(read1fn)
                     os.remove(read2fn)
@@ -482,12 +489,10 @@ def run_pipeline(results_path):
     logger.debug('pipeline started!')
     
     initialize(results_path,haplotype_path,cancer_dir_path)
-    pool1 = multiprocessing.Pool(processes=12, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating] ) 
+    pool1 = multiprocessing.Pool(processes=4, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating] ) 
     try:
         result1 = pool1.map_async(find_roi_bam, chromosome_event ).get(9999999)
         result2 = pool1.map_async(implement_cnv, chromosome_event ).get(9999999)
-      
-      
         pool1.close()
     except KeyboardInterrupt:  
         logger.debug('You cancelled the program!')
@@ -499,8 +504,7 @@ def run_pipeline(results_path):
         pool1.join()
     time.sleep(.1)
     mergeSortBamFiles(outbamfn, finalbams_path )
-    
     t1 = time.time()
-    #shutil.rmtree(tmpbams_path)
+    shutil.rmtree(tmpbams_path)
     logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0)/60.0, 1)) +' minutes ***** ')
     logging.shutdown()
