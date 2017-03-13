@@ -11,7 +11,6 @@ from itertools import izip
 import gzip
 import shutil
 import traceback
-import time
 import multiprocessing
 from multiprocessing import Pool
 from contextlib import closing
@@ -22,34 +21,53 @@ import ntpath
 import fnmatch
 
 from threading import Thread
-from helpers import handlers as handle
 from helpers import parameters as params
 
-configReader = params.GetConfigReader()
-#modify later
-java_path="/mnt/work1/software/java/8/jdk1.8.0_45/bin/java"
-beagle_jar="/mnt/work1/users/pughlab/projects/Benchmarking/Beagle/beagle.09Nov15.d2a.jar"
-samtool_path = "/cluster/tools/software/samtools/0.1.18/samtools"
 
+def phaseVCF(vcfpath, phasevcfpath):
+    print (" ___ phasing vcf file ___ "  )    
+    if(not vcfpath.endswith('.vcf.gz')):
+        gzipFile(vcfpath)
+        vcfpath = vcfpath+'.gz'
+    
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    path, vcffn = os.path.split(vcfpath)
+    path2, vcffn2 = os.path.split(phasevcfpath)
+    phasevcffn = sub('.vcf.gz$', '_phased', vcffn)
+    command = " ".join([java_path,"-Xmx4g -jar", beagle_path, "gt="+vcfpath, "out="+"/".join([path2, phasevcffn]), "2> beagle.log"])
+    
+    runCommand(command)
+    return phasevcffn
+
+def create_chr_bam_list():
+    chrom_event= []
+    for c in range(1,23):
+        for e in ['nonhet','mutated']:
+            chev = "_".join(['chr'+str(c), e])
+            chrom_event.append(chev)
+    return chrom_event
 
 def gzipFile(filename):
     with open(filename, 'rb') as f_in, gzip.open(filename+'.gz', 'wb') as f_out:
         shutil.copyfileobj(f_in, f_out)
 
 def thinVCF(invcf, outvcf):
-   command = " ".join(["vcftools --vcf", invcf, "--thin 50 --out", outvcf,  "--recode"])
-   #print("thin VCF called with command: "+command )
+   java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
+   command = " ".join([vcftools_path,"--vcf", invcf, "--thin 50 --out", outvcf,  "--recode"])
    runCommand(command)
 
 def extractPairedReadfromROI(inbamfn, bedfn, outbamfn, flag = "either"):
-    command = " ".join(["bedtools pairtobed -abam", inbamfn,"-b",bedfn, "-type", flag,">", outbamfn, "2> bedtool.log"])
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
+    command = " ".join([bedtools_path,"pairtobed -abam", inbamfn,"-b",bedfn, "-type", flag,">", outbamfn, "2> bedtool.log"])
     runCommand(command)
     
 def extractBAMfromROI_All(inbamfn, bedfn, outbamfn):
-    command = " ".join(["samtools view -b -L", bedfn, inbamfn, ">",outbamfn])
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
+    command = " ".join([samtool_path, "view -b -L", bedfn, inbamfn, ">",outbamfn])
     runCommand(command)
 
 def dedupBam(inbamfn, outbamfn):
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     command = " ".join([samtool_path, "rmdup", inbamfn, outbamfn])
     runCommand(command)
 
@@ -62,22 +80,8 @@ def runCommand(cmd):
         else:
             return 1
     except OSError as e:
-        #logger.debug("Execution failed %s", e)
         sys.exit(1)
 
-#phase unphased VCF into Hap1 and Hap2 phased alleles using BEAGLE
-def phaseVCF(vcfpath, phasevcfpath):
-    print (" ___ phasing vcf file ___ "  )
-    if(not vcfpath.endswith('.vcf.gz')):
-        gzipFile(vcfpath)
-        vcfpath = vcfpath+'.gz'
-    
-    path, vcffn = os.path.split(vcfpath)
-    path2, vcffn2 = os.path.split(phasevcfpath)
-    phasevcffn = sub('.vcf.gz$', '_phased', vcffn)
-    command = " ".join([java_path,"-Xmx4g -jar", beagle_jar, "gt="+vcfpath, "out="+"/".join([path2, phasevcffn]), "2> beagle.log"])
-    runCommand(command)
-    return phasevcffn
 
 def getVCFHaplotypes(phasedvcf, hap1, hap2):
     out_hap1 = open(hap1, 'w')
@@ -119,7 +123,6 @@ def convertvcftobed(vcf, bed):
         
     bedh.close()
     
-
 #report exon bedfiles that are within the defined CNV region
 def findExonsinCNVregion(cnvpath, exonpath, intersectfile, wa=False):
     cwd = os.path.dirname(__file__)
@@ -152,9 +155,9 @@ def subtractBeds(bedfn1, bedfn2, diffn):
     f.close()
 
 def bamDiff(bamfn1, bamfn2, path):
-    command = " ".join(["bam diff", "--in1", bamfn1, "--in2", bamfn2, "--out" ,"/".join([path,"diff.bam"])]) 
+    bamutil_path = configReader.get('SOFTWARE', 'bamutil_path')
+    command = " ".join([bamutil_path,"diff", "--in1", bamfn1, "--in2", bamfn2, "--out" ,"/".join([path,"diff.bam"])]) 
     runCommand(command ) 
-
 
 def intersectBed(bed1fn, bed2fn, intersectfile, wa=False):
     cwd = os.path.dirname(__file__)
@@ -224,7 +227,8 @@ def renamereads(inbamfn, outbamfn):
 
 
 def subsample(bamfn1, bamfn2, samplingrate = 0.5):
-    command = " ".join(["samtools view -s", samplingrate ,"-b", bamfn1, ">", bamfn2])
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
+    command = " ".join([samtools_path,"view -s", samplingrate ,"-b", bamfn1, ">", bamfn2])
     runCommand(command)
   
 def sortByName(inbamfn, outbamfn):
@@ -233,18 +237,21 @@ def sortByName(inbamfn, outbamfn):
     runCommand(command)
     
 def sortIndexBam(inbamfn, outbamfn):
-    command = " ".join(["sambamba sort", inbamfn, "-o", outbamfn])
-    command2 = " ".join(["sambamba index", outbamfn])
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
+    command = " ".join([sambamba_path, "sort", inbamfn, "-o", outbamfn])
+    command2 = " ".join([sambamba_path,"index", outbamfn])
     
     runCommand(command)
     runCommand(command2)
 
 def sortBam(inbamfn, outbamfn):
-    command = " ".join(["sambamba sort", inbamfn, "-o", outbamfn])
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
+    command = " ".join([sambamba_path, "sort", inbamfn, "-o", outbamfn])
     runCommand(command)
   
 def getProperPairs(inbamfn, outbamfn):
-    command = " ".join(["samtools view -u -h -f 0x0003", inbamfn ,">", outbamfn])
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
+    command = " ".join([samtools_path,"view -u -h -f 0x0003", inbamfn ,">", outbamfn])
     runCommand(command)  
     
 
@@ -277,10 +284,12 @@ def generatePurities(purity):
     return          
 
 def merge_bams(bamfn1, bamfn2, mergefn):
-    command = " ".join(["sambamba merge", mergefn, bamfn1, bamfn2 ])
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
+    command = " ".join([sambamba_path, "merge", mergefn, bamfn1, bamfn2 ])
     runCommand(command)
 
 def mergeSortBamFiles(mergedBamfn, finalbamdir):
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     command = ""
     os.chdir(finalbamdir)
     matches = []
@@ -296,7 +305,7 @@ def mergeSortBamFiles(mergedBamfn, finalbamdir):
                 matches.append(path)
                 command = " ".join([path, command])
             
-    command2 = " ".join(["sambamba merge", mergedBamfn, command ])
+    command2 = " ".join([sambamba_path, "merge", mergedBamfn, command ])
     runCommand(command2)
     
 def getMeanSTD(inbam):
@@ -306,24 +315,27 @@ def getMeanSTD(inbam):
 
 
 def splitPairs(inbamfn):
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     pair1fn =  sub('.bam$', '_read1.bam', inbamfn)
     pair2fn =  sub('.bam$', '_read2.bam', inbamfn)
-    command1 = " ".join(["samtools view -u -h -f 0x0043", inbamfn, ">", pair1fn])
-    command2 = " ".join(["samtools view -u -h -f 0x0083", inbamfn, ">", pair2fn])
+    command1 = " ".join([samtools_path, "view -u -h -f 0x0043", inbamfn, ">", pair1fn])
+    command2 = " ".join([samtools_path ,"view -u -h -f 0x0083", inbamfn, ">", pair2fn])
     runCommand(command1)
     runCommand(command2)
 
 def getStrands(inbamfn):
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     outbamfn_forward =  sub('.bam$', '_forward.bam', inbamfn)
     outbamfn_reverse =  sub('.bam$', '_reverse.bam', inbamfn)
-    command1 = " ".join(["samtools view -F 0x10", inbamfn, ">",outbamfn_forward])
-    command2 = " ".join(["samtools view -f 0x10", inbamfn, ">",outbamfn_reverse])    
+    command1 = " ".join([samtools_path,"view -F 0x10", inbamfn, ">",outbamfn_forward])
+    command2 = " ".join([samtools_path,"view -f 0x10", inbamfn, ">",outbamfn_reverse])    
     runCommand(command1)
     runCommand(command2)
     
     
 def countReads(inbamfn):
-    cmd = " ".join(["samtools view", inbamfn, "|wc -l"])
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
+    cmd = " ".join([samtools_path, "view", inbamfn, "|wc -l"])
     out,err= subprocess.Popen(cmd, 
                             stdout=subprocess.PIPE, 
                             stderr=subprocess.PIPE, 
@@ -331,23 +343,24 @@ def countReads(inbamfn):
     return "".join(out.split())
  
 def splitPairAndStrands(inbamfn):
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     read1_strand1sortfn =  sub('.bam$', '.read1_pos.bam', inbamfn)
     read1_strand2sortfn =  sub('.bam$', '.read1_neg.bam', inbamfn)
     read2_strand1sortfn =  sub('.bam$', '.read2_pos.bam', inbamfn)
     read2_strand2sortfn =  sub('.bam$', '.read2_neg.bam', inbamfn)
-    command1 = " ".join(["samtools view -u -h -f 0x0063", inbamfn, ">", read1_strand1sortfn])
-    command2 = " ".join(["samtools view -u -h -f 0x0053", inbamfn, ">", read1_strand2sortfn])
-    command3 = " ".join(["samtools view -u -h -f 0x0093", inbamfn, ">", read2_strand1sortfn])
-    command4 = " ".join(["samtools view -u -h -f 0x00A3", inbamfn, ">", read2_strand2sortfn])
+    command1 = " ".join([samtools_path ,"view -u -h -f 0x0063", inbamfn, ">", read1_strand1sortfn])
+    command2 = " ".join([samtools_path ,"view -u -h -f 0x0053", inbamfn, ">", read1_strand2sortfn])
+    command3 = " ".join([samtools_path ,"view -u -h -f 0x0093", inbamfn, ">", read2_strand1sortfn])
+    command4 = " ".join([samtools_path ,"view -u -h -f 0x00A3", inbamfn, ">", read2_strand2sortfn])
     runCommand(command1)
     runCommand(command2)
     runCommand(command3)
     runCommand(command4)
    
- 
 def extract_proper_paired_reads(inbamfn):
     properfn = sub('.bam$', '_proper.bam', inbamfn)
-    command = " ".join(["samtools view -f 0x03 -bSq 30", inbamfn, ">", properfn])
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
+    command = " ".join([samtools_path,"view -f 0x03 -bSq 30", inbamfn, ">", properfn])
     runCommand(command)
     os.remove(inbamfn)
     
@@ -378,13 +391,7 @@ def create_chr_event_list():
             chrom_event.append(chev)
     return chrom_event
 
-def create_chr_bam_list():
-    chrom_event= []
-    for c in range(1,23):
-        for e in ['nonhet','mutated']:
-            chev = "_".join(['chr'+str(c), e])
-            chrom_event.append(chev)
-    return chrom_event
+
 
 
 

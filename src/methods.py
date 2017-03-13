@@ -3,6 +3,7 @@ import ntpath
 from helpers import parameters as params
 from helpers import handlers as handle
 from helpers import bamgineerHelpers as bamhelp
+import time
 from utils import *
 import logging, sys
 import random
@@ -32,6 +33,7 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
         exons_path = bamhelp.GetExons()
         reference_path = bamhelp.GetRef()
         
+        
         vpath, vcf = os.path.split(vcf_path)
         phasedvcf = "/".join([results_path, sub('.vcf$', '_phased.vcf.gz', vcf)])
         vcftobed =  "/".join([results_path, sub('.vcf$', '.bed', vcf)])
@@ -43,7 +45,7 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
         hap1vcffilteredtobed = "/".join([results_path, "hap1_het_filtered.bed"])
         hap2vcffilteredtobed = "/".join([results_path, "hap2_het_filtered.bed"])
         phased_bed =  "/".join([results_path, "PHASED.BED"])
-          
+        
         phaseVCF(vcf_path, phasedvcf)
         getVCFHaplotypes(phasedvcf, hap1vcf, hap2vcf)
         thinVCF(hap1vcf, hap1vcffiltered)
@@ -73,8 +75,7 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
             intersectBed(phased_bed, exonsinroibed, hetsnpbed, wa=True)
             splitBed(exonsinroibed, event+'_exons_in_roi_')
             splitBed(hetsnpbed, event+'_het_snp_')
-            
-        
+
     except:  
         logger.exception("Initialization error !")
         raise
@@ -294,7 +295,6 @@ def implement_cnv(chromosome_event):
         logger.debug("implement_cnv complete successfully for "+chr + event) 
     return           
 
-  
 def re_pair_reads(bamsortfn):    
     try:
         if not terminating.is_set():
@@ -420,7 +420,6 @@ def re_pair_reads(bamsortfn):
         return False
     return             
   
-      
 def removeReadsOverlappingHetRegion(inbamfn, bedfn,outbamfn,path):
     print "___ removing reads overlapping heterozygous region ___"
     inbamsorted =  sub('.bam$','.sorted',inbamfn)
@@ -484,7 +483,7 @@ def run_pipeline(results_path):
     
     t0 = time.time()
     outbamfn=params.GetOutputFileName() 
-    chromosome_event=create_chr_event_list()
+    chromosome_event = create_chr_event_list()
     chromosomes_bamfiles = create_chr_bam_list()
     logger.debug('pipeline started!')
     
