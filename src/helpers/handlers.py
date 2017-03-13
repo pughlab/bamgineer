@@ -29,6 +29,7 @@ def GetProjectPaths(results_path):
     createDirectory(finalbams_path)  
     return (haplotype_path,cancer_dir_path,tmpbams_path,finalbams_path,log_path, logfile)
 
+
 def GetLoggings(logfile):
     terminating = multiprocessing.Event()
     logger = logging.getLogger('')
