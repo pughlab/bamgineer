@@ -232,7 +232,7 @@ def subsample(bamfn1, bamfn2, samplingrate = 0.5):
     runCommand(command)
   
 def sortByName(inbamfn, outbamfn):
-    command = " ".join(["sambamba sort -n", inbamfn, "-o", outbamfn])
+    command = " ".join([samtools_path, "sort -n", inbamfn, "-o", outbamfn])
     print(command)
     runCommand(command)
     
