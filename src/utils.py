@@ -155,7 +155,7 @@ def subtractBeds(bedfn1, bedfn2, diffn):
     f.close()
 
 def bamDiff(bamfn1, bamfn2, path):
-    bamutil_path = configReader.get('SOFTWARE', 'bamutil_path')
+    bamutil_path = params.GetConfigReader().get('SOFTWARE', 'bamutil_path')
     command = " ".join([bamutil_path,"diff", "--in1", bamfn1, "--in2", bamfn2, "--out" ,"/".join([path,"diff.bam"])]) 
     runCommand(command ) 
 
