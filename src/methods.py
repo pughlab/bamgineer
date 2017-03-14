@@ -11,12 +11,8 @@ import random
 global bases
 bases = ('A','T','C','G')
 
-
 def initPool(queue, level, terminating_):
-    """
-    This causes the logging module to be initialized with the necessary info
-    in pool threads to work correctly.
-    """
+    #This causes the logging module to be initialized with the necessary info in pool threads
     logging.getLogger('').setLevel(level)
     global terminating
     terminating = terminating_
@@ -27,13 +23,10 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
         event_list=['gain','loss']
         gaincnv = params.GetGainCNV()
         losscnv = params.GetLossCNV()
-        
         logger.debug(' --- Initializing input files  --- ')
         vcf_path = bamhelp.GetVCF()
         exons_path = bamhelp.GetExons()
         reference_path = bamhelp.GetRef()
-        
-        
         vpath, vcf = os.path.split(vcf_path)
         phasedvcf = "/".join([results_path, sub('.vcf$', '_phased.vcf.gz', vcf)])
         vcftobed =  "/".join([results_path, sub('.vcf$', '.bed', vcf)])
@@ -79,7 +72,6 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
     except:  
         logger.exception("Initialization error !")
         raise
-    
     logger.debug("--- initialization complete ---")    
     return 
 
@@ -128,7 +120,6 @@ def find_roi_bam(chromosome_event):
     return           
     
 def mutate_reads(bamsortfn,chr, event):
-    
     fn,sortbyname,sortbyCoord, bedfn = init_file_names(chr, event, tmpbams_path, haplotype_path)
     cmd=" ".join(["sort -u", bedfn, "-o", bedfn]); runCommand(cmd)
     outbamfn = sub('.sorted.bam$',".mutated_het.bam", bamsortfn)
@@ -308,8 +299,6 @@ def re_pair_reads(bamsortfn):
                 outbam = pysam.Samfile(bamrepairedfn, 'wb', template=inbam)  
     
                 writtencount = 0
-             
-                #positive & negative strands
                 strands=['pos','neg']
                 
                 for strand in strands :
@@ -324,10 +313,8 @@ def re_pair_reads(bamsortfn):
                     itr1 =   splt1.fetch(until_eof=True)
                     itr2 =   splt2.fetch(until_eof=True)
                     start = True
-                    
-                    
-                    for read1, read2 in  izip(itr1, itr2):                   
-                       
+    
+                    for read1, read2 in  izip(itr1, itr2):                                      
                         try:
                             if(read2.qname != read1.qname and start):
                                 read2 = itr2.next()
@@ -408,8 +395,6 @@ def re_pair_reads(bamsortfn):
                 
                 sortBam(bamrepairedfn, bamrepairedsortfn)
                 os.remove(bamrepairedfn)   
-                
-            
     except (KeyboardInterrupt):
         logger.error('Exception Crtl+C pressed in the child process  in re_pair_reads')
         terminating.set()
