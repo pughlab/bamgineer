@@ -20,8 +20,6 @@ def splitAndRePairHET(inbamfn, outbamfn, chr):
     
     pysam.sort(splitfn1 , splt1sortedfn )
     pysam.sort(splitfn2 , splt2sortedfn)
-    #os.remove(splitfn1)
-    #os.remove(splitfn2)
     splt1 = pysam.Samfile(splt1sortedfn + ".bam", 'rb') 
     splt2 = pysam.Samfile(splt2sortedfn + ".bam", 'rb')
     spltcount = pysam.Samfile(splt1sortedfn + ".bam", 'rb') 
