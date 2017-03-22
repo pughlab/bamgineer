@@ -14,20 +14,21 @@ import taskHelpers
 from itertools import izip
 import itertools
 import re
+import subprocess
 
 global bases
 bases = ('A','T','C','G')
 
 log = pipelineHelpers.GetLogFile('Bamgineer')
-
-java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path,bamutil_path=params.GetSoftwarePath()
-
 import utils
 import vcf
 import gzip
 import shutil
 chr_list = [4, 5]
 event_list=['gain','loss']
+
+sentinel_path, results_path,haplotype_path,cancer_dir_path,tmpbams_path,finalbams_path = taskHelpers.GetProjectNamePathRunID()
+
 
 def initPool(queue, level, terminating_):
     """
@@ -114,7 +115,6 @@ def split_bams(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
 
     pipelineHelpers.Logging('INFO', log, log_msg + 'Starting')
     if pipelineHelpers.CheckSentinel(prev_sentinel, log, log_msg):
-        samtools = samtools_path
         python = sys.executable
         script_path = pipelineHelpers.GetScriptPath(
             sample_id, bamhelp.name)
@@ -122,7 +122,6 @@ def split_bams(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
 
         exons = params.GetExonPath()
         command=  "".join(["""awk '($1 ~ "chr"){print $0 >> $1".bed" }' """, exons])
-
         initialize()
         
         os.chdir(script_path)
@@ -132,10 +131,13 @@ def split_bams(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
                 '{0}splitbam_chr{1}.sh'.format(script_path,
                                                      num), 'w')
 
-            script.write('#!/bin/bash\n\n')
+            script.write('#!/bin/bash\n')
+            script.write('#\n')
+            script.write('#$ -cwd \n')
+            script.write('module load samtools \n')
             script.write(command +'\n')
-            script.write('{rc} view -bh {bam} chr{num} > '
-                         '{out}\n'.format(rc=samtools, bam=inputs[0][0],
+            script.write('samtools view -bh {bam} chr{num} > '
+                         '{out}\n'.format(bam=inputs[0][0],
                                           num=num, out=outp))
             script.close()
 
@@ -159,7 +161,6 @@ def sort_by_name(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
 
     pipelineHelpers.Logging('INFO', log, log_msg + 'Starting')
     if pipelineHelpers.CheckSentinel(prev_sentinel, log, log_msg):
-        sambamba = sambamba_path
         python = sys.executable
         script_path = pipelineHelpers.GetScriptPath(
             sample_id, bamhelp.name)
@@ -170,19 +171,20 @@ def sort_by_name(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
                     '{0}sortbyname_chr{1}.sh'.format(script_path,
                                                          num), 'w')
 
-                script.write('#!/bin/bash\n\n')
-                script.write('{sb} sort -n {inp} '
-                             '-o {outp} -t 4 \n'.format(sb=sambamba, inp = inp, outp=outp))
+                script.write('#!/bin/bash\n')
+                script.write('#\n')
+                script.write('#$ -cwd \n')
+                script.write('module load sambamba \n')
+                script.write('sambamba sort -n {inp} '
+                             '-o {outp} -t 4 \n'.format(inp = inp, outp=outp))
                 script.close()
-
                 process = pipelineHelpers.RunTask(
                     os.path.abspath(script.name), 4, bamgineer_mem,
                     sample_id,  bamhelp.name)
-
                 task_list.append(process)
         pipelineHelpers.CheckTaskStatus(
                     task_list, output_sentinel, log, log_msg)
-    pipelineHelpers.Logging('INFO', log, log_msg + 'Finished task2')
+    pipelineHelpers.Logging('INFO', log, log_msg + 'Finished SplitBams')
 
 
 @follows(sort_by_name)
@@ -194,39 +196,43 @@ def find_roi_bam(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
 
     pipelineHelpers.Logging('INFO', log, log_msg + 'Starting')
     if pipelineHelpers.CheckSentinel(prev_sentinel, log, log_msg):
-        sambamba = sambamba_path
-        bedtools = bedtools_path
         python = sys.executable
         script_path = pipelineHelpers.GetScriptPath(
             sample_id, bamhelp.name)
         bamgineer_mem = bamhelp.GetBamgineerMem('med')
-
-        for event,chr in itertools.product(event_list,chr_list):
-            roi,sortbyname,sortbyCoord, hetsnp = init_file_names('chr'+str(chr), event, tmpbams_path, haplotype_path)
-            exonsinroibed = "/".join([haplotype_path,   event + "_exons_in_roi_"+ 'chr'+str(chr) +'.bed'])
-            roisort = sub('.bam$', '.sorted.bam', roi)
-            if(os.path.isfile(exonsinroibed)):
-    
-                script = open(
-                    '{0}find_roi_chr{1}_{2}.sh'.format(script_path,
-                                                         chr, event), 'w')
-                script.write('#!/bin/bash\n\n')
-                script.write('sort -u {exonbed} -o {exonbed} \n'.format(exonbed=exonsinroibed))
-                script.write('{bt} pairtobed -abam {inp} '
-                             '-b {bf} -type either > {outp} \n'.format(bt=bedtools, inp = sortbyname,
-                                               bf=exonsinroibed, outp=roi))
-                script.write('{sb} sort {outp} -o '
-                              '{outpsorted} \n'.format(sb=sambamba, outp=roi, outpsorted= roisort))  
-                script.write('rm {outp} \n'.format( outp=roi))
-                script.close()
-                process = pipelineHelpers.RunTask(
-                    os.path.abspath(script.name), 1, bamgineer_mem,
-                    sample_id,  bamhelp.name)
-                task_list.append(process)                 
+        sentinel_path, results_path,haplotype_path,cancer_dir_path,tmpbams_path,finalbams_path = taskHelpers.GetProjectNamePathRunID()
+        
+        for inp, op in izip(inputs[0],outputs[0]):
+            opsorted=sub('.bam$',".sorted.bam", op)
+            chr=os.path.basename(op).strip().split(".")[0]
+            event=os.path.basename(op).strip().split(".")[1]
+            exonsinroibed = "/".join([haplotype_path,   event + "_exons_in_roi_"+ str(chr) +'.bed'])
+            script = open(
+                '{0}find_roi_{1}_{2}.sh'.format(script_path,
+                                                     chr, event), 'w')
+            script.write('#!/bin/bash\n\n')
+            script.write('#\n')
+            script.write('#$ -cwd \n')
+            script.write('module load bedtools \n')
+            script.write('module load sambamba \n')
+            
+            script.write('sort -u {exonbed} -o {exonbed} \n'.format(exonbed=exonsinroibed))
+            script.write('bedtools pairtobed -abam {inp} '
+                         '-b {bf} -type either > {outp} \n'.format(inp = inp,
+                                           bf=exonsinroibed, outp=op))
+            script.write('sambamba sort {outp} -o '
+                          '{outpsorted} \n'.format(outp=op, outpsorted= opsorted))  
+            script.write('rm {outp} \n'.format( outp=op))
+            script.close()
+            process = pipelineHelpers.RunTask(
+                os.path.abspath(script.name), 1, bamgineer_mem,
+                sample_id,  bamhelp.name)
+            
+            task_list.append(process)                 
         pipelineHelpers.CheckTaskStatus(
                     task_list, output_sentinel, log, log_msg)
-    pipelineHelpers.Logging('INFO', log, log_msg + 'Finished 3')
-
+    pipelineHelpers.Logging('INFO', log, log_msg + 'Finished FindROI')
+    
 
 
 @follows(find_roi_bam)
@@ -237,30 +243,26 @@ def repair( inputs, output_sentinel, outputs, sample_id, prev_sentinel):
     log_msg = ' [re-pairing reads] ' + '[' + sample_id + '] '
     pipelineHelpers.Logging('INFO', log, log_msg + 'Starting')
     
-    
     if pipelineHelpers.CheckSentinel(prev_sentinel, log, log_msg):
-        sambamba = sambamba_path
         python = sys.executable
         current_path = params.GetProgramPath()
         script_path = pipelineHelpers.GetScriptPath(
                 sample_id, bamhelp.name)
         bamgineer_mem = bamhelp.GetBamgineerMem('med')
        
-        for chr in chr_list:
-        
-            bamfn,sortbyname,sortbyCoord, bedfn = init_file_names('chr'+str(chr), "gain", tmpbams_path, haplotype_path)
-            bamsortfn = sub('.bam$', '.sorted.bam', bamfn)
+        for inp in inputs[0]:
+            chr= os.path.basename(inp).strip().split(".")[0]
             
-            if(os.path.isfile(bamsortfn)):
-            
-                script = open('{0}re-pair_{1}_{2}.sh'.format(script_path, 'chr'+str(chr), "gain"), 'w')
-                script.write('#!/bin/bash\n\n')
-                script.write('python {path}/re-pair.py {inbam} {sam} {bamba} \n'.format(inbam=bamsortfn, path=current_path, sam = samtools_path, bamba=sambamba_path ))        
-                script.close()
-                process = pipelineHelpers.RunTask( 
-                    os.path.abspath(script.name),4, bamgineer_mem,
-                    sample_id, bamhelp.name)
-                task_list.append(process)
+            script = open('{0}re-pair_{1}_{2}.sh'.format(script_path, chr, "gain"), 'w')
+            script.write('#!/bin/bash\n\n')
+            script.write('module load samtools \n')
+            script.write('module load sambamba \n')
+            script.write('python {path}/re-pair.py {inbam} \n'.format(inbam=inp, path=current_path ))        
+            script.close()
+            process = pipelineHelpers.RunTask( 
+                os.path.abspath(script.name),4, bamgineer_mem,
+                sample_id, bamhelp.name)
+            task_list.append(process)
             
         pipelineHelpers.CheckTaskStatus(
                         task_list, output_sentinel, log, log_msg)
@@ -277,34 +279,39 @@ def mutate_gain(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
     if pipelineHelpers.CheckSentinel(prev_sentinel, log, log_msg):
         pipelineHelpers.Logging('INFO', log, log_msg + 'Starting')
         python = sys.executable
-        sambamba = sambamba_path
+
         current_path = params.GetProgramPath()
         script_path = pipelineHelpers.GetScriptPath(
             sample_id, bamhelp.name)
         bamgineer_mem = bamhelp.GetBamgineerMem('med')
+        sentinel_path, results_path,haplotype_path,cancer_dir_path,tmpbams_path,finalbams_path = taskHelpers.GetProjectNamePathRunID()
+        
         for inp in inputs[0]:
-            chrevent=os.path.basename(inp).strip().split("_")[0]
-            chr = re.split('(\d+)',chrevent)[1]
            
-            sentinel_path, results_path,haplotype_path,cancer_dir_path,tmpbams_path,finalbams_path = taskHelpers.GetProjectNamePathRunID()
-            bedfn= "/".join([haplotype_path, 'gain_het_snp_chr' + chr + '.bed'])
+            chr= os.path.basename(inp).strip().split(".")[0]
+           
+            
+            bedfn= "/".join([haplotype_path, 'gain_het_snp_' + chr + '.bed'])
             diffn =   "/".join([tmpbams_path,"diff.bam"])
             nonhet= "/".join([tmpbams_path, 'diff_only1_' +  os.path.basename(inp)])
-            hetfn=sub('.sorted.bam$',".mutated_het.bam", inp)
-            hetfnsorted = sub('.sorted.bam$',".mutated_het.sorted.bam", inp)
-            mergedsortfn = sub('.sorted.bam$',".mutated_merged.sorted.bam", inp)
-            mergedrenamedfn = sub('.sorted.bam$',".mutated_merged_renamed.sorted.bam", inp)
+            hetfn=sub('.sorted.bam$',".mutated.het.bam", inp)
+            hetfnsorted = sub('.sorted.bam$',".mutated.het.sorted.bam", inp)
+            mergedsortfn = sub('.sorted.bam$',".mutated.merged.sorted.bam", inp)
+            mergedrenamedfn = sub('.sorted.bam$',".mutated.merged.renamed.sorted.bam", inp)
             
-            script = open('{0}mutate_{1}_{2}.sh'.format(script_path, 'chr'+str(chr), "gain"), 'w')
+            script = open('{0}mutate_{1}_{2}.sh'.format(script_path, chr, "gain"), 'w')
             script.write('#!/bin/bash\n')
             script.write('#')
-            script.write('#$ -cwd')
+            script.write('#$ -cwd \n')
+            script.write('module load samtools \n')
+            script.write('module load sambamba \n')
+            script.write('module load bamUtil \n')  
+                
             script.write('sort -u {bf} -o {bf}\n\n'.format(bf=bedfn))
             script.write('python {path}/mutate.py {repairedbam} {bf} {happath}\n\n'.format(repairedbam=inp, bf=bedfn ,path=current_path , happath=haplotype_path))        
-            script.write('{samba} sort {het} -o {hetsort}\n\n'.format(samba= sambamba_path,het=hetfn, hetsort=hetfnsorted))
-            
-            script.write('{bamdiff} diff --in1 {repairedbam} --in2 {hetsort} --out {dif}\n\n'.format(bamdiff= bamutil_path, repairedbam=inp, hetsort=hetfnsorted ,dif=diffn,path=current_path ))  
-            script.write('{samba} merge {merged} {hetonly} {nonhetonly}\n\n'.format(samba= sambamba_path,merged=mergedsortfn,hetonly=hetfnsorted, nonhetonly= nonhet))
+            script.write('sambamba sort {het} -o {hetsort}\n\n'.format(het=hetfn, hetsort=hetfnsorted))
+            script.write('bam diff --in1 {repairedbam} --in2 {hetsort} --out {dif}\n\n'.format(repairedbam=inp, hetsort=hetfnsorted ,dif=diffn ))  
+            script.write('sambamba merge {merged} {hetonly} {nonhetonly}\n\n'.format(merged=mergedsortfn,hetonly=hetfnsorted, nonhetonly= nonhet))
             script.write('rm {het} {nonhetonly}  \n\n'.format(het=hetfn,nonhetonly= nonhet))
             script.write('python {path}/rename-reads.py {inp2} {outp}\n\n'.format(inp2= mergedsortfn, outp=mergedrenamedfn, path=current_path))
             
@@ -316,7 +323,7 @@ def mutate_gain(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
                 
             pipelineHelpers.CheckTaskStatus(
                             task_list, output_sentinel, log, log_msg)
-    pipelineHelpers.Logging('INFO', log, log_msg + 'Finished Re-pairing')
+    pipelineHelpers.Logging('INFO', log, log_msg + 'Finished Mutating')
         
 
 @follows(mutate_gain)
@@ -334,30 +341,27 @@ def subsample_gain(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
         bamgineer_mem = bamhelp.GetBamgineerMem('med')
         
         for inp in inputs[0]:
-            print()
-        
-
-@follows(find_roi_bam)
-@files(bamgineerTasks.mutate_gain_task_list)
-def mutate_loss():
-    """mutating reads according to haplotype at germline SNP locations"""
-    task_list = []
-    log_msg = ' [implement_cnv] ' + '[' + sample_id + '] '
-    pipelineHelpers.Logging('INFO', log, log_msg + 'Starting')
-    if pipelineHelpers.CheckSentinel(prev_sentinel, log, log_msg):
-        print()
-        
-
-
-def init_file_names(chr, event,tmpbams_path, haplotypedir):
+            chrevent=os.path.basename(inp).strip().split("_")[0]
+            chr = re.split('(\d+)',chrevent)[1]
+            original_bam = sub('.re.paired.mutatated.merged.renamed.sorted.bam', '.sorted.bam', inp)
+            sentinel_path, results_path,haplotype_path,cancer_dir_path,tmpbams_path,finalbams_path = taskHelpers.GetProjectNamePathRunID()
+            GAIN_FINAL = "/".join([finalbams_path,  'CHR'+str(chr).upper() +'_GAIN.bam'])
     
-    flist=[]
-    results_path = params.GetConfigReader().get('RESULTS', 'results_path')
-    split_path = "/".join([results_path, "splitbams"])
-    roibam = "/".join([tmpbams_path ,chr + event +"_roi.bam"])
-    sortbyname =  "/".join([split_path,  chr + '.byname.bam'])
-    sortbyCoord = "/".join([split_path,  chr + '.bam'])
-    hetsnp   = "/".join([haplotypedir, event+'_het_snp_' + chr + '.bed'])
-    flist.extend([roibam,sortbyname,sortbyCoord,hetsnp])
-    return flist
+            script = open('{0}sample_{1}_{2}.sh'.format(script_path, 'chr'+str(chr), "gain"), 'w')
+            script.write('#!/bin/bash\n')
+            script.write('#\n')
+            script.write('#$ -cwd \n')
+            script.write('module load samtools \n')
+            script.write('python {path}/subsample_gain.py {inbam} {origroi} {fg} \n'.format(path=current_path,inbam=inp, origroi=original_bam , fg=GAIN_FINAL)) 
+            
+            script.close()
+            process = pipelineHelpers.RunTask( 
+                os.path.abspath(script.name),4, bamgineer_mem,
+                sample_id, bamhelp.name)
+            task_list.append(process)
+                
+            pipelineHelpers.CheckTaskStatus(
+                            task_list, output_sentinel, log, log_msg)
+    pipelineHelpers.Logging('INFO', log, log_msg+ 'Finished Sampling ')
+            
 

@@ -131,19 +131,13 @@ def runCommand(cmd):
 
 
 def RunTask(command, num_cpu, mem_usage, sample_id, software):
-    """assignes a task to the cluster"""
-
-
-    repls = ('depthcov', 'splitbam'), ('merge_', 'depthcov')
-    prevtask = reduce(lambda a, kv: a.replace(*kv), repls, command)
-        
+    """assignes a task to the cluster"""     
     results_path = configReader.get('RESULTS', 'results_path')    
     cancer_type = params.GetCancerType() 
     cancer_dir_path = "/".join([results_path, cancer_type])
     
-    time.sleep(random.uniform(params.num_samples, params.num_samples + 10))
-    log_path = cancer_dir_path + '/' + params.GetProjectName() + '_' + rid.GetRunID(
-    )  +  '/logs/' 
+    time.sleep(random.uniform(params.num_samples, params.num_samples + 20))
+    log_path = cancer_dir_path + '/' + params.GetProjectName() + '_' + rid.GetRunID()  +  '/logs/' 
     try:
         os.makedirs(log_path)
     except:
@@ -157,18 +151,15 @@ def RunTask(command, num_cpu, mem_usage, sample_id, software):
     max_jobs = int(configReader.get('CLUSTER', 'max_jobs'))
     current = 0
 
-    # Grabs the current number of jobs assigned
     jobcheck = subprocess.Popen('qstat -u {0} | wc -l'.format(
         getpass.getuser()), stdout=subprocess.PIPE, shell=True)
     for line in jobcheck.stdout:
         current = int(re.sub(r'[\r\n]', '', line)) - 2
 
-    # Checks if current number of jobs exceeds the max, waits if it is
     while current >= max_jobs:
-        time.sleep(20)
+        time.sleep(10)
         jobcheck2 = subprocess.Popen('qstat -u {0} | wc -l'.format(
             getpass.getuser()), stdout=subprocess.PIPE, shell=True)
-        print(' ==== '+str(jobcheck2))
         for line in jobcheck2.stdout:
             current = int(re.sub(r'[\r\n]', '', line)) - 2
     
@@ -196,32 +187,6 @@ def GetScriptPath(sample_id, software):
     except:
         pass
     return script_path
-
-
-#def GetLogPath(sample_id, software):
-#    """returns path to store logs"""
-#    results_path = configReader.get('RESULTS', 'results_path')
-#    cancer_type = params.GetCancerType() 
-#    cancer_dir_path = "/".join([results_path, cancer_type])
-#    
-#    log_path = cancer_dir_path+ '/' + params.GetProjectName() + '_' + rid.GetRunID(
-#    ) + '/logs/'
-#
-#    try:
-#        os.makedirs(log_path)
-#    except:
-#        pass
-#    return log_path
-
-
-def ConvertChromosome(chromosome):
-    """Return string representation of chromosome"""
-    if chromosome == 23:
-        return 'X'
-    elif chromosome == 24:
-        return 'Y'
-    else:
-        return str(chromosome)
 
 
 def CheckSentinel(sentinel_list, log, log_msg):

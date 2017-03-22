@@ -166,7 +166,6 @@ def GetSoftwarePath():
     bamutil_path= configReader.get('SOFTWARE', 'bamutil_path')
     return (java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path,bamutil_path)
  
-#
 #def GetProjectPaths():
 #    results_path=configReader.get('RESULTS', 'results_path')
 #    cancer_type = GetCancerType() 

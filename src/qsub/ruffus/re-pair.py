@@ -6,11 +6,9 @@ import os
 from itertools import izip
 
 bamsortfn = sys.argv[1]
-samtools_path = sys.argv[2]
-sambamba_path = sys.argv[3]
 
-bamrepairedfn = sub('.sorted.bam$',  ".re_paired.bam", bamsortfn)
-bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
+bamrepairedfn = sub('.sorted.bam$',  ".re.paired.bam", bamsortfn)
+bamrepairedsortfn = sub('.sorted.bam$', ".re.paired.sorted.bam", bamsortfn)
 
 if(os.path.isfile(bamsortfn)):
 
@@ -31,10 +29,10 @@ if(os.path.isfile(bamsortfn)):
         read1_strand2sortfn =  sub('.bam$', '.read1_neg.bam', bamsortfn)
         read2_strand1sortfn =  sub('.bam$', '.read2_pos.bam', bamsortfn)
         read2_strand2sortfn =  sub('.bam$', '.read2_neg.bam', bamsortfn)
-        command1 = " ".join([samtools_path ,"view -u -h -f 0x0063", bamsortfn, ">", read1_strand1sortfn])
-        command2 = " ".join([samtools_path ,"view -u -h -f 0x0053", bamsortfn, ">", read1_strand2sortfn])
-        command3 = " ".join([samtools_path ,"view -u -h -f 0x0093", bamsortfn, ">", read2_strand1sortfn])
-        command4 = " ".join([samtools_path ,"view -u -h -f 0x00A3", bamsortfn, ">", read2_strand2sortfn])
+        command1 = " ".join(["samtools view -u -h -f 0x0063", bamsortfn, ">", read1_strand1sortfn])
+        command2 = " ".join(["samtools view -u -h -f 0x0053", bamsortfn, ">", read1_strand2sortfn])
+        command3 = " ".join(["samtools view -u -h -f 0x0093", bamsortfn, ">", read2_strand1sortfn])
+        command4 = " ".join(["samtools view -u -h -f 0x00A3", bamsortfn, ">", read2_strand2sortfn])
         subprocess.check_output(command1, shell = True)
         subprocess.check_output(command2, shell = True)
         subprocess.check_output(command3, shell = True)
@@ -121,6 +119,6 @@ if(os.path.isfile(bamsortfn)):
     outbam.close() 
       
       
-    command = " ".join([sambamba_path, "sort", bamrepairedfn, "-o", bamrepairedsortfn])  
+    command = " ".join(["sambamba sort", bamrepairedfn, "-o", bamrepairedsortfn])  
     subprocess.check_output(command, shell = True)
     os.remove(bamrepairedfn) 

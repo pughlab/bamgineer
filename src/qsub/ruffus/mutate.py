@@ -9,7 +9,7 @@ bamrepairedsortfn = sys.argv[1]
 bedfn = sys.argv[2]
 haplotype_path= sys.argv[3]
 
-outhetfn = sub('.sorted.bam$',".mutated_het.bam", bamrepairedsortfn)
+outhetfn = sub('.sorted.bam$',".mutated.het.bam", bamrepairedsortfn)
 
 if(os.path.isfile(bamrepairedsortfn) and os.path.isfile(bedfn) ):
     samfile = pysam.Samfile(bamrepairedsortfn, "rb" )

@@ -18,7 +18,9 @@ def GetProjectNamePathRunID():
    haplotype_path = "/".join([cancer_dir_path, "haplotypedir"])
    tmpbams_path = "/".join([cancer_dir_path, "tmpbams"])
    finalbams_path = "/".join([cancer_dir_path, "finalbams"])
-   sentinel_path = CheckPath( cancer_dir_path+'/'+ 'sentinel_' + rid.GetRunID() +'/')
+   sentinel_path = CheckPath( cancer_dir_path+'/'+ params.GetProjectName() + "_" + rid.GetRunID() +'/sentinels/')
+
+
    return sentinel_path, results_path,haplotype_path,cancer_dir_path,tmpbams_path,finalbams_path
 
 
@@ -84,10 +86,7 @@ def CreateFileList(file_type, num_files, path, flag= None):
             file_list.append('')
          job_list.append(file_list)
          
-      elif(flag=="extractROI"):
-         gain_event = params.GetGainCNV()
-         loss_event = params.GetLossCNV()
-         
+      elif(flag=="extractROI"):    
          for chr, event   in itertools.product(chr_list, event_list):
             exonsinroibed = "/".join([haplotype_path,   event + "_exons_in_roi_"+ 'chr'+str(chr) +'.bed'])
             if(os.path.isfile(exonsinroibed)):
@@ -96,42 +95,13 @@ def CreateFileList(file_type, num_files, path, flag= None):
                job_list.append(file_list)
                
       elif(flag=="gain"):
-         gain_event = params.GetGainCNV()
-         
+        
          for chr  in  chr_list:
-      
             splittmpbams = "/".join([path])
-            if(os.path.isfile(splittmpbams+ '/'+ 'chr'+ str(chr)+ 'gain_roi.sorted.bam')):
+            if(os.path.isfile(splittmpbams+ '/'+ 'chr'+ str(chr)+ '.gain.roi.sorted.bam')):
                file_list.append(splittmpbams + '/'+ 'chr'+ file_type.format(chr,"gain"))
                job_list.append(file_list)
-      
-      #elif(flag=="FINAL"):
-      #   gain_event = params.GetGainCNV()
-      #   loss_event = params.GetLossCNV()
-      #   
-      #   for chr, event, hap   in itertools.product(chr_list, event_list, haplotype_list):
-      #      
-      #      hapev = eval(hap +'_' + event +'_event')
-      #      
-      #      if(not hapev is None):
-      #         (haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path) = handle.GetProjectPaths(results_path)
-      #
-      #         if(event == "gain"):
-      #            
-      #            finalbams_path = "/".join([finalbams, hap])
-      #            nh= finalbams_path + '/'+ 'CHR'+ file_type.format(str(chr).upper(),event.upper(),"NH")
-      #            h= finalbams_path + '/'+ 'CHR'+ file_type.format(str(chr).upper(),event.upper(),"H")
-      #            if(os.path.isfile(nh)):
-      #               file_list.append(nh)
-      #            if(os.path.isfile(h)):
-      #               file_list.append(h)
-      #            job_list.append(file_list)
-      #         elif(event == "loss"):
-      #            finalbams_path = "/".join([finalbams, hap])
-      #            lf = finalbams_path + '/'+ 'CHR'+ file_type.format(str(chr).upper(),event.upper(),"FINAL")
-      #            if(os.path.isfile(lf)):
-      #               file_list.append(lf)
-      #            job_list.append(file_list)                
+           
     return job_list
 
 
