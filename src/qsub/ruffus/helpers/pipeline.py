@@ -343,7 +343,7 @@ def subsample_gain(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
         for inp in inputs[0]:
             chrevent=os.path.basename(inp).strip().split("_")[0]
             chr = re.split('(\d+)',chrevent)[1]
-            original_bam = sub('.re.paired.mutatated.merged.renamed.sorted.bam', '.sorted.bam', inp)
+            original_bam = sub('.re.paired.mutated.merged.renamed.sorted.bam', '.sorted.bam', inp) 
             sentinel_path, results_path,haplotype_path,cancer_dir_path,tmpbams_path,finalbams_path = taskHelpers.GetProjectNamePathRunID()
             GAIN_FINAL = "/".join([finalbams_path,  'CHR'+str(chr).upper() +'_GAIN.bam'])
     

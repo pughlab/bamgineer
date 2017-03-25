@@ -112,7 +112,7 @@ if __name__ == '__main__':
     if( args.phase):    
         #pipeline_run([pipeline.CompletePipeline], multiprocess=num_procs, verbose=1)
         if(not args.splitbams):
-            pipeline_run([pipeline.find_roi_bam], multiprocess=num_procs, verbose=1)
+            pipeline_run([pipeline.subsample_gain], multiprocess=num_procs, verbose=1)
         else:
             
             params.SetSplitBamsPath(args.splitbams)  
