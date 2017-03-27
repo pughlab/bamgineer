@@ -181,7 +181,7 @@ def call_subprocess(cmd):
         logger.exception("Exception in call_subprocess " , sys.exc_info()[0])
         return
     
-    
+#readname function from: https://github.com/adamewing/bamsurgeon       
 def renamereads(inbamfn, outbamfn):
     
     inbam = pysam.Samfile(inbamfn, 'rb')
