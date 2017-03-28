@@ -7,8 +7,8 @@ from itertools import izip
 
 bamsortfn = sys.argv[1]
 
-bamrepairedfn = sub('.sorted.bam$',  ".re.paired.bam", bamsortfn)
-bamrepairedsortfn = sub('.sorted.bam$', ".re.paired.sorted.bam", bamsortfn)
+bamrepairedfn = sub('.sorted.bam$',  ".repaired.bam", bamsortfn)
+bamrepairedsortfn = sub('.sorted.bam$', ".repaired.sorted.bam", bamsortfn)
 
 if(os.path.isfile(bamsortfn)):
 

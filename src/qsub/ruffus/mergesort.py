@@ -21,5 +21,5 @@ for root,dirnames, filenames in os.walk(finalbamdir):
             matches.append(path)
             command = " ".join([path, command])
         
-command = " ".join(["/mnt/work1/software/sambamba/0.5.4/sambamba merge", mergedBamfn, command,"-t 4" ])
+command = " ".join(["sambamba merge", mergedBamfn, command,"-t 4" ])
 subprocess.check_output(command, shell = True)       

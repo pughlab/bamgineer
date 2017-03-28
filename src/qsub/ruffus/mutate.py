@@ -9,7 +9,11 @@ bamrepairedsortfn = sys.argv[1]
 bedfn = sys.argv[2]
 haplotype_path= sys.argv[3]
 
-outhetfn = sub('.sorted.bam$',".mutated.het.bam", bamrepairedsortfn)
+
+outhetfn=sub("gain.roi.repaired.sorted.bam$","gain.mutated.het.bam", bamrepairedsortfn)
+if(outhetfn == bamrepairedsortfn):
+    outhetfn=sub("loss.roi.sorted.bam$","loss.mutated.het.bam", bamrepairedsortfn)
+
 
 if(os.path.isfile(bamrepairedsortfn) and os.path.isfile(bedfn) ):
     samfile = pysam.Samfile(bamrepairedsortfn, "rb" )

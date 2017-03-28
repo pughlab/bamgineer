@@ -11,6 +11,16 @@ from helpers import bamgineerHelpers as bamhelp
 
 __version__ = 'Bamgineer v0.1.0'
 
+events= [['gain'],['loss']]
+@parallel(events)
+def parallel_events(evt):
+    if(evt == 'gain'):
+        pipeline_run([pipeline.subsample_gain], multiprocess=4)
+       
+    elif(evt == 'loss'):
+        pipeline_run([pipeline.subsample_loss], multiprocess=2)
+    
+    
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='adds CN spikes to reads, outputs modified reads as .bam along with mates')
@@ -110,12 +120,15 @@ if __name__ == '__main__':
     num_procs = line_count * 2
     
     if( args.phase):    
-        #pipeline_run([pipeline.CompletePipeline], multiprocess=num_procs, verbose=1)
+       
         if(not args.splitbams):
-            pipeline_run([pipeline.subsample_gain], multiprocess=num_procs, verbose=1)
+            pipeline_run([pipeline.find_roi_bam], multiprocess=num_procs, verbose=1)
+            pipeline_run([pipeline.complete_pipeline])
+            
         else:
             
-            params.SetSplitBamsPath(args.splitbams)  
+            params.SetSplitBamsPath(args.splitbams)
+            ##to do
     else:
         print('user must provide phase VCFs') #user provides phased VCF
     t1 = time.time()

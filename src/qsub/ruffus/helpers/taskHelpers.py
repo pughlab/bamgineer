@@ -101,7 +101,28 @@ def CreateFileList(file_type, num_files, path, flag= None):
             if(os.path.isfile(splittmpbams+ '/'+ 'chr'+ str(chr)+ '.gain.roi.sorted.bam')):
                file_list.append(splittmpbams + '/'+ 'chr'+ file_type.format(chr,"gain"))
                job_list.append(file_list)
-           
+      
+      elif(flag=="loss"):
+        
+         for chr  in  chr_list:
+            splittmpbams = "/".join([path])
+            if(os.path.isfile(splittmpbams+ '/'+ 'chr'+ str(chr)+ '.loss.roi.sorted.bam')):
+               file_list.append(splittmpbams + '/'+ 'chr'+ file_type.format(chr,"loss"))
+               job_list.append(file_list)
+               
+               
+      elif(flag=="FINAL"):
+
+            for chr,event in itertools.product(chr_list, event_list):
+                chrbam="/".join([finalbams_path,   'CHR'+ str(chr) + '_' +event.upper()+'.bam'])
+                sortbyCoord =  "/".join( [params.GetSplitBamsPath(),'chr'+str(chr)+'.bam' ])
+                if(os.path.isfile(chrbam)):
+                  file_list.append(chrbam)
+                  job_list.append(file_list)
+                elif(event == 'loss' and sortbyCoord):
+                  
+                   os.symlink(sortbyCoord, chrbam)
+                  
     return job_list
 
 
