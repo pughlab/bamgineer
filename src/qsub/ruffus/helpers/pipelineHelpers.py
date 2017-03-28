@@ -12,20 +12,25 @@ from helpers import parameters as params
 import helpers
 from re import sub
 from ruffus import *
-# global variables ###
-configReader = params.GetConfigReader()
 
+configReader = params.GetConfigReader()
 
 def GetLogFile(logger_name):
     """returns the log file"""
+    
+    results_path = configReader.get('RESULTS', 'results_path')    
+    cancer_type = params.GetCancerType() 
+    cancer_dir_path = "/".join([results_path, cancer_type])
+    
     log = []
-    log_file_path = params.GetProjectPath() + '/' + \
+    
+    
+    log_file_path = cancer_dir_path + '/' + \
         params.GetProjectName(
         ) + '_' + rid.GetRunID() + '/batch_logs/'
     log_file = log_file_path + 'pipeline_batch_log_' + \
         params.GetProjectName() + '_' + rid.GetRunID() + '.log'
 
-    #log_path = os.path.dirname(log_file)
     try:
         os.makedirs(log_file_path)
     except:
@@ -126,16 +131,13 @@ def runCommand(cmd):
 
 
 def RunTask(command, num_cpu, mem_usage, sample_id, software):
-    """assignes a task to the cluster"""
-
-    #SOROUSH
-    repls = ('depthcov', 'splitbam'), ('merge_', 'depthcov')
-    prevtask = reduce(lambda a, kv: a.replace(*kv), repls, command)
-        
-        
-    time.sleep(random.uniform(params.num_samples, params.num_samples + 10))
-    log_path = params.GetProjectPath() + '/' + params.GetProjectName() + '_' + rid.GetRunID(
-    ) + '/' + software + '/intermediate_' + rid.GetRunID() + '/' + sample_id +  '/logs/' 
+    """assignes a task to the cluster"""     
+    results_path = configReader.get('RESULTS', 'results_path')    
+    cancer_type = params.GetCancerType() 
+    cancer_dir_path = "/".join([results_path, cancer_type])
+    
+    time.sleep(random.uniform(params.num_samples, params.num_samples + 20))
+    log_path = cancer_dir_path + '/' + params.GetProjectName() + '_' + rid.GetRunID()  +  '/logs/' 
     try:
         os.makedirs(log_path)
     except:
@@ -145,24 +147,19 @@ def RunTask(command, num_cpu, mem_usage, sample_id, software):
     process = []
     subprocess.call('chmod +x ' + command, shell=True)
     cluster_cmd = cluster_cmd + ' ' + command
-    
-    #hold_cmd = None #SOROUSH
-    # Grabs max number of jobs allowed
+
     max_jobs = int(configReader.get('CLUSTER', 'max_jobs'))
     current = 0
 
-    # Grabs the current number of jobs assigned
     jobcheck = subprocess.Popen('qstat -u {0} | wc -l'.format(
         getpass.getuser()), stdout=subprocess.PIPE, shell=True)
     for line in jobcheck.stdout:
         current = int(re.sub(r'[\r\n]', '', line)) - 2
 
-    # Checks if current number of jobs exceeds the max, waits if it is
     while current >= max_jobs:
-        time.sleep(30)
+        time.sleep(10)
         jobcheck2 = subprocess.Popen('qstat -u {0} | wc -l'.format(
             getpass.getuser()), stdout=subprocess.PIPE, shell=True)
-        print(' ==== '+str(jobcheck2))
         for line in jobcheck2.stdout:
             current = int(re.sub(r'[\r\n]', '', line)) - 2
     
@@ -178,36 +175,18 @@ def RunTask(command, num_cpu, mem_usage, sample_id, software):
 
 def GetScriptPath(sample_id, software):
     """returns path to store scripts"""
-    script_path = params.GetProjectPath() + '/' + params.GetProjectName() + '_' + rid.GetRunID(
-    ) + '/' + software + '/intermediate_' + rid.GetRunID() + '/' + sample_id + '/scripts/'
+    
+    results_path = configReader.get('RESULTS', 'results_path')
+    cancer_type = params.GetCancerType() 
+    cancer_dir_path = "/".join([results_path, cancer_type])
+    script_path = cancer_dir_path + '/' + params.GetProjectName() + '_' + rid.GetRunID(
+    )  + '/scripts/'
 
     try:
         os.makedirs(script_path)
     except:
         pass
     return script_path
-
-
-def GetLogPath(sample_id, software):
-    """returns path to store logs"""
-    log_path = params.GetProjectPath() + '/' + params.GetProjectName() + '_' + rid.GetRunID(
-    ) + '/' + software + '/intermediate_' + rid.GetRunID() + '/' + sample_id + '/logs/'
-
-    try:
-        os.makedirs(log_path)
-    except:
-        pass
-    return log_path
-
-
-def ConvertChromosome(chromosome):
-    """Return string representation of chromosome"""
-    if chromosome == 23:
-        return 'X'
-    elif chromosome == 24:
-        return 'Y'
-    else:
-        return str(chromosome)
 
 
 def CheckSentinel(sentinel_list, log, log_msg):
@@ -254,5 +233,5 @@ def CheckTaskStatus(taskList, output_sentinel, log, log_msg):
     else:
         Logging('INFO', log, log_msg + 'Completed Sucessfully!')
         subprocess.call('touch ' + output_sentinel, shell=True)
-    return not failed #SOROUSH
+    return not failed 
 

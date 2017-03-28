@@ -102,11 +102,11 @@ def mergeSegments(cnvsegfile,numgains, numlosses):
         lossoverlapfn_loss_minus_gain = cnvsegfn+'_'+str(sampe_cnt) +'.gistic_loss_minus_gain.bed'
               
         
-        cmd = """awk '{if (($1!="Sample")&&($2 != "23") && ($4 -$3 > 2000000) && ($6 < -0.01)){print $2"\t"$3"\t"$4"\t"$6}}' """ + sampled_seg_path + ' > ' + lossfn 
-        cmd2 = """awk '{if (($1 != "Sample")&&($2 != "23") && ($4 -$3 > 2000000) &&  ($6 > 0.01)){print $2"\t"$3"\t"$4"\t"$6}}' """ + sampled_seg_path + ' > ' + gainfn 
+        cmd = """awk '{if (($1!="Sample")&&($2 != "23") && ($4 -$3 > 1000000) && ($6 < -0.01)){print $2"\t"$3"\t"$4"\t"$6}}' """ + sampled_seg_path + ' > ' + lossfn 
+        cmd2 = """awk '{if (($1 != "Sample")&&($2 != "23") && ($4 -$3 > 1000000) &&  ($6 > 0.01)){print $2"\t"$3"\t"$4"\t"$6}}' """ + sampled_seg_path + ' > ' + gainfn 
         
-        cmd3= "bedtools merge -i " + lossfn + ' -d 3000000 > ' + lossfn+'.merged.bed' 
-        cmd4= "bedtools merge -i " + gainfn +' -d 3000000 > '  + gainfn+'.merged.bed' 
+        cmd3= "bedtools merge -i " + lossfn + ' -d 1000000 > ' + lossfn+'.merged.bed' 
+        cmd4= "bedtools merge -i " + gainfn +' -d 1000000 > '  + gainfn+'.merged.bed' 
         cmdsx = """awk '{if (($2 != "23") &&  ($6 < -0.01 || $6 > 0.01)){print $1"\t"$2"\t"$3"\t"$4"\t"$6}}' """ + sampled_seg_path + ' > ' + cnvsegfn+'.filtered.seg' 
         
         runCommand(cmd)

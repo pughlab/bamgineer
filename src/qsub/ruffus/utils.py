@@ -7,7 +7,6 @@ import subprocess
 from uuid import uuid4
 from re import sub
 from itertools import izip
-
 import gzip
 import shutil
 import traceback
@@ -23,18 +22,18 @@ import fnmatch
 from threading import Thread
 from helpers import parameters as params
 
-
 def phaseVCF(vcfpath, phasevcfpath):
+    beagle_path = params.GetSoftwarePath()[1]
+    java_path = params.GetSoftwarePath()[0]
+    
     print (" ___ phasing vcf file ___ "  )    
     if(not vcfpath.endswith('.vcf.gz')):
         gzipFile(vcfpath)
         vcfpath = vcfpath+'.gz'
-    
-    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     path, vcffn = os.path.split(vcfpath)
     path2, vcffn2 = os.path.split(phasevcfpath)
     phasevcffn = sub('.vcf.gz$', '_phased', vcffn)
-    command = " ".join([java_path,"-Xmx4g -jar", beagle_path, "gt="+vcfpath, "out="+"/".join([path2, phasevcffn]), "2> beagle.log"])
+    command = " ".join([ java_path, "-Xmx4g -jar", beagle_path, "gt="+vcfpath, "out="+"/".join([path2, phasevcffn]), "2> beagle.log"])
     
     runCommand(command)
     return phasevcffn
@@ -52,22 +51,19 @@ def gzipFile(filename):
         shutil.copyfileobj(f_in, f_out)
 
 def thinVCF(invcf, outvcf):
-   java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
+   vcftools_path = params.GetSoftwarePath()[4]
    command = " ".join([vcftools_path,"--vcf", invcf, "--thin 50 --out", outvcf,  "--recode"])
    runCommand(command)
 
 def extractPairedReadfromROI(inbamfn, bedfn, outbamfn, flag = "either"):
-    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     command = " ".join([bedtools_path,"pairtobed -abam", inbamfn,"-b",bedfn, "-type", flag,">", outbamfn, "2> bedtool.log"])
     runCommand(command)
     
 def extractBAMfromROI_All(inbamfn, bedfn, outbamfn):
-    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     command = " ".join([samtool_path, "view -b -L", bedfn, inbamfn, ">",outbamfn])
     runCommand(command)
 
 def dedupBam(inbamfn, outbamfn):
-    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     command = " ".join([samtool_path, "rmdup", inbamfn, outbamfn])
     runCommand(command)
 
@@ -155,7 +151,7 @@ def subtractBeds(bedfn1, bedfn2, diffn):
     f.close()
 
 def bamDiff(bamfn1, bamfn2, path):
-    bamutil_path = params.GetConfigReader().get('SOFTWARE', 'bamutil_path')
+    #bamutil_path = params.GetConfigReader().get('SOFTWARE', 'bamutil_path')
     command = " ".join([bamutil_path,"diff", "--in1", bamfn1, "--in2", bamfn2, "--out" ,"/".join([path,"diff.bam"])]) 
     runCommand(command ) 
 
@@ -185,9 +181,7 @@ def call_subprocess(cmd):
         logger.exception("Exception in call_subprocess " , sys.exc_info()[0])
         return
     
- 
-
-#readname function from: https://github.com/adamewing/bamsurgeon    
+#readname function from: https://github.com/adamewing/bamsurgeon       
 def renamereads(inbamfn, outbamfn):
     
     inbam = pysam.Samfile(inbamfn, 'rb')
@@ -229,8 +223,7 @@ def renamereads(inbamfn, outbamfn):
 
 
 def subsample(bamfn1, bamfn2, samplingrate = 0.5):
-    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
-    command = " ".join([samtools_path,"view -s", samplingrate ,"-b", bamfn1, ">", bamfn2])
+    command = " ".join(["samtools view -s", samplingrate ,"-b", bamfn1, ">", bamfn2])
     runCommand(command)
   
 def sortByName(inbamfn, outbamfn):
@@ -239,20 +232,16 @@ def sortByName(inbamfn, outbamfn):
     runCommand(command)
     
 def sortIndexBam(inbamfn, outbamfn):
-    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     command = " ".join([sambamba_path, "sort", inbamfn, "-o", outbamfn])
     command2 = " ".join([sambamba_path,"index", outbamfn])
-    
     runCommand(command)
     runCommand(command2)
 
 def sortBam(inbamfn, outbamfn):
-    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     command = " ".join([sambamba_path, "sort", inbamfn, "-o", outbamfn])
     runCommand(command)
   
 def getProperPairs(inbamfn, outbamfn):
-    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     command = " ".join([samtools_path,"view -u -h -f 0x0003", inbamfn ,">", outbamfn])
     runCommand(command)  
     
@@ -264,7 +253,6 @@ def splitBed(bedfn, event):
     runCommand(command)
  
 def generatePurities(purity):
-    
     try:
          if not terminating.is_set():
             purityDir = createDirectory("/".join([finalbams_hap, str(purity)]))
@@ -286,12 +274,10 @@ def generatePurities(purity):
     return          
 
 def merge_bams(bamfn1, bamfn2, mergefn):
-    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     command = " ".join([sambamba_path, "merge", mergefn, bamfn1, bamfn2 ])
     runCommand(command)
 
-def mergeSortBamFiles(mergedBamfn, finalbamdir):
-    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
+def mergeSortBamFiles(mergedBamfn, finalbamdir): 
     command = ""
     os.chdir(finalbamdir)
     matches = []
@@ -317,7 +303,6 @@ def getMeanSTD(inbam):
 
 
 def splitPairs(inbamfn):
-    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     pair1fn =  sub('.bam$', '_read1.bam', inbamfn)
     pair2fn =  sub('.bam$', '_read2.bam', inbamfn)
     command1 = " ".join([samtools_path, "view -u -h -f 0x0043", inbamfn, ">", pair1fn])
@@ -326,7 +311,6 @@ def splitPairs(inbamfn):
     runCommand(command2)
 
 def getStrands(inbamfn):
-    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     outbamfn_forward =  sub('.bam$', '_forward.bam', inbamfn)
     outbamfn_reverse =  sub('.bam$', '_reverse.bam', inbamfn)
     command1 = " ".join([samtools_path,"view -F 0x10", inbamfn, ">",outbamfn_forward])
@@ -336,8 +320,7 @@ def getStrands(inbamfn):
     
     
 def countReads(inbamfn):
-    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
-    cmd = " ".join([samtools_path, "view", inbamfn, "|wc -l"])
+    cmd = " ".join(["samtools view", inbamfn, "|wc -l"])
     out,err= subprocess.Popen(cmd, 
                             stdout=subprocess.PIPE, 
                             stderr=subprocess.PIPE, 
@@ -345,7 +328,6 @@ def countReads(inbamfn):
     return "".join(out.split())
  
 def splitPairAndStrands(inbamfn):
-    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     read1_strand1sortfn =  sub('.bam$', '.read1_pos.bam', inbamfn)
     read1_strand2sortfn =  sub('.bam$', '.read1_neg.bam', inbamfn)
     read2_strand1sortfn =  sub('.bam$', '.read2_pos.bam', inbamfn)
@@ -361,7 +343,7 @@ def splitPairAndStrands(inbamfn):
    
 def extract_proper_paired_reads(inbamfn):
     properfn = sub('.bam$', '_proper.bam', inbamfn)
-    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
+    
     command = " ".join([samtools_path,"view -f 0x03 -bSq 30", inbamfn, ">", properfn])
     runCommand(command)
     os.remove(inbamfn)
@@ -383,6 +365,20 @@ def createHaplotypes(hetsnp_orig_bed, hetsnp_hap1_bed ):
         outbedh.close()
     except:
         print('exception')
+
+def removeEmptyBams(bamdir):
+   for file in os.listdir(bamdir):  
+     if file.endswith(".bam"):
+        command = " ".join(["samtools view", "/".join([bamdir, file]), "| less | head -1 | wc -l" ])
+        nline =  nline= subprocess.check_output(command, shell = True)  
+        if (os.path.isfile( "/".join([bamdir, file])) and (int(nline) == 0)):
+                os.remove("/".join([bamdir, file]))
+                print(' removing ' + "/".join([bamdir, file]))
+
+def createDirectory(path):
+    if not os.path.isdir(path):
+        os.makedirs(path)
+
    
 #chr 21 and 22 for test, change it to 1
 def create_chr_event_list():

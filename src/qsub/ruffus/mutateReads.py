@@ -31,7 +31,7 @@ if ((int(nline) == 0)):
         print('removing '+bamfn)
 elif((int(nline) == 1)):
         
-        #logger.debug("___ mutating reads and finding reads not matching hg19 at germline SNP locations ___")
+        logger.debug("___ mutating reads and finding reads not matching hg19 at germline SNP locations ___")
         samfile = pysam.Samfile(bamfn, "rb" )
         outbam = pysam.Samfile(outfn, 'wb', template=samfile) 
         
@@ -39,15 +39,15 @@ elif((int(nline) == 1)):
         refbamfn = sub('_het_alt_roi.bam$',"_REFREADS.bam", outfn)
         altbamfn = sub('_het_alt_roi.bam$',"_ALTREADS.bam", outfn)
         
-        refbam = pysam.Samfile(refbamfn, 'wb', template=samfile) #SOROUSH
-        altbam = pysam.Samfile( altbamfn, 'wb', template=samfile) #SOROUSH
+        refbam = pysam.Samfile(refbamfn, 'wb', template=samfile) 
+        altbam = pysam.Samfile( altbamfn, 'wb', template=samfile) 
         
         sortedsamfn = sub('.bam$', '', bamfn)
         
         
         pysam.sort(bamfn, sortedsamfn)
         pysam.index(sortedsamfn+".bam")
-        #os.remove(bamfn)
+        os.remove(bamfn)
         alignmentfile = pysam.AlignmentFile(sortedsamfn+".bam", "rb" )
         
         bedfile = open(bedfn, 'r')
@@ -72,7 +72,6 @@ elif((int(nline) == 1)):
                 refbase = str(c[3])
                 altbase = str(c[4])
             else :
-                #print(len(c))
                 continue
             
             readmappings = alignmentfile.fetch(chr2, start, end)

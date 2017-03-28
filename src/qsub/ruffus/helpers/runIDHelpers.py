@@ -18,8 +18,8 @@ def IncRunID(project_name, db_dir):
     lock = lf.FileLock(database_file)
     while not lock.i_am_locking():
         try:
-            # wait up to 20 seconds
-            lock.acquire(timeout=20)
+            # wait up to 10 seconds
+            lock.acquire(timeout=5)
         except lf.LockTimeout:
             raise Exception(
                 'ERROR: Timed out waiting for file lock at ' + lock.path)
