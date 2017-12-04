@@ -16,7 +16,8 @@ original data such as local coverage, strand bias, and insert size. As input, Ba
 overlapping genomic coordinates to introduce allele-specific gains and losses. The user may explicitly provide known haplotypes or chose 
 to use the BEAGLE phasing module that is already incorporated within Bamgineer. We implemented parallelization of the Bamgineer 
 algorithm for both standalone and high performance computing cluster environments, significantly improving the scalability of the 
-algorithm.
+algorithm.Bamgineer has been extensively tested on whole exome sequencing and targeted gene panel applied to cell-free DNA sequencing 
+data.
 
 
 ## Installation
