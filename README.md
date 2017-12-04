@@ -19,7 +19,7 @@ algorithm for both standalone and high performance computing cluster environment
 algorithm.Bamgineer has been extensively tested on whole exome sequencing and targeted gene panel applied to cell-free DNA sequencing 
 data.
 
-*Quick start: [Quick start](https://github.com/pughlab/bamgineer/blob/master/docs/quick_start)* 
+*Quick start: [Quick start](https://github.com/pughlab/bamgineer/blob/master/docs/quick_start) 
 
 ## Google User Group (Q&A)
 If you have any questions with the package, please feel free to post in our Google user group 
