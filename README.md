@@ -25,10 +25,8 @@ algorithm.
 
 ***General NGS tools*** 
 
-Samtools1.2
-
-Bedtools
-
+Samtools1.2 \
+Bedtools \
 VCFtools
 
 ***Python packages***
