@@ -31,31 +31,23 @@ VCFtools
 
 ***Python packages***
 
-*pysam (version 0.8.4): [pysam](https://pypi.python.org/pypi/pysam)*
-Note: the latest version of pysam (0.9.0) is not backward compatible with Samtools1.2
-
-*pyVCF [pyvcf](https://pypi.python.org/pypi/PyVCF)*
-
+*pysam (version 0.8.4): [pysam](https://pypi.python.org/pypi/pysam)* \
+Note: the latest version of pysam (0.9.0) is not backward compatible with Samtools1.2 \
+*pyVCF [pyvcf](https://pypi.python.org/pypi/PyVCF)* \
 *pyBedTools [pybedtools](https://pypi.python.org/pypi/pybedtools)*
 
 
 ***Input parameters***
 
--inbam: input sorted and indexed normal bam file 
-
--cnv_amp: bed file for allele-specific and cancer-specific CNV amplifications (null is not specified)
-
--cnv_del: bed file for allele-specific and cancer-specific CNV deletions (null is not specified)
-
--vcf: normal heterozygous vcf file (could be from HaplotypeCaller output, remember to filter indels and homozygous loci)
-
--exons: exon bed files (SureSelect V5 + UTR)
-
--r: reference hg19 fasta file (should be indexed: .fai, .amb, .ann, .pac, .awb)
+-inbam: input sorted and indexed normal bam file \
+-cnv_amp: bed file for allele-specific and cancer-specific CNV amplifications (null is not specified) \
+-cnv_del: bed file for allele-specific and cancer-specific CNV deletions (null is not specified) \
+-vcf: normal heterozygous vcf file (could be from HaplotypeCaller output, not including indels and homozygous loci) \
+-target_region: bed file containing the target regions (exons or any user-specified region) \
+-r: reference hg19 fasta file (should be indexed: .fai, .amb, .ann, .pac, .awb) 
 
 
 ***Output***
 
--outbam: output engineered, sorted bam file 
-
+-outbam: output engineered, sorted bam file \
 -phased(optional): Binary flag to perform phasing (BEAGLE) of SNPs prior to spiking CNV's
