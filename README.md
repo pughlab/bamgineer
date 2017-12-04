@@ -19,7 +19,9 @@ Bamgineer is a tool to introduce user-defined haplotype-phased allele-specific c
 ***General NGS tools*** 
 
 Samtools1.2
+
 Bedtools
+
 VCFtools
 
 ***Python packages***
@@ -32,7 +34,7 @@ Note: the latest version of pysam (0.9.0) is not backward compatible with Samtoo
 *pyBedTools [pybedtools](https://pypi.python.org/pypi/pybedtools)*
 
 
-*** Parameters ***
+***Parameters***
 
 -inbam: input sorted and indexed normal bam file 
 
