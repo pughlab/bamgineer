@@ -1,9 +1,22 @@
 # bamgineer
 Introduces simulated allele-specific copy number variants into exome and targeted sequence data sets
 
-Prerequisites
+## Author
+Soroush Samadian
 
-*** General NGS tools ***
+
+## Maintainer
+Soroush Samadian <soroush.samadian@uhnresearch.ca>
+
+## Description
+Bamgineer is a tool to introduce user-defined haplotype-phased allele-specific copy number events into an existing Binary Alignment Mapping (BAM) file, with a focus on targeted and exome sequencing experiments. As input, this tool requires a read alignment file (BAM format), lists of non-overlapping genome coordinates for introduction of gains and losses (bed file), and an optional file defining known haplotypes (vcf format). 
+
+
+## Prerequisites
+
+
+
+## General NGS tools 
 
 Samtools1.2
 
