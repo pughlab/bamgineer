@@ -12,23 +12,19 @@ Soroush Samadian <soroush.samadian@uhnresearch.ca>
 Bamgineer is a tool to introduce user-defined haplotype-phased allele-specific copy number events into an existing Binary Alignment Mapping (BAM) file, with a focus on targeted and exome sequencing experiments. As input, this tool requires a read alignment file (BAM format), lists of non-overlapping genome coordinates for introduction of gains and losses (bed file), and an optional file defining known haplotypes (vcf format). 
 
 
-## Prerequisites
+## Installation
 
+### Prerequisites
 
-
-## General NGS tools 
+***General NGS tools*** 
 
 Samtools1.2
-
 Bedtools
-
 VCFtools
-
 
 ***Python packages***
 
 *pysam (version 0.8.4): [pysam](https://pypi.python.org/pypi/pysam)*
-
 Note: the latest version of pysam (0.9.0) is not backward compatible with Samtools1.2
 
 *pyVCF [pyvcf](https://pypi.python.org/pypi/PyVCF)*
