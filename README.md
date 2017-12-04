@@ -58,4 +58,5 @@ Note: the latest version of pysam (0.9.0) is not backward compatible with Samtoo
 
 
 ***Output***
+
 -outbam: output engineered, sorted bam file 
