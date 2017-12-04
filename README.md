@@ -21,6 +21,12 @@ data.
 
 *Quick start: [Quick start](https://github.com/pughlab/bamgineer/blob/master/docs/quick_start)* 
 
+## Google User Group (Q&A)
+If you have any questions with the package, please feel free to post in our Google user group 
+https://groups.google.com/d/forum/bamgineer or email us at bamgineer@googlegroups.com. We will try our best to reply as soon as 
+possible.
+
+
 ## Installation
 
 ### Prerequisites
