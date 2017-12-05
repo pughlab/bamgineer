@@ -759,10 +759,10 @@ def run_pipeline(results_path):
     chromosomes_bamfiles = create_chr_bam_list()
     logger.debug('pipeline started!')
     
-    #initialize(results_path,haplotype_path,cancer_dir_path)
+    initialize(results_path,haplotype_path,cancer_dir_path)
     pool1 = multiprocessing.Pool(processes=12, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating] ) 
     try:
-        #result1 = pool1.map_async(find_roi_bam, chromosome_event ).get(9999999)
+        result1 = pool1.map_async(find_roi_bam, chromosome_event ).get(9999999)
         result2 = pool1.map_async(implement_cnv, chromosome_event ).get(9999999)
         pool1.close()
     except KeyboardInterrupt:  
@@ -774,8 +774,8 @@ def run_pipeline(results_path):
     finally:
         pool1.join()
     time.sleep(.1)
-    #mergeSortBamFiles(outbamfn, finalbams_path )
+    mergeSortBamFiles(outbamfn, finalbams_path )
     t1 = time.time()
-    #shutil.rmtree(tmpbams_path)
-    #logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0)/60.0, 1)) +' minutes ***** ')
+    shutil.rmtree(tmpbams_path)
+    logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0)/60.0, 1)) +' minutes ***** ')
     logging.shutdown()
