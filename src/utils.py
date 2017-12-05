@@ -194,12 +194,7 @@ def renamereads(inbamfn, outbamfn):
     outbam = pysam.Samfile(outbamfn, 'wb', template=inbam)
 
     paired = {}
-
-    n = 0
-    p = 0
-    u = 0
-    w = 0
-    m = 0
+    n = 0;p = 0;u = 0;w = 0;m = 0
     
     for read in inbam.fetch(until_eof=True):
         n += 1
@@ -210,8 +205,7 @@ def renamereads(inbamfn, outbamfn):
                 del paired[read.qname]
                 read.qname = uuid
                 outbam.write(read)
-                w += 1
-                m += 1
+                w += 1;m += 1
             else:
                 newname = str(uuid4())
                 paired[read.qname] = newname
@@ -223,7 +217,6 @@ def renamereads(inbamfn, outbamfn):
             read.qname = str(uuid4())
             outbam.write(read)
             w += 1
-
     outbam.close()
     inbam.close()
 
@@ -343,28 +336,81 @@ def countReads(inbamfn):
                             stderr=subprocess.PIPE, 
                             stdin=subprocess.PIPE, shell=True).communicate()
     return "".join(out.split())
- 
+
+def find_unpaired_reads(inbamfn):
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath()
+    unpairedfn =  sub('.bam$', '.unpairedfn.bam', inbamfn)
+    command1 = " ".join([samtools_path ,"view -u -h -f  0x0004", inbamfn, ">", unpairedfn])
+    runCommand(command1)
+
 def splitPairAndStrands(inbamfn):
+    
     java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     read1_strand1sortfn =  sub('.bam$', '.read1_pos.bam', inbamfn)
     read1_strand2sortfn =  sub('.bam$', '.read1_neg.bam', inbamfn)
     read2_strand1sortfn =  sub('.bam$', '.read2_pos.bam', inbamfn)
     read2_strand2sortfn =  sub('.bam$', '.read2_neg.bam', inbamfn)
-    command1 = " ".join([samtools_path ,"view -u -h -f 0x0063", inbamfn, ">", read1_strand1sortfn])
-    command2 = " ".join([samtools_path ,"view -u -h -f 0x0053", inbamfn, ">", read1_strand2sortfn])
-    command3 = " ".join([samtools_path ,"view -u -h -f 0x0093", inbamfn, ">", read2_strand1sortfn])
-    command4 = " ".join([samtools_path ,"view -u -h -f 0x00A3", inbamfn, ">", read2_strand2sortfn])
+    
+    read_comp =  sub('.bam$', '.complementary.bam', inbamfn)
+    #read1_strand1comp =  sub('.bam$', '.read1_pos_comp.bam', inbamfn)
+    #read1_strand2comp =  sub('.bam$', '.read1_neg_comp.bam', inbamfn)
+    #read2_strand1comp =  sub('.bam$', '.read2_pos_comp.bam', inbamfn)
+    #read2_strand2comp =  sub('.bam$', '.read2_neg_comp.bam', inbamfn)
+    
+    
+    
+    mapped_all  =  sub('sorted.bam$', 'mapped_all.bam', inbamfn)
+    
+    #command1 = " ".join([samtools_path ,"view -u -h -f 0x0040", inbamfn, ">", read1_strand1sortfn])
+    #command2 = " ".join([samtools_path ,"view -u -h -f 0x0050", inbamfn, ">", read1_strand2sortfn])
+    #command3 = " ".join([samtools_path ,"view -u -h -f 0x0080", inbamfn, ">", read2_strand1sortfn])
+    #command4 = " ".join([samtools_path ,"view -u -h -f 0x0090", inbamfn, ">", read2_strand2sortfn])
+    
+    #command1 = " ".join([samtools_path ,"view -u -h -f 0x0063", inbamfn, ">", read1_strand1sortfn])
+    #command2 = " ".join([samtools_path ,"view -u -h -f 0x0053", inbamfn, ">", read1_strand2sortfn])
+    #command3 = " ".join([samtools_path ,"view -u -h -f 0x0093", inbamfn, ">", read2_strand1sortfn])
+    #command4 = " ".join([samtools_path ,"view -u -h -f 0x00A3", inbamfn, ">", read2_strand2sortfn])
+    
+    command1 = " ".join([samtools_path ,"view -u -h -f 0x0061", inbamfn, ">", read1_strand1sortfn])
+    command2 = " ".join([samtools_path ,"view -u -h -f 0x0051", inbamfn, ">", read1_strand2sortfn])
+    command3 = " ".join([samtools_path ,"view -u -h -f 0x0091", inbamfn, ">", read2_strand1sortfn])
+    command4 = " ".join([samtools_path ,"view -u -h -f 0x00A1", inbamfn, ">", read2_strand2sortfn])
+    
+    #command1 = " ".join([samtools_path ,"view -u -h -f 0x0060", inbamfn, ">", read1_strand1sortfn])
+    #command2 = " ".join([samtools_path ,"view -u -h -f 0x0050", inbamfn, ">", read1_strand2sortfn])
+    #command3 = " ".join([samtools_path ,"view -u -h -f 0x0090", inbamfn, ">", read2_strand1sortfn])
+    #command4 = " ".join([samtools_path ,"view -u -h -f 0x00A0", inbamfn, ">", read2_strand2sortfn])
+    #command5 = " ".join([sambamba_path ,"merge" , mapped_all , read1_strand1sortfn, read1_strand2sortfn, read2_strand1sortfn, read2_strand2sortfn])
+   
+    command5 = " ".join([sambamba_path ,"""view -F "unmapped or mate_is_unmapped or secondary_alignment or not (paired) or duplicate" """, "-f bam" ,inbamfn ,">", read_comp])
+   
     runCommand(command1)
     runCommand(command2)
     runCommand(command3)
     runCommand(command4)
+    
+    runCommand(command5)
+
+    
+    #runCommand(command5)
+    
    
-def extract_proper_paired_reads(inbamfn):
-    properfn = sub('.bam$', '_proper.bam', inbamfn)
+def extract_proper_paired_reads(inbamfn, properfn):
+    #properfn = sub('.bam$', '_proper.bam', inbamfn)
     java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     command = " ".join([samtools_path,"view -f 0x03 -bSq 30", inbamfn, ">", properfn])
     runCommand(command)
     os.remove(inbamfn)
+    
+def removeIfEmpty(bamdir,file):
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath()  
+    if file.endswith(".bam"):
+       command = " ".join([samtools_path, "view", "/".join([bamdir, file]), "| less | head -1 | wc -l" ])
+       nline= subprocess.check_output(command, shell = True)  
+       if (os.path.isfile( "/".join([bamdir, file])) and (int(nline) == 0)):
+               os.remove("/".join([bamdir, file]))
+                      
+     
     
 def createHaplotypes(hetsnp_orig_bed, hetsnp_hap1_bed ):
     try:

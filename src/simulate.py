@@ -13,22 +13,27 @@ def main(args):
     params.SetLossCNV(args.cnvDelFile)
     params.SetCancerType(args.cancerType)
     params.SetOutputFileName(args.outBamFile)
+    
     params.SetSplitBamsPath(args.splitbams)
+    params.SetPhase(args.phase)
+    params.SetctDNA(args.ctDNA)
     
     results_path = configReader.get('RESULTS', 'results_path')
     
     #set software paths
-    java_path= bamhelp.GetJavaPath()
-    beagle_path= bamhelp.GetBeaglePath()
-    samtools_path = bamhelp.GetSamtoolsPath()
-    bedtools_path = bamhelp.GetBedtoolsPath()
-    vcftools_path = bamhelp.GetVCFtoolsPath()
-    sambamba_path  = bamhelp.GetSambambaPath()
+    java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path = params.GetSoftwarePath()
     params.SetSoftwarePath(java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path)
     
+    if(args.splitbams):
+        if(args.phase):    
+            run_pipeline(results_path)
+        else:
+            print ("user should provide phased vcf files")
+    else:
+        print("split the bams first")
+       
+        
     
-    if( args.phase):    
-        run_pipeline(results_path)
         
 if __name__ == '__main__':
     
@@ -48,6 +53,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--configFile', action='store', required=True, dest='configfile',
                         help='/path/to/config_file.cfg')
     parser.add_argument('-phase',dest= 'phase', action="store_true")
+    parser.add_argument('-ctDNA',dest= 'ctDNA', action="store_true")
     
     args = parser.parse_args()
     

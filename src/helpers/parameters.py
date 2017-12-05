@@ -18,6 +18,8 @@ beagle_path=''
 samtools_path=''
 bedtools_path='' 
 vcftools_path=''
+phase=True
+ctDNA=False
 
 def InitConfigReader(configFile):
     """init the config file"""
@@ -27,6 +29,17 @@ def GetConfigReader():
     """return the configreader"""
     return configReader
 
+def GetctDNA():
+    return ctDNA
+def SetctDNA(ctdna):
+    global ctDNA
+    ctDNA= ctdna
+def GetPhase():
+    return phase
+def SetPhase(ph):
+    global phase
+    phase= ph
+    
 def GetResultsPath():
     return results_path
 def SetResultsPath(path):
