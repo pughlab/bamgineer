@@ -101,12 +101,6 @@ def find_roi_bam(chromosome_event):
                  cmd=" ".join(["sort -u", exonsinroibed, "-o", exonsinroibed]); runCommand(cmd)
                  extractPairedReadfromROI(sortbyname, exonsinroibed, roi)
                  removeIfEmpty(tmpbams_path,ntpath.basename(roi))
-               
-                 #getProperPairs(roi, roi+'.tmp.bam')
-                 #pysam.sort(roi+'.tmp.bam',roisort )
-                 #pysam.index(roisort+'.bam')
-                 #os.remove(roi+'.tmp.bam')
-                 
                  pysam.sort(roi ,roisort )
                  pysam.index(roisort+'.bam')
                  os.remove(roi)
@@ -194,20 +188,14 @@ def mutate_reads(bamsortfn,chr, event):
                 outbam.close()
                 allreads.close()
                 
-                #sortBam(outbamfn,outbamsortfn+'.bam')
-                #sortBam(allreadsfn, allreadssortfn+'.bam')
-                
-                #ratio2= float(countReads(outbamfn))/float(countReads(allreadsfn))
                 ratio = float(num_reads_written)/float(num_total_reads)
                 bamsortfnsampled = sub('.sorted.bam$',".sampled.nh.bam", bamsortfn)
                 
                 subsample(bamsortfn, bamsortfnsampled ,str(ratio))
-                #bamDiff(bamsortfnsampled, allreadssortfn+'.bam', tmpbams_path )
-                #merge_bams("/".join([tmpbams_path, 'diff_only1_' +  os.path.basename(bamsortfnsampled)]), outbamsortfn+'.bam', mergedsortfn)
-                
+
                 os.remove("/".join([tmpbams_path,  'diff_only1_' +  os.path.basename(bamsortfnsampled)]))
                 os.remove(outbamfn)
-                #os.remove(outbamsortfn+'.bam')
+
     
     except (KeyboardInterrupt):
         logger.error('Exception Crtl+C pressed in the child process  in mutaute_reads')
@@ -241,22 +229,7 @@ def implement_cnv(chromosome_event):
                     GAIN_FINAL = "/".join([finalbams_path,  str(chr).upper() +'_GAIN.bam'])
                     if(os.path.isfile(bamsortfn)):
                         re_pair_reads(bamsortfn)
-                        #mutate_reads(bamrepairedsortfn, chr, 'gain')
-                        #renamereads(mergedsortfn, mergedrenamedfn)
-                        #ratio_kept = float(countReads(mergedrenamedfn))/float(countReads(bamsortfn))
-                        #samplerate= round(0.5/(ratio_kept),2)
-                        #
-                        #logger.debug("ratios kept for:"+ ntpath.basename(bamsortfn)+ ": "+ str(ratio_kept) )
-                        ##os.remove(bamfn)
-                        #if(samplerate < 1.0):
-                        #    subsample(mergedrenamedfn, GAIN_FINAL,str(samplerate)) #calculate it later
-                        #    logger.debug("___ sampling rate for " + ntpath.basename(bamsortfn)  +" : "+ str(samplerate))
-                        #elif(samplerate > 1.0 and samplerate< 1.05):
-                        #    os.rename(mergedrenamedfn, GAIN_FINAL)
-                        #else:
-                        #    logger.error('not enough reads for '+ntpath.basename(bamsortfn)+ 'rate: '+str(samplerate) )
-                        #    success = False
-                        #    return
+
             elif(event== 'loss'):
                
                 inbam_deletion = "/".join([finalbams_path , str(chr).upper() + '_LOSS.bam'])
@@ -331,43 +304,7 @@ def re_pair_reads_v0(bamsortfn):
                             writtencount = writtencount + 1
                         else:
                             itr2.next()
-                    #else:
-                    #    continue
-                    
-                        
-                
-                    #if (read.is_secondary or read.is_duplicate or read.is_supplementary or read.is_unmapped):
-                    #    #outbam.write(read)
-                    #    print('hi')
-                    #elif(read.is_paired and read.is_proper_pair ):
-                    #    
-                    #    if(read.is_read1 and not read.is_reverse ): 
-                    #        print('1111')
-                    #        for readnext in inbamcopy :
-                    #            if(not readnext.is_read2 and not read.is_reverse):
-                    #                continue
-                    #            tlenabs = readnext.pos - read.pos + abs(readnext.qlen)
-                    #            
-                    #    elif(read.is_read1 and read.is_reverse ):
-                    #        
-                    #        for readnext in inbamcopy :
-                    #            if(not readnext.is_read2 and read.is_reverse):
-                    #                continue
-                    #            tlenabs = read.pos - readnext.pos + abs(readnext.qlen)
-                    #   
-                    #    elif(read.is_read2 and not read.is_reverse):
-                    #        
-                    #        for readnext in inbamcopy :
-                    #            if(not readnext.is_read1 and not read.is_reverse):
-                    #                continue
-                    #            tlenabs = readnext.pos - read.pos + abs(readnext.qlen)
-                    #   
-                    #    elif(read.is_read2 and read.is_reverse):
-                    #        for readnext in inbamcopy :
-                    #            if(not readnext.is_read1 and read.is_reverse):
-                    #                continue
-                    #            tlenabs = read.pos - readnext.pos + abs(readnext.qlen)
-                    
+
                 outbam.close()
             
     except (KeyboardInterrupt):
@@ -411,11 +348,6 @@ def re_pair_reads(bamsortfn):
                     for read1, read2 in  izip(itr1, itr2):                                      
                         
                         try:
-                            #maxtlen = max(abs(read1.tlen), abs(read2.tlen))
-                            #mintlen = min(abs(read1.tlen), abs(read2.tlen))
-                         
-                           # while(read1.reference_id != read1.next_reference_id):
-                           #     read1 =  itr1.next()
                             
                             read1next = itr1.next()
                             read2next = itr2.next()
@@ -428,38 +360,11 @@ def re_pair_reads(bamsortfn):
                                   tlenabs1 < 0.5*abs(read1.tlen) or tlenabs1 > 5*abs(read1.tlen) or
                                   tlenabs2 < 0.5*abs(read1next.tlen) or tlenabs2 > 5*abs(read1next.tlen)):
                                 continue
-                                 # or tmptlen > 5*abs(read2.tlen) or tmptlen < 0.2*abs(read2.tlen)  ):
-                                #read1 =  itr1.next()
-                                #read1next = itr1.next()
-                                #read2 =  itr2.next()
-                                #read2next = itr2.next()
-                               
-                                
-                            # if(read1.reference_id != read1.next_reference_id or read2.reference_id != read2.next_reference_id or 
-                               #abs(read2.pos -read1.pos + abs(read2.qlen)) < 0.85*abs(read1.tlen)  or abs(read2.pos -read1.pos + abs(read2.tlen)) > 1.25*abs(read1.tlen) or
-                               #abs(read2.pos -read1.pos + abs(read2.qlen)) < 0.85*abs(read2.tlen) or abs(read2.pos -read1.pos + abs(read2.qlen)) > 1.25*abs(read2.tlen) ):
-                               #abs(read2.pos -read1.pos + abs(read2.qlen)) < 0.85*abs(mintlen)  or abs(read2.pos -read1.pos + abs(read2.qlen)) > 5*abs(maxtlen) ):
-                               #continue
-                            
-                            
-                           
-                            #tlenmean = (abs(read1.tlen) + abs(read1next.tlen))/2
-                            
-                            #if(tlenabs2 < )
-                            
-                            
-                            #if(read1next.reference_id == read1next.next_reference_id and read2next.reference_id == read2next.next_reference_id):    
                             
                             if(strand == 'pos'):
                                 tlenabs1 = read2next.pos - read1.pos + abs(read2next.qlen)
                                 tlenabs2 =  read2.pos - read1next.pos  + abs(read2.qlen)  
                                 tlenmean = (abs(read1.tlen) + abs(read1next.tlen))/2
-                                        
-                                #criteria1= (tlenabs1 > 0.5* tlenmean  or tlenabs1 < 2*tlenmean  and
-                                #            tlenabs1 > 0   )
-                                #criteria2= (tlenabs2 > 0.5* tlenmean  or tlenabs2 < 2*tlenmean  and
-                                #            tlenabs2 > 0 )
-                                
                                 criteria1 = True
                                 criteria2 = True
                                 
@@ -497,14 +402,9 @@ def re_pair_reads(bamsortfn):
                                        not read2.is_duplicate and not read2.is_secondary and not read1next.is_duplicate and not read1next.is_secondary )
                                     else: #ctDNA
                                     
-                                       #criteria1= (tlenabs1 > 0.5*tlenmean  or tlenabs1 < 2*tlenmean  and
-                                       #          tlenabs1 > 0 )
-                                       #criteria2= (tlenabs2 > 0.5*tlenmean  or tlenabs2 < 2*tlenmean  and
-                                       #          tlenabs2 > 0 )
-                                       #criteria1 = True
-                                       criteria2 = True
+                                        criteria2 = True
                                        
-                                       if(criteria1 ):
+                                        if(criteria1 ):
                                             read1.tlen = -tlenabs1
                                             read2next.tlen = tlenabs1
                                             read1.pnext = read2next.pos
@@ -513,8 +413,8 @@ def re_pair_reads(bamsortfn):
                                             outbam.write(read1)
                                             outbam.write(read2next)
                                             writtencount = writtencount + 1
-                                        
-                                       if(criteria2):
+
+                                        if(criteria2):
                                     
                                             read1next.tlen = -tlenabs2
                                             read2.tlen = tlenabs2
@@ -531,28 +431,12 @@ def re_pair_reads(bamsortfn):
                             break        
                 
                     splt1.close();splt2.close()
-                    #os.remove(read1fn)
-                    #os.remove(matefn)
-                
+
                 inbam.close()
                 outbam.close() 
                 
                 sortBam(bamrepairedfn, bamrepairedsortfn)
-                
-                #bamDiff(bamsortfn, "/".join([tmpbams_path, sub('.sorted.bam$','',os.path.basename(bamsortfn))]) +'.mapped_all.bam', tmpbams_path)
-                #merge_bams("/".join([tmpbams_path, 'diff_only1_'+os.path.basename(bamsortfn)]) , bamrepairedsortfn , bamrepairedsortfn+'merged.bam')
-                
-                #move(bamrepairedsortfn+'merged.bam',  bamrepairedsortfn )
-                #move(bamrepairedsortfn+'merged.bam.bai',  bamrepairedsortfn +'.bai' )
-                
-                #os.remove("/".join([tmpbams_path, 'diff_only1_'+os.path.basename(bamsortfn)]))
-                #os.remove("/".join([tmpbams_path, 'diff_only2_'+ sub('.sorted.bam$','',os.path.basename(bamsortfn))]) +'.mapped_all.bam')
-                #os.remove("/".join([tmpbams_path, 'diff.bam']))
-                #os.remove(bamrepairedfn)
-                #os.remove("/".join([tmpbams_path, sub('.sorted.bam$','',os.path.basename(bamsortfn))]) +'.mapped_all.bam')
-                #os.remove("/".join([tmpbams_path, sub('.sorted.bam$','',os.path.basename(bamsortfn))]) +'.mapped_all.bam.bai')
-                
-                
+
     except (KeyboardInterrupt):
         logger.error('Exception Crtl+C pressed in the child process  in re_pair_reads')
         terminating.set()
@@ -563,153 +447,6 @@ def re_pair_reads(bamsortfn):
         return False
     return             
 
-#def re_pair_reads1(bamsortfn):    
-#    try:
-#        if not terminating.is_set():
-#            logger.debug(" calling  re-pair-reads version" )
-#            bamrepairedfn = sub('.sorted.bam$',  ".re_paired.bam", bamsortfn)
-#            bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
-#            
-#            if(os.path.isfile(bamsortfn)):
-#                  
-#                inbam = pysam.Samfile(bamsortfn, 'rb')
-#                outbam = pysam.Samfile(bamrepairedfn, 'wb', template=inbam)  
-#    
-#                writtencount = 0
-#                strands=['pos','neg']
-#                
-#                for strand in strands :
-#                    read1fn= sub('.bam$', '.read1_'+strand+'.bam', bamsortfn)
-#                    matefn= sub('.bam$', '.read2_'+strand+'.bam', bamsortfn)
-#                    
-#                    if(not os.path.isfile(read1fn) or not os.path.isfile(matefn)):
-#                        splitPairAndStrands(bamsortfn)
-#                    
-#                    splt1 = pysam.Samfile(read1fn , 'rb')
-#                    splt2 = pysam.Samfile(matefn , 'rb')
-#                    itr1 =   splt1.fetch(until_eof=True)
-#                    itr2 =   splt2.fetch(until_eof=True)
-#                    start = True
-#    
-#                    for read1, read2 in  izip(itr1, itr2):                                      
-#                        try:
-#                            if(read2.qname != read1.qname and start):
-#                                start = False
-#                                read2=itr2.next()
-#                                continue
-#                            
-#                            read1next=itr1.next()
-#                            read2next=itr2.next()
-#                
-#                            if(strand == 'pos'):
-#                                tlenabs1 = read2next.pos - read1.pos + abs(read2next.qlen)
-#                                tlenabs2 =  read2.pos - read1next.pos  + abs(read2.qlen)  
-#                                tlenmean = (abs(read1.tlen) + abs(read1next.tlen))/2
-#                                
-#                                if(not params.GetctDNA()):
-#                                    criteria1= (tlenabs1 > 0.2*tlenmean and tlenabs1 < 5*tlenmean and
-#                                                read2next.qname != read1.qname and tlenabs1 > 0 and
-#                                        not read1.is_duplicate and not read1.is_secondary and
-#                                        not read2next.is_duplicate and not read2next.is_secondary)
-#                                    criteria2=(tlenabs2 > 0.2*tlenmean and tlenabs2 < 5*tlenmean and
-#                                               read1next.qname != read2.qname and tlenabs2 > 0 and
-#                                            not read2.is_duplicate and not read2.is_secondary and
-#                                            not read1next.is_duplicate and not read1next.is_secondary )
-#                                else: #ctDNA
-#                                    
-#                                    #criteria1= (tlenabs1 > 0.2*tlenmean and tlenabs1 < 5*tlenmean and
-#                                    #            read2next.qname != read1.qname and tlenabs1 > 0 )
-#                                    #criteria2= (tlenabs2 > 0.2*tlenmean and tlenabs2 < 5*tlenmean and
-#                                    #           read1next.qname != read2.qname and tlenabs2 > 0 )
-#                                    
-#                                    
-#                                    criteria1= (tlenabs1 > 0.1*abs(read1.tlen)  and tlenabs1 < 10*abs(read1.tlen)  and
-#                                                read2next.qname != read1.qname and tlenabs1 > 0 and not read1.is_secondary and not read2next.is_secondary )
-#                                    criteria2= (tlenabs2 > 0.1*abs(read2.tlen)  and tlenabs2 < 10*abs(read2.tlen)  and
-#                                               read1next.qname != read2.qname and tlenabs2 > 0 and not read2.is_secondary and not read1next.is_secondary )
-#                                
-#                                if(criteria1):
-#                                    
-#                                    read1.tlen = tlenabs1
-#                                    read2next.tlen = -tlenabs1
-#                                    read1.pnext = read2next.pos
-#                                    read2next.pnext = read1.pos
-#                                    read2next.qname = read1.qname 
-#                                    outbam.write(read1)
-#                                    outbam.write(read2next)
-#                                    writtencount = writtencount + 1
-#                                    
-#                                if(criteria2 ):
-#                              
-#                                    read1next.tlen = tlenabs2
-#                                    read2.tlen = -tlenabs2 
-#                                    read2.pnext = read1next.pos
-#                                    read1next.pnext = read2.pos
-#                                    read2.qname = read1next.qname
-#                                    outbam.write(read1next)
-#                                    outbam.write(mate)
-#                                    writtencount = writtencount + 1  
-#                            
-#                            elif(strand== 'neg'):
-#                                
-#                                tlenabs1 = read1.pos - read2next.pos + abs(read1.qlen)
-#                                tlenabs2 = read1next.pos -read2.pos + abs(read1next.qlen)
-#                                tlenmean = (abs(read1.tlen) + abs(read1next.tlen))/2
-#                                
-#                                if(not params.GetctDNA()):
-#                                    criteria1= (tlenabs1 > 0.2*tlenmean and tlenabs1 < 5*tlenmean and read2next.qname != read1.qname and tlenabs1 > 0 and
-#                                    not read1.is_duplicate and not read1.is_secondary and not read2next.is_duplicate and not read2next.is_secondary)
-#                                    criteria2=(tlenabs2 > 0.2*tlenmean and tlenabs2 < 5*tlenmean and read1next.qname != read2.qname and tlenabs2 > 0 and
-#                                   not read2.is_duplicate and not read2.is_secondary and not read1next.is_duplicate and not read1next.is_secondary )
-#                                else: #ctDNA
-#                                   criteria1= (tlenabs1 > 0.1*abs(read1.tlen)  and tlenabs1 < 10*abs(read1.tlen)  and
-#                                                read2next.qname != read1.qname and tlenabs1 > 0 and not read1.is_secondary and not read2next.is_secondary )
-#                                   criteria2= (tlenabs2 > 0.1*abs(read2.tlen)  and tlenabs2 < 10*abs(read2.tlen)  and
-#                                               read1next.qname != read2.qname and tlenabs2 > 0 and not read2.is_secondary and not read1next.is_secondary )
-#                                if(criteria1):
-#                                    
-#                                    read1.tlen = -tlenabs1
-#                                    read2next.tlen = tlenabs1
-#                                    read1.pnext = read2next.pos
-#                                    read2next.pnext = read1.pos
-#                                    read2next.qname = read1.qname
-#                                    outbam.write(read1)
-#                                    outbam.write(read2next)
-#                                    writtencount = writtencount + 1
-#                                
-#                                if(criteria2):
-#                            
-#                                    read1next.tlen = -tlenabs2
-#                                    mate.tlen = tlenabs2
-#                                    mate.pnext = read1next.pos
-#                                    read1next.pnext = mate.pos
-#                                    mate.qname = read1next.qname
-#                                    outbam.write(read1next)
-#                                    outbam.write(mate)
-#                                    writtencount = writtencount + 1
-#
-#                        except StopIteration:
-#                            break        
-#               
-#                    splt1.close();splt2.close()
-#                    #os.remove(read1fn)
-#                    #os.remove(matefn)
-#                    
-#                inbam.close()
-#                outbam.close() 
-#                
-#                sortBam(bamrepairedfn, bamrepairedsortfn)
-#                os.remove(bamrepairedfn)   
-#    except (KeyboardInterrupt):
-#        logger.error('Exception Crtl+C pressed in the child process  in re_pair_reads')
-#        terminating.set()
-#        return False
-#    except Exception as e:   
-#        logger.exception("Exception in re_pair_reads %s" ,e )
-#        terminating.set()
-#        return False
-#    return             
-#  
 def removeReadsOverlappingHetRegion(inbamfn, bedfn,outbamfn,path):
     print "___ removing reads overlapping heterozygous region ___"
     inbamsorted =  sub('.bam$','.sorted',inbamfn)
