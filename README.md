@@ -54,9 +54,10 @@ Below is a general description of the file formats and prerequizites. For detail
 
 ***General NGS tools*** 
 
-Samtools1.2 \
-Bedtools \
-VCFtools
+*Samtools (version 1.2): [samtools](http://samtools.sourceforge.net)* \
+*Bedtools:[bedtools](http://bedtools.readthedocs.io/en/latest/)*\
+*VCFtools:[vcftools](http://vcftools.sourceforge.net/index.html)*
+
 
 ***Python packages***
 
