@@ -1,3 +1,9 @@
+
+
+
+
+
+
 All options:
 
         usage: python simulate.py [-h] [-i INPUT_BAM] [-o OUTPUT_BAM]
