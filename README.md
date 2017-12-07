@@ -29,7 +29,7 @@ possible.
 ## Using Bamgineer
 Below is a general description of the file formats and prerequizites. For details on usage and example, please follow our detailed guide in [Quick start](https://github.com/pughlab/bamgineer/blob/master/docs/quick_start)
 
-### All options:
+### Running options:
 
         usage: python simulate.py [-h] [--inbam INPUT_BAM] [--outbam OUTPUT_BAM]
                          [--cnvgain CNV_GAIN_FILE] [--cnvloss CNV_LOSS_FILE] [--splitdir BAM_SPLIT_DIR] 
