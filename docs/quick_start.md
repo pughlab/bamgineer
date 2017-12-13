@@ -1,5 +1,5 @@
  
-## Running Bamgineer
+## Using Bamgineer
 
 ### Prerequisites
 
@@ -24,17 +24,31 @@ Note: the latest version of pysam (0.9.0) is not backward compatible with Samtoo
 -cnv_del: bed file for allele-specific and cancer-specific CNV deletions (null is not specified) \
 -vcf: normal heterozygous vcf file (could be from HaplotypeCaller output, not including indels and homozygous loci) \
 -target_region: bed file containing the target regions (exons or any user-specified region) \
--r: reference hg19 fasta file (should be indexed: .fai, .amb, .ann, .pac, .awb) 
+-splitdir: input bam split by chromosomes
 -phased(optional): Binary flag to perform phasing (BEAGLE) of SNPs prior to spiking CNV's
 
+It is recommend
 
 ***Output***
 
 -outbam: output engineered, sorted bam file
 
-### Running on single node
+## Running Bamgineer
+
+It is recommended that users split the input bam file by chromosome (e.g. chr1.bam, chr2.bam) sorted by coordinates along with index 
+files(chr.bam.bai, chr1.bam.bai ,etc) and also have them sorted by name using "by.name.bam" extension(chr1.byname.bam, chr2.byname.bam, 
+etc) prior to running the program. The directory containing these bam is given to bamgineer as an argument ( --splitdir). If no such 
+directory is given Bamgineer performs the splitting and sorting by coordinates and name as a preprocessing step. Please note that it is 
+not necessary to have the data for all the chromosomes. For instance, a user can run bamgineer on a bam file that is only comprised of 
+chromosomes 1,3 and 22.
+
+###  Editting the Config file
 
 ### Running on single node
+
+
+
+### Running on HPC (Sun Grid Engine)
 
 
 ### Running options:
