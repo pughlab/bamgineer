@@ -1,8 +1,0 @@
-
-
-All options:
-
-        usage: python simulate.py [-h] [-i INPUT_BAM] [-o OUTPUT_BAM]
-                         [-g CNV_GAIN_FILE] [-l CNV_LOSS_FILE] [-B BURNIN_SAMPLES]
-                         [-s BAM_SPLIT_DIR] [-c CONFIG_FILE] [-C CANCER_TYPE]
-                         [-p PHASE] [-f CT_DNA]
