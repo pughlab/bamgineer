@@ -73,8 +73,7 @@ Note: the latest version of pysam (0.9.0) is not backward compatible with Samtoo
 -cnv_amp: bed file for allele-specific and cancer-specific CNV amplifications (null is not specified) \
 -cnv_del: bed file for allele-specific and cancer-specific CNV deletions (null is not specified) \
 -vcf: normal heterozygous vcf file (could be from HaplotypeCaller output, not including indels and homozygous loci) \
--target_region: bed file containing the target regions (exons or any user-specified region) \
--r: reference hg19 fasta file (should be indexed: .fai, .amb, .ann, .pac, .awb) 
+-target_region: bed file containing the target regions (exons or any user-specified region) \ 
 -phased(optional): Binary flag to perform phasing (BEAGLE) of SNPs prior to spiking CNV's
 
 
