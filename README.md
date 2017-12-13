@@ -19,12 +19,18 @@ algorithm for both standalone and high performance computing cluster environment
 algorithm.Bamgineer has been extensively tested on whole exome sequencing and targeted gene panel applied to cell-free DNA sequencing 
 data.
 
-*Quick start: [Quick start](https://github.com/pughlab/bamgineer/blob/master/docs/quick_start)* 
+
+*Quick start: [Quick start](https://github.com/pughlab/bamgineer/blob/master/docs/quick_start.md)* 
 
 ## Google User Group (Q&A)
 If you have any questions with the package, please feel free to post in our Google user group 
 https://groups.google.com/d/forum/bamgineer or email us at bamgineer@googlegroups.com. We will try our best to reply as soon as 
 possible.
+
+
+## Using Bamgineer
+Below is a general description of the file formats and prerequizites. For details on usage and example, please follow our detailed guide in
+[Quick start](https://github.com/pughlab/bamgineer/blob/master/docs/quick_start.md)
 
 ### Running options:
 
@@ -45,10 +51,8 @@ possible.
            --cancer CANCER_TYPE,        cancer type/acronym
            --splitdir BAM_SPLIT_DIR,    input bam split by chromosomes
            --p PHASE,                   whether SNP phasing should be applied
-           --ctdna CT_DNA,              whether simulation is on reads obtained from ctDNA sequencing data
+           --ctdna CT_DNA,              whether simulation is on reads obtained from ctDNA sequencing data   
 
-## Using Bamgineer
-Below is a general description of the file formats and prerequizites. For details on usage and example, please follow our detailed guide in [Quick start](https://github.com/pughlab/bamgineer/blob/master/docs/quick_start)
 
 ### Prerequisites
 
@@ -57,7 +61,6 @@ Below is a general description of the file formats and prerequizites. For detail
 *Samtools (version 1.2): [samtools](http://samtools.sourceforge.net)* \
 *Bedtools:[bedtools](http://bedtools.readthedocs.io/en/latest/)*\
 *VCFtools:[vcftools](http://vcftools.sourceforge.net/index.html)*
-
 
 ***Python packages***
 
@@ -73,8 +76,7 @@ Note: the latest version of pysam (0.9.0) is not backward compatible with Samtoo
 -cnv_amp: bed file for allele-specific and cancer-specific CNV amplifications (null is not specified) \
 -cnv_del: bed file for allele-specific and cancer-specific CNV deletions (null is not specified) \
 -vcf: normal heterozygous vcf file (could be from HaplotypeCaller output, not including indels and homozygous loci) \
--target_region: bed file containing the target regions (exons or any user-specified region) \
--r: reference hg19 fasta file (should be indexed: .fai, .amb, .ann, .pac, .awb) 
+-target_region: bed file containing the target regions (exons or any user-specified region) \ 
 -phased(optional): Binary flag to perform phasing (BEAGLE) of SNPs prior to spiking CNV's
 
 
