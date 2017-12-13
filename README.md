@@ -27,7 +27,7 @@ https://groups.google.com/d/forum/bamgineer or email us at bamgineer@googlegroup
 possible.
 
 ## Using Bamgineer
-Below is a general description of the file formats and prerequizites. For details on usage and example, please follow our detailed guide in [Quick start](https://github.com/pughlab/bamgineer/blob/master/docs/quick_start)
+Below is a general description of the file formats and prerequizites. For details on usage and example, please follow our detailed guide in [Quick start](https://github.com/pughlab/bamgineer/blob/master/docs/quick_start.md)
 
 ### Running options:
 
