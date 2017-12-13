@@ -37,8 +37,9 @@ if __name__ == '__main__':
     parser.add_argument('-splitbamdir', dest='splitbams', required=False,
                         help='input bam split by chromosomes')
     parser.add_argument('-c', '--configFile', action='store', required=True, dest='configfile',
-                        help='/path/to/config_file.cfg')
+                        help='path to config_file.cfg')
     parser.add_argument('-phase',dest= 'phase', action="store_true")
+    parser.add_argument('-ctDNA', dest='ctDNA', action="store_true")
     
     parser.add_argument(
         '--project-name', action='store', required=True, dest='project_name',
