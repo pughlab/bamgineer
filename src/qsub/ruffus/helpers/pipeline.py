@@ -384,7 +384,7 @@ def mutate_loss(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
             sample_id, bamhelp.name)
         bamgineer_mem = bamhelp.GetBamgineerMem('med')
         sentinel_path, results_path,haplotype_path,cancer_dir_path,tmpbams_path,finalbams_path = taskHelpers.GetProjectNamePathRunID()
-        
+
         for inp in inputs[0]:
            
             chr= os.path.basename(inp).strip().split(".")[0]
