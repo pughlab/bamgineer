@@ -93,11 +93,12 @@ def initialize():
             nonhetbed = "/".join([haplotype_path, event + "_non_het.bed"])
             hetbed = "/".join([haplotype_path, event + "_het.bed"])
             hetsnpbed = "/".join([haplotype_path,  event + "_het_snp.bed"])
-            
-            utils.intersectBed( exons_path, locals()[event + 'cnv'], exonsinroibed, wa=True)
-            utils.intersectBed(phased_bed, exonsinroibed, hetsnpbed, wa=True)
-            utils.splitBed(exonsinroibed, event+'_exons_in_roi_')
-            utils.splitBed(hetsnpbed, event+'_het_snp_')
+
+            if (locals()[event + 'cnv']):
+                utils.intersectBed( exons_path, locals()[event + 'cnv'], exonsinroibed, wa=True)
+                utils.intersectBed(phased_bed, exonsinroibed, hetsnpbed, wa=True)
+                utils.splitBed(exonsinroibed, event+'_exons_in_roi_')
+                utils.splitBed(hetsnpbed, event+'_het_snp_')
 
     except:  
         pipelineHelpers.Logging("INFO", log, "Initialization error !")
