@@ -208,28 +208,30 @@ def find_roi_bam(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
             chr=os.path.basename(op).strip().split(".")[0]
             event=os.path.basename(op).strip().split(".")[1]
             exonsinroibed = "/".join([haplotype_path,   event + "_exons_in_roi_"+ str(chr) +'.bed'])
-            script = open(
-                '{0}find_roi_{1}_{2}.sh'.format(script_path,
-                                                     chr, event), 'w')
-            script.write('#!/bin/bash\n\n')
-            script.write('#\n')
-            script.write('#$ -cwd \n')
-            script.write('module load bedtools \n')
-            script.write('module load sambamba \n')
-            
-            script.write('sort -u {exonbed} -o {exonbed} \n'.format(exonbed=exonsinroibed))
-            script.write('bedtools pairtobed -abam {inp} '
-                         '-b {bf} -type either > {outp} \n'.format(inp = inp,
-                                           bf=exonsinroibed, outp=op))
-            script.write('sambamba sort {outp} -o '
-                          '{outpsorted} \n'.format(outp=op, outpsorted= opsorted))  
-            script.write('rm {outp} \n'.format( outp=op))
-            script.close()
-            process = pipelineHelpers.RunTask(
-                os.path.abspath(script.name), 1, bamgineer_mem,
-                sample_id,  bamhelp.name)
-            
-            task_list.append(process)                 
+
+            if (os.path.isfile(exonsinroibed)):
+                script = open(
+                    '{0}find_roi_{1}_{2}.sh'.format(script_path,
+                                                         chr, event), 'w')
+                script.write('#!/bin/bash\n\n')
+                script.write('#\n')
+                script.write('#$ -cwd \n')
+                script.write('module load bedtools \n')
+                script.write('module load sambamba \n')
+
+                script.write('sort -u {exonbed} -o {exonbed} \n'.format(exonbed=exonsinroibed))
+                script.write('bedtools pairtobed -abam {inp} '
+                             '-b {bf} -type either > {outp} \n'.format(inp = inp,
+                                               bf=exonsinroibed, outp=op))
+                script.write('sambamba sort {outp} -o '
+                              '{outpsorted} \n'.format(outp=op, outpsorted= opsorted))
+                script.write('rm {outp} \n'.format( outp=op))
+                script.close()
+                process = pipelineHelpers.RunTask(
+                    os.path.abspath(script.name), 1, bamgineer_mem,
+                    sample_id,  bamhelp.name)
+
+                task_list.append(process)
         pipelineHelpers.CheckTaskStatus(
                     task_list, output_sentinel, log, log_msg)
     pipelineHelpers.Logging('INFO', log, log_msg + 'Finished FindROI')
