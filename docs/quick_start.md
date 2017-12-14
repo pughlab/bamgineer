@@ -35,7 +35,7 @@ It is recommend
 
 ## Running Bamgineer
 
-It is recommended that users split the input bam file by chromosome (e.g. chr1.bam, chr2.bam) sorted by coordinates along with index 
+Optionally users may users split the input bam file by chromosome (e.g. chr1.bam, chr2.bam) sorted by coordinates along with index 
 files(chr.bam.bai, chr1.bam.bai ,etc) and also have them sorted by name using "by.name.bam" extension(chr1.byname.bam, chr2.byname.bam, 
 etc) prior to running the program. The directory containing these bam is given to bamgineer as an argument ( --splitdir). If no such 
 directory is given Bamgineer performs the splitting and sorting by coordinates and name as a preprocessing step. Please note that it is 
