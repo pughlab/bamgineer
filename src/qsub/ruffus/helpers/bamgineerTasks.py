@@ -42,9 +42,9 @@ def sort_by_name_task_list():
     sentinels = taskHelpers.CreateFileList(
         '{0}_sortn.sentinel', 1, sentinel_path)
     inputs.append(taskHelpers.CreateFileList(
-        'chr{1}.bam', 3, split_path+"/"))
+        'chr{1}.bam', 22, split_path+"/"))
     outputs.append(taskHelpers.CreateFileList(
-        'chr{1}.byname.bam', 3 ,split_path+"/"))
+        'chr{1}.byname.bam', 22 ,split_path+"/"))
     sample_ids = taskHelpers.CreateFileList('{0}', 1, '')
     job_parameters = taskHelpers.CreateTaskList(inputs, sentinels, outputs,
                                                 sample_ids, prev_sentinels)
@@ -64,9 +64,9 @@ def find_roi_bam_task_list():
     sentinels = taskHelpers.CreateFileList(
         '{0}_findroi.sentinel', 1, sentinel_path)
     inputs.append(taskHelpers.CreateFileList(
-        '{0}.byname.bam', 3, split_path, "extractROI"))
+        '{0}.byname.bam', 22, split_path, "extractROI"))
     outputs.append(taskHelpers.CreateFileList(
-            '{0}.{1}.roi.bam', 12, tmpbams_path,"extractROI")) # max number of outputs chr*events*haplotypes (8 for 2 chromosomes)
+            '{0}.{1}.roi.bam', 88, tmpbams_path,"extractROI")) # max number of outputs chr*events*haplotypes (8 for 2 chromosomes)
     
     sample_ids = taskHelpers.CreateFileList('{0}', 1, '')
     job_parameters = taskHelpers.CreateTaskList(inputs, sentinels, outputs,
