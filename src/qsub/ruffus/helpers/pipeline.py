@@ -24,7 +24,7 @@ import utils
 import vcf
 import gzip
 import shutil
-chr_list = [4, 5]
+chr_list = range(1,22)
 event_list=['gain','loss']
 
 sentinel_path, results_path,haplotype_path,cancer_dir_path,tmpbams_path,finalbams_path = taskHelpers.GetProjectNamePathRunID()
