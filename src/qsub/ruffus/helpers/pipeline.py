@@ -390,14 +390,15 @@ def mutate_loss(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
             chr= os.path.basename(inp).strip().split(".")[0]
            
             bedfn= "/".join([haplotype_path, 'loss_het_snp_' + chr + '.bed'])
-            diffn =   "/".join([tmpbams_path,"diff.bam"])
-            nonhet= "/".join([tmpbams_path, 'diff_only1_' +  os.path.basename(inp)])
-            hetfn=sub('.roi.sorted.bam$',".mutated.het.bam", inp)
-            hetfnsorted = sub('.roi.sorted.bam$',".mutated.het.sorted.bam", inp)
-            mergedsortfn = sub('.roi.sorted.bam$',".mutated.merged.sorted.bam", inp)
 
             if (os.path.isfile(inp) and os.path.isfile(bedfn)):
-            
+
+                diffn =   "/".join([tmpbams_path,"diff.bam"])
+                nonhet= "/".join([tmpbams_path, 'diff_only1_' +  os.path.basename(inp)])
+                hetfn=sub('.roi.sorted.bam$',".mutated.het.bam", inp)
+                hetfnsorted = sub('.roi.sorted.bam$',".mutated.het.sorted.bam", inp)
+                mergedsortfn = sub('.roi.sorted.bam$',".mutated.merged.sorted.bam", inp)
+
                 script = open('{0}mutate_{1}_{2}.sh'.format(script_path, chr, "loss"), 'w')
                 script.write('#!/bin/bash\n')
                 script.write('#')
