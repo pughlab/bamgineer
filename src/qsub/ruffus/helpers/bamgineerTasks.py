@@ -87,9 +87,9 @@ def repair_task_list():
         '{0}_repair.sentinel', 1, sentinel_path)
      
     inputs.append(taskHelpers.CreateFileList(
-        '{0}.{1}.roi.sorted.bam', 12, tmpbams_path,"gain")) 
+        '{0}.{1}.roi.sorted.bam', 88, tmpbams_path,"gain"))
     outputs.append(taskHelpers.CreateFileList(
-        '{0}.{1}.repaired.bam', 12, tmpbams_path, "gain"))
+        '{0}.{1}.repaired.bam', 88, tmpbams_path, "gain"))
 
     sample_ids = taskHelpers.CreateFileList('{0}', 1, '')
     job_parameters = taskHelpers.CreateTaskList(inputs, sentinels, outputs,
@@ -108,9 +108,9 @@ def mutate_gain_task_list():
     sentinels = taskHelpers.CreateFileList(
         '{0}_mutate_gain.sentinel', 1, sentinel_path)
      
-    inputs.append(taskHelpers.CreateFileList('{0}.{1}.roi.repaired.sorted.bam', 12, tmpbams_path, "gain"))
+    inputs.append(taskHelpers.CreateFileList('{0}.{1}.roi.repaired.sorted.bam', 88, tmpbams_path, "gain"))
     outputs.append(taskHelpers.CreateFileList(
-        '{0}.{1}.mutated.merged.renamed.bam', 12, tmpbams_path, "gain"))
+        '{0}.{1}.mutated.merged.renamed.bam', 88, tmpbams_path, "gain"))
 
     sample_ids = taskHelpers.CreateFileList('{0}', 1, '')
     job_parameters = taskHelpers.CreateTaskList(inputs, sentinels, outputs,
@@ -128,9 +128,9 @@ def subsample_gain_task_list():
     sentinels = taskHelpers.CreateFileList(
         '{0}_subsample_gain.sentinel', 1, sentinel_path)
   
-    inputs.append(taskHelpers.CreateFileList('{0}.{1}.renamed.mutated.merged.sorted.bam', 12, tmpbams_path, "gain"))
+    inputs.append(taskHelpers.CreateFileList('{0}.{1}.renamed.mutated.merged.sorted.bam', 88, tmpbams_path, "gain"))
     outputs.append(taskHelpers.CreateFileList(
-        '{0}{1}_GAIN.bam', 12, tmpbams_path, "gain"))
+        '{0}{1}_GAIN.bam', 88, tmpbams_path, "gain"))
 
     sample_ids = taskHelpers.CreateFileList('{0}', 1, '')
     job_parameters = taskHelpers.CreateTaskList(inputs, sentinels, outputs,
@@ -150,9 +150,9 @@ def mutate_loss_task_list():
     sentinels = taskHelpers.CreateFileList(
         '{0}_mutate_loss.sentinel', 1, sentinel_path)
      
-    inputs.append(taskHelpers.CreateFileList('{0}.{1}.roi.sorted.bam', 12, tmpbams_path, "loss"))
+    inputs.append(taskHelpers.CreateFileList('{0}.{1}.roi.sorted.bam', 88, tmpbams_path, "loss"))
     outputs.append(taskHelpers.CreateFileList(
-        '{0}.{1}.mutated.merged.bam', 12, tmpbams_path, "loss"))
+        '{0}.{1}.mutated.merged.bam', 88, tmpbams_path, "loss"))
 
     sample_ids = taskHelpers.CreateFileList('{0}', 1, '')
     job_parameters = taskHelpers.CreateTaskList(inputs, sentinels, outputs,
@@ -170,9 +170,9 @@ def subsample_loss_task_list():
     sentinels = taskHelpers.CreateFileList(
         '{0}_subsample_loss.sentinel', 1, sentinel_path)
      
-    inputs.append(taskHelpers.CreateFileList('{0}.{1}.mutated.merged.sorted.bam', 12, tmpbams_path, "loss"))
+    inputs.append(taskHelpers.CreateFileList('{0}.{1}.mutated.merged.sorted.bam', 88, tmpbams_path, "loss"))
     outputs.append(taskHelpers.CreateFileList(
-        '{0}{1}_GAIN.bam', 12, tmpbams_path, "loss"))
+        '{0}{1}_GAIN.bam', 88, tmpbams_path, "loss"))
 
     sample_ids = taskHelpers.CreateFileList('{0}', 1, '')
     job_parameters = taskHelpers.CreateTaskList(inputs, sentinels, outputs,
@@ -197,7 +197,7 @@ def complete_pipeline_task_list():
         '{0}_sortmerge.sentinel', 1, sentinel_path)
     
      inputs.append(taskHelpers.CreateFileList(
-         '{0}_{1}_{2}.bam', 12, finalbams_path, "FINAL"))
+         '{0}_{1}_{2}.bam', 88, finalbams_path, "FINAL"))
      
 
      outputs.append(taskHelpers.CreateFileList(params.GetOutputFileName(),1,finalbams_path ))
