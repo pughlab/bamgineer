@@ -395,31 +395,32 @@ def mutate_loss(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
             hetfn=sub('.roi.sorted.bam$',".mutated.het.bam", inp)
             hetfnsorted = sub('.roi.sorted.bam$',".mutated.het.sorted.bam", inp)
             mergedsortfn = sub('.roi.sorted.bam$',".mutated.merged.sorted.bam", inp)
+
+            if (os.path.isfile(inp) and os.path.isfile(bedfn)):
             
-            
-            script = open('{0}mutate_{1}_{2}.sh'.format(script_path, chr, "loss"), 'w')
-            script.write('#!/bin/bash\n')
-            script.write('#')
-            script.write('#$ -cwd \n')
-            script.write('module load samtools/1.2 \n')
-            script.write('module load sambamba \n')
-            script.write('module load bamUtil \n')  
-                
-            script.write('sort -u {bf} -o {bf}\n\n'.format(bf=bedfn))
-            script.write('python {path}/mutate.py {inp1} {bf} {happath}\n\n'.format(inp1=inp, bf=bedfn ,path=current_path , happath=haplotype_path))        
-            script.write('sambamba sort {het} -o {hetsort}\n\n'.format(het=hetfn, hetsort=hetfnsorted))
-            script.write('bam diff --in1 {repairedbam} --in2 {hetsort} --out {dif}\n\n'.format(repairedbam=inp, hetsort=hetfnsorted ,dif=diffn ))  
-            script.write('sambamba merge {merged} {hetonly} {nonhetonly}\n\n'.format(merged=mergedsortfn,hetonly=hetfnsorted, nonhetonly= nonhet))
-            script.write('rm {het} {nonhetonly}  \n\n'.format(het=hetfn,nonhetonly= nonhet))
-            
-            script.close()
-            process = pipelineHelpers.RunTask( 
-                os.path.abspath(script.name),4, bamgineer_mem,
-                sample_id, bamhelp.name)
-            task_list.append(process)
-                
-            pipelineHelpers.CheckTaskStatus(
-                            task_list, output_sentinel, log, log_msg)
+                script = open('{0}mutate_{1}_{2}.sh'.format(script_path, chr, "loss"), 'w')
+                script.write('#!/bin/bash\n')
+                script.write('#')
+                script.write('#$ -cwd \n')
+                script.write('module load samtools/1.2 \n')
+                script.write('module load sambamba \n')
+                script.write('module load bamUtil \n')
+
+                script.write('sort -u {bf} -o {bf}\n\n'.format(bf=bedfn))
+                script.write('python {path}/mutate.py {inp1} {bf} {happath}\n\n'.format(inp1=inp, bf=bedfn ,path=current_path , happath=haplotype_path))
+                script.write('sambamba sort {het} -o {hetsort}\n\n'.format(het=hetfn, hetsort=hetfnsorted))
+                script.write('bam diff --in1 {repairedbam} --in2 {hetsort} --out {dif}\n\n'.format(repairedbam=inp, hetsort=hetfnsorted ,dif=diffn ))
+                script.write('sambamba merge {merged} {hetonly} {nonhetonly}\n\n'.format(merged=mergedsortfn,hetonly=hetfnsorted, nonhetonly= nonhet))
+                script.write('rm {het} {nonhetonly}  \n\n'.format(het=hetfn,nonhetonly= nonhet))
+
+                script.close()
+                process = pipelineHelpers.RunTask(
+                    os.path.abspath(script.name),4, bamgineer_mem,
+                    sample_id, bamhelp.name)
+                task_list.append(process)
+
+                pipelineHelpers.CheckTaskStatus(
+                                task_list, output_sentinel, log, log_msg)
     pipelineHelpers.Logging('INFO', log, log_msg + 'Finished Mutating')
     
     
