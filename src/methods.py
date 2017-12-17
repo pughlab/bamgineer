@@ -93,6 +93,11 @@ def init_file_names(chr, event,tmpbams_path, haplotypedir):
         inbamfn = params.GetInputBam()
         splitbams = "/".join([res_path, 'splitbams'])
 
+        if not os.path.exists(splitbams):
+            os.makedirs(splitbams)
+
+        split_bam_by_chr(inbamfn, splitbams)
+
 
 
 def find_roi_bam(chromosome_event):
