@@ -227,11 +227,13 @@ def subsample(bamfn1, bamfn2, samplingrate = 0.5):
     runCommand(command)
 
 def splitBamByChr(inbamfn, path,chr):
+    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     command = " ".join([samtools_path, "view -bh", inbamfn, chr, ">", "/".join(path/chr+".bam")])
     print(command)
     runCommand(command)
 
 def sortByName(inbamfn, outbamfn):
+    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     command = " ".join([samtools_path, "sort -n", inbamfn, "-o", outbamfn])
     print(command)
     runCommand(command)
