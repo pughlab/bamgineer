@@ -229,7 +229,6 @@ def subsample(bamfn1, bamfn2, samplingrate = 0.5):
 def splitBamByChr(inbamfn, path,chr):
 
     if(chr is not None ):
-        print("/".join([path,str(chr)+".bam"]))
         java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
         command = " ".join([samtools_path, "view -bh", inbamfn, str(chr), ">",  "/".join([path,str(chr)+".bam"])])
         sortByName("/".join[path,str(chr)+".bam"], "/".join[path,str(chr)+".byname.bam"])
