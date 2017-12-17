@@ -225,7 +225,7 @@ def split_bam_by_chr(inbam, split_path):
     try:
         if not terminating.is_set():
             logger.debug("___ spliting bam by chromosome ___")
-            splitBamByChr( inbam , split_path,'chr'+chr_list)
+            splitBamByChr( inbam , split_path,'chr'+str(chr_list))
 
 
     except (KeyboardInterrupt):
