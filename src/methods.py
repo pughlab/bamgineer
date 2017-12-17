@@ -89,15 +89,15 @@ def init_file_names(chr, event,tmpbams_path, haplotypedir):
         hetsnp   = "/".join([haplotypedir, event+'_het_snp_' + chr + '.bed'])
         flist.extend([roibam,sortbyname,sortbyCoord,hetsnp])
         return flist
-    else:
-        inbamfn = params.GetInputBam()
-        splitbams = "/".join([res_path, 'splitbams'])
-        params.SetSplitBamsPath(splitbams)
-
-        if not os.path.exists(splitbams):
-            os.makedirs(splitbams)
-
-        split_bam_by_chr(inbamfn, splitbams)
+    # else:
+    #     inbamfn = params.GetInputBam()
+    #     splitbams = "/".join([res_path, 'splitbams'])
+    #     params.SetSplitBamsPath(splitbams)
+    #
+    #     if not os.path.exists(splitbams):
+    #         os.makedirs(splitbams)
+    #
+    #     split_bam_by_chr(inbamfn, splitbams)
 
 
 
@@ -220,13 +220,12 @@ def mutate_reads(bamsortfn,chr, event):
         return
     return        
 
-def split_bam_by_chr(inbam, split_path):
-    chr_list = range(1, 22)
+def split_bam_by_chr(inbam,  chr_list):
+
     try:
         if not terminating.is_set():
             logger.debug("___ spliting bam by chromosome ___")
-            splitBamByChr( inbam , split_path,'chr'+str(chr_list))
-
+            splitBamByChr( inbam ,'chr'+str(chr_list))
 
     except (KeyboardInterrupt):
         logger.error('Exception Crtl+C pressed in the child process  in split_bam_by_chr')
@@ -496,6 +495,18 @@ def run_pipeline(results_path):
     initialize(results_path,haplotype_path,cancer_dir_path)
     pool1 = multiprocessing.Pool(processes=12, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating] ) 
     try:
+        if(not params.GetSplitBamsPath()):
+            chr_list = range(1, 22)
+
+            splitbams = "/".join([res_path, 'splitbams'])
+            params.SetSplitBamsPath(splitbams)
+
+            if not os.path.exists(splitbams):
+                os.makedirs(splitbams)
+
+            result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
+
+
         result1 = pool1.map_async(find_roi_bam, chromosome_event ).get(9999999)
         result2 = pool1.map_async(implement_cnv, chromosome_event ).get(9999999)
         pool1.close()
