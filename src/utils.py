@@ -231,7 +231,7 @@ def splitBamByChr(inbamfn, path,chr):
 
 
     command = " ".join([samtools_path, "view -bh", inbamfn, chr, ">",  "/".join[path,chr+".bam"]])
-    sortByName["/".join(path,chr+".bam"], "/".join[path,chr+".byname.bam"])
+    sortByName["/".join[path,chr+".bam"], "/".join[path,chr+".byname.bam"])
     print(command)
     runCommand(command)
 
