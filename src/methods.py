@@ -80,25 +80,19 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
 def init_file_names(chr, event,tmpbams_path, haplotypedir):
     
     flist=[]
+
+    roibam = "/".join([tmpbams_path, chr + event + "_roi.bam"])
     splitbams = params.GetSplitBamsPath()
+    hetsnp = "/".join([haplotypedir, event + '_het_snp_' + chr + '.bed'])
 
-    if(splitbams):
-        roibam = "/".join([tmpbams_path ,chr + event +"_roi.bam"])
-        sortbyname =  "/".join([splitbams,  chr + '.byname.bam'])
-        sortbyCoord = "/".join([splitbams,  chr + '.bam'])
-        hetsnp   = "/".join([haplotypedir, event+'_het_snp_' + chr + '.bed'])
-        flist.extend([roibam,sortbyname,sortbyCoord,hetsnp])
-        return flist
-    # else:
-    #     inbamfn = params.GetInputBam()
-    #     splitbams = "/".join([res_path, 'splitbams'])
-    #     params.SetSplitBamsPath(splitbams)
-    #
-    #     if not os.path.exists(splitbams):
-    #         os.makedirs(splitbams)
-    #
-    #     split_bam_by_chr(inbamfn, splitbams)
+    if(not splitbams):
+        splitbams = "/".join([res_path, 'splitbams'])
 
+    sortbyname =  "/".join([splitbams,  chr + '.byname.bam'])
+    sortbyCoord = "/".join([splitbams,  chr + '.bam'])
+
+    flist.extend([roibam,sortbyname,sortbyCoord,hetsnp])
+    return flist
 
 
 def find_roi_bam(chromosome_event):
