@@ -223,8 +223,16 @@ def mutate_reads(bamsortfn,chr, event):
 def split_bam_by_chr(chr_list):
 
     inbam = params.GetInputBam()
-    spltbams_path = params.GetSplitBamsPath()
+
+
+
+    spltbams_path = "/".join([res_path, 'splitbams'])
     print(spltbams_path)
+
+
+    if not os.path.exists(spltbams_path):
+        os.makedirs(spltbams_path)
+
     try:
         if not terminating.is_set():
             logger.debug("___ spliting bam by chromosome ___")
@@ -500,14 +508,6 @@ def run_pipeline(results_path):
     try:
         if(not params.GetSplitBamsPath()):
             chr_list = range(1, 22)
-
-
-            splitbams = "/".join([res_path, 'splitbams'])
-            params.SetSplitBamsPath(splitbams)
-
-            if not os.path.exists(splitbams):
-                os.makedirs(splitbams)
-
             result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
 
 
