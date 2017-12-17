@@ -223,12 +223,12 @@ def mutate_reads(bamsortfn,chr, event):
 def split_bam_by_chr(chr_list):
 
     inbam = params.GetInputBam()
-    split_bam_path = params.GetSplitBamsPath()
-    print(split_bam_path)
+    spltbams_path = params.GetSplitBamsPath()
+    print(spltbams_path)
     try:
         if not terminating.is_set():
             logger.debug("___ spliting bam by chromosome ___")
-            splitBamByChr( inbam ,split_bam_path,'chr'+str(chr_list))
+            splitBamByChr( inbam ,spltbams_path,'chr'+str(chr_list))
 
     except (KeyboardInterrupt):
         logger.error('Exception Crtl+C pressed in the child process  in split_bam_by_chr')
@@ -500,6 +500,7 @@ def run_pipeline(results_path):
     try:
         if(not params.GetSplitBamsPath()):
             chr_list = range(1, 22)
+
 
             splitbams = "/".join([res_path, 'splitbams'])
             params.SetSplitBamsPath(splitbams)
