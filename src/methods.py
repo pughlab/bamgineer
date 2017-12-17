@@ -83,7 +83,6 @@ def init_file_names(chr, event,tmpbams_path, haplotypedir):
     splitbams = params.GetSplitBamsPath()
 
     if(splitbams):
-        print('THEREEE')
         roibam = "/".join([tmpbams_path ,chr + event +"_roi.bam"])
         sortbyname =  "/".join([splitbams,  chr + '.byname.bam'])
         sortbyCoord = "/".join([splitbams,  chr + '.bam'])
@@ -91,7 +90,10 @@ def init_file_names(chr, event,tmpbams_path, haplotypedir):
         flist.extend([roibam,sortbyname,sortbyCoord,hetsnp])
         return flist
     else:
-        print ('herrrrreeeee')
+        inbamfn = params.GetInputBam()
+        splitbams = "/".join([res_path, 'splitbams'])
+
+
 
 def find_roi_bam(chromosome_event):
     chr,event = chromosome_event .split("_")
@@ -212,9 +214,28 @@ def mutate_reads(bamsortfn,chr, event):
         return
     return        
 
+def split_bam_by_chr(inbam, tmpbams_path):
+    chr_list = range(1, 22)
+    try:
+        if not terminating.is_set():
+            logger.debug("___ spliting bam by chromosome ___")
+
+
+
+    except (KeyboardInterrupt):
+        logger.error('Exception Crtl+C pressed in the child process  in split_bam_by_chr')
+        terminating.set()
+        return False
+    except Exception as e:
+        logger.exception("Exception in split_bam_by_chr %s" ,e )
+        terminating.set()
+        return False
+    return
+
 #cn change is 1 for CN=1,3 and 2 for CN=0,4
 def calculate_sample_rate(inbam, outbam, cnchange, purity):
-    logger.debug("___ adjusting sample rate ___")
+
+            logger.debug("___ adjusting sample rate ___")
 
 def implement_cnv(chromosome_event):
     chr,event = chromosome_event .split("_")
@@ -286,59 +307,7 @@ def implement_cnv(chromosome_event):
         logger.debug("implement_cnv complete successfully for "+chr + event) 
     return           
 
-def re_pair_reads_v0(bamsortfn): 
-    try:
-        if not terminating.is_set():
-            logger.debug(" calling  re-pair-reads" )
-             
-            bamrepairedfn = sub('.sorted.bam$',  ".re_paired.bam", bamsortfn)
-            bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
-          
-            
-            if(os.path.isfile(bamsortfn)):
-                
-                  
-                itr1 = pysam.Samfile(bamsortfn, 'rb')
-                itr2 = pysam.Samfile(bamsortfn, 'rb')
-                
-                outbam = pysam.Samfile(bamrepairedfn, 'wb', template=itr1)
-        
-                #for read in inbam:
-                itr2.next()
-                for read,readnext in izip(itr1, itr2):   
-                   
-                    if(read.is_paired and readnext.is_paired):
-                    
-                        if((read.is_read1 and readnext.is_read2) or (read.is_read2 and readnext.is_read1)):
-                            tlenabs = abs( readnext.pos - read.pos) + abs(readnext.qlen)
-                            if(read.is_read2):
-                                tlenabs = - tlenabs    
-                        
-                            
-                            read.tlen = tlenabs
-                            readnext.tlen = -tlenabs
-                            read.pnext = readnext.pos
-                            readnext.pnext = read.pos
-                            readnext.qname = read.qname 
-                            outbam.write(read)
-                            outbam.write(readnext)
-                            writtencount = writtencount + 1
-                        else:
-                            itr2.next()
-
-                outbam.close()
-            
-    except (KeyboardInterrupt):
-        logger.error('Exception Crtl+C pressed in the child process  in re_pair_reads')
-        terminating.set()
-        return False
-    except Exception as e:   
-        logger.exception("Exception in re_pair_reads %s" ,e )
-        terminating.set()
-        return False
-    return  
-
-def re_pair_reads(bamsortfn): 
+def re_pair_reads(bamsortfn):
     try:
         if not terminating.is_set():
             logger.debug(" calling  re-pair-reads version" )
@@ -506,8 +475,9 @@ def removeReadsOverlappingHetRegion(inbamfn, bedfn,outbamfn,path):
     outbam.close()           
 
 def run_pipeline(results_path):
-   
-    global haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path,log_path, logfile ,terminating,logger,logQueue
+
+    global haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path,log_path, logfile ,terminating,logger,logQueue, res_path
+    res_path = results_path
     haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path,log_path, logfile = handle.GetProjectPaths(results_path)
     terminating,logger,logQueue = handle.GetLoggings(logfile)
     

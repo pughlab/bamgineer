@@ -17,22 +17,22 @@ def main(args):
     params.SetSplitBamsPath(args.splitbams)
     params.SetPhase(args.phase)
     params.SetctDNA(args.ctDNA)
-    
+
+    if(args.inbamFile):
+        params.SetInputBam(args.inbamFile)
+
     results_path = configReader.get('RESULTS', 'results_path')
-    
+
     #set software paths
     java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path = params.GetSoftwarePath()
     params.SetSoftwarePath(java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path)
-    
-    if(args.splitbams):
-        if(args.phase):    
-            run_pipeline(results_path)
-        else:
-            print ("user should provide phased vcf files")
+
+
+    if(args.phase):
+        run_pipeline(results_path)
     else:
-        print("split the bams first")
-       
-        
+        print ("user should provide phased vcf files")
+
     
         
 if __name__ == '__main__':

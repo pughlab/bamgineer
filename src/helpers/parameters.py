@@ -12,6 +12,7 @@ spltbams_path  = ''
 het_path = ''
 nonhet_path = ''
 outbamfn = ''
+inbamfn = ''
 results_path=''
 java_path =''
 beagle_path=''
@@ -96,6 +97,14 @@ def SetBeaglePath(path):
     java_path = path
 def GetBeaglePath():
     return java_path
+
+def SetInputBam(in_bam_fn):
+    global inbamfn
+    inbamfn = in_bam_fn
+def GetInputBam():
+    return inbamfn
+
+
 
 def SetSoftwarePath(j_path, b_path, s_path, bd_path, v_path,sb_path):
     

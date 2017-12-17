@@ -225,7 +225,12 @@ def subsample(bamfn1, bamfn2, samplingrate = 0.5):
     java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
     command = " ".join([samtools_path,"view -s", samplingrate ,"-b", bamfn1, ">", bamfn2])
     runCommand(command)
-  
+
+def splitBamByChr(inbamfn, path,chr):
+    command = " ".join([samtools_path, "view -bh", inbamfn, chr, ">", "/".join(path/chr+".bam")])
+    print(command)
+    runCommand(command)
+
 def sortByName(inbamfn, outbamfn):
     command = " ".join([samtools_path, "sort -n", inbamfn, "-o", outbamfn])
     print(command)
@@ -352,36 +357,14 @@ def splitPairAndStrands(inbamfn):
     read2_strand2sortfn =  sub('.bam$', '.read2_neg.bam', inbamfn)
     
     read_comp =  sub('.bam$', '.complementary.bam', inbamfn)
-    #read1_strand1comp =  sub('.bam$', '.read1_pos_comp.bam', inbamfn)
-    #read1_strand2comp =  sub('.bam$', '.read1_neg_comp.bam', inbamfn)
-    #read2_strand1comp =  sub('.bam$', '.read2_pos_comp.bam', inbamfn)
-    #read2_strand2comp =  sub('.bam$', '.read2_neg_comp.bam', inbamfn)
-    
-    
-    
     mapped_all  =  sub('sorted.bam$', 'mapped_all.bam', inbamfn)
-    
-    #command1 = " ".join([samtools_path ,"view -u -h -f 0x0040", inbamfn, ">", read1_strand1sortfn])
-    #command2 = " ".join([samtools_path ,"view -u -h -f 0x0050", inbamfn, ">", read1_strand2sortfn])
-    #command3 = " ".join([samtools_path ,"view -u -h -f 0x0080", inbamfn, ">", read2_strand1sortfn])
-    #command4 = " ".join([samtools_path ,"view -u -h -f 0x0090", inbamfn, ">", read2_strand2sortfn])
-    
-    #command1 = " ".join([samtools_path ,"view -u -h -f 0x0063", inbamfn, ">", read1_strand1sortfn])
-    #command2 = " ".join([samtools_path ,"view -u -h -f 0x0053", inbamfn, ">", read1_strand2sortfn])
-    #command3 = " ".join([samtools_path ,"view -u -h -f 0x0093", inbamfn, ">", read2_strand1sortfn])
-    #command4 = " ".join([samtools_path ,"view -u -h -f 0x00A3", inbamfn, ">", read2_strand2sortfn])
     
     command1 = " ".join([samtools_path ,"view -u -h -f 0x0061", inbamfn, ">", read1_strand1sortfn])
     command2 = " ".join([samtools_path ,"view -u -h -f 0x0051", inbamfn, ">", read1_strand2sortfn])
     command3 = " ".join([samtools_path ,"view -u -h -f 0x0091", inbamfn, ">", read2_strand1sortfn])
     command4 = " ".join([samtools_path ,"view -u -h -f 0x00A1", inbamfn, ">", read2_strand2sortfn])
     
-    #command1 = " ".join([samtools_path ,"view -u -h -f 0x0060", inbamfn, ">", read1_strand1sortfn])
-    #command2 = " ".join([samtools_path ,"view -u -h -f 0x0050", inbamfn, ">", read1_strand2sortfn])
-    #command3 = " ".join([samtools_path ,"view -u -h -f 0x0090", inbamfn, ">", read2_strand1sortfn])
-    #command4 = " ".join([samtools_path ,"view -u -h -f 0x00A0", inbamfn, ">", read2_strand2sortfn])
-    #command5 = " ".join([sambamba_path ,"merge" , mapped_all , read1_strand1sortfn, read1_strand2sortfn, read2_strand1sortfn, read2_strand2sortfn])
-   
+
     command5 = " ".join([sambamba_path ,"""view -F "unmapped or mate_is_unmapped or secondary_alignment or not (paired) or duplicate" """, "-f bam" ,inbamfn ,">", read_comp])
    
     runCommand(command1)
@@ -391,10 +374,7 @@ def splitPairAndStrands(inbamfn):
     
     runCommand(command5)
 
-    
-    #runCommand(command5)
-    
-   
+
 def extract_proper_paired_reads(inbamfn, properfn):
     #properfn = sub('.bam$', '_proper.bam', inbamfn)
     java_path, beagle_path,samtools_path, bedtools_path, vcftools_path,sambamba_path  = params.GetSoftwarePath() 
