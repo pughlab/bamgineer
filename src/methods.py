@@ -500,7 +500,8 @@ def run_pipeline(results_path):
         if(not params.GetSplitBamsPath()):
             chr_list = range(1, 22)
 
-            global splitbams = "/".join([res_path, 'splitbams'])
+            global splitbams
+            splitbams = "/".join([res_path, 'splitbams'])
             params.SetSplitBamsPath(splitbams)
 
             if not os.path.exists(splitbams):
