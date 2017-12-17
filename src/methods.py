@@ -220,8 +220,9 @@ def mutate_reads(bamsortfn,chr, event):
         return
     return        
 
-def split_bam_by_chr(inbam,  chr_list):
+def split_bam_by_chr(chr_list):
 
+    inbam = params.GetInputBam()
     try:
         if not terminating.is_set():
             logger.debug("___ spliting bam by chromosome ___")
