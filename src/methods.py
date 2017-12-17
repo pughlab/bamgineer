@@ -431,6 +431,7 @@ def re_pair_reads(bamsortfn):
                 outbam.close() 
                 
                 sortBam(bamrepairedfn, bamrepairedsortfn)
+                os.remove(bamrepairedfn)
 
     except (KeyboardInterrupt):
         logger.error('Exception Crtl+C pressed in the child process  in re_pair_reads')
