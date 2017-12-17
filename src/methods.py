@@ -81,12 +81,17 @@ def init_file_names(chr, event,tmpbams_path, haplotypedir):
     
     flist=[]
     splitbams = params.GetSplitBamsPath()
-    roibam = "/".join([tmpbams_path ,chr + event +"_roi.bam"])
-    sortbyname =  "/".join([splitbams,  chr + '.byname.bam'])
-    sortbyCoord = "/".join([splitbams,  chr + '.bam'])
-    hetsnp   = "/".join([haplotypedir, event+'_het_snp_' + chr + '.bed'])
-    flist.extend([roibam,sortbyname,sortbyCoord,hetsnp])
-    return flist
+
+    if(splitbams):
+        print('THEREEE')
+        roibam = "/".join([tmpbams_path ,chr + event +"_roi.bam"])
+        sortbyname =  "/".join([splitbams,  chr + '.byname.bam'])
+        sortbyCoord = "/".join([splitbams,  chr + '.bam'])
+        hetsnp   = "/".join([haplotypedir, event+'_het_snp_' + chr + '.bed'])
+        flist.extend([roibam,sortbyname,sortbyCoord,hetsnp])
+        return flist
+    else:
+        print ('herrrrreeeee')
 
 def find_roi_bam(chromosome_event):
     chr,event = chromosome_event .split("_")
