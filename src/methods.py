@@ -501,10 +501,9 @@ def run_pipeline(results_path):
     try:
         if(not params.GetSplitBamsPath()):
             chr_list = range(1, 22)
-            spltbams_path = "/".join([res_path, 'splitbams'])
 
-            if not os.path.exists(spltbams_path):
-                os.makedirs(spltbams_path)
+            if not os.path.exists("/".join([res_path, 'splitbams'])):
+                os.makedirs("/".join([res_path, 'splitbams']))
 
             result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
 
