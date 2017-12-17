@@ -501,7 +501,7 @@ def run_pipeline(results_path):
             if not os.path.exists("/".join([res_path, 'splitbams'])):
                 os.makedirs("/".join([res_path, 'splitbams']))
 
-        result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
+            result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
 
         result1 = pool1.map_async(find_roi_bam, chromosome_event ).get(9999999)
         result2 = pool1.map_async(implement_cnv, chromosome_event ).get(9999999)
