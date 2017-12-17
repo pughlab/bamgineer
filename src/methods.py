@@ -225,8 +225,6 @@ def split_bam_by_chr(chr_list):
     inbam = params.GetInputBam()
     spltbams_path = "/".join([res_path, 'splitbams'])
 
-    if not os.path.exists(spltbams_path):
-        os.makedirs(spltbams_path)
 
     try:
         if not terminating.is_set():
@@ -503,6 +501,11 @@ def run_pipeline(results_path):
     try:
         if(not params.GetSplitBamsPath()):
             chr_list = range(1, 22)
+            spltbams_path = "/".join([res_path, 'splitbams'])
+
+            if not os.path.exists(spltbams_path):
+                os.makedirs(spltbams_path)
+
             result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
 
         result1 = pool1.map_async(find_roi_bam, chromosome_event ).get(9999999)
