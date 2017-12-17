@@ -229,6 +229,22 @@ def implement_cnv(chromosome_event):
                     GAIN_FINAL = "/".join([finalbams_path,  str(chr).upper() +'_GAIN.bam'])
                     if(os.path.isfile(bamsortfn)):
                         re_pair_reads(bamsortfn)
+                        mutate_reads(bamrepairedsortfn, chr, 'gain')
+                        renamereads(mergedsortfn, mergedrenamedfn)
+                        ratio_kept = float(countReads(mergedrenamedfn))/float(countReads(bamsortfn))
+                        samplerate= round(0.5/(ratio_kept),2)
+
+                        logger.debug("ratios kept for:"+ ntpath.basename(bamsortfn)+ ": "+ str(ratio_kept) )
+                        #os.remove(bamfn)
+                        if(samplerate < 1.0):
+                           subsample(mergedrenamedfn, GAIN_FINAL,str(samplerate)) #calculate it later
+                           logger.debug("___ sampling rate for " + ntpath.basename(bamsortfn)  +" : "+ str(samplerate))
+                        elif(samplerate > 1.0 and samplerate< 1.05):
+                           os.rename(mergedrenamedfn, GAIN_FINAL)
+                        else:
+                           logger.error('not enough reads for '+ntpath.basename(bamsortfn)+ 'rate: '+str(samplerate) )
+                           success = False
+                           return
 
             elif(event== 'loss'):
                
