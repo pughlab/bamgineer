@@ -92,6 +92,7 @@ def init_file_names(chr, event,tmpbams_path, haplotypedir):
     else:
         inbamfn = params.GetInputBam()
         splitbams = "/".join([res_path, 'splitbams'])
+        params.SetSplitBamsPath(splitbams)
 
         if not os.path.exists(splitbams):
             os.makedirs(splitbams)
@@ -219,12 +220,12 @@ def mutate_reads(bamsortfn,chr, event):
         return
     return        
 
-def split_bam_by_chr(inbam, tmpbams_path):
+def split_bam_by_chr(inbam, split_path):
     chr_list = range(1, 22)
     try:
         if not terminating.is_set():
             logger.debug("___ spliting bam by chromosome ___")
-
+            splitBamByChr( inbam , split_path,'chr'+chr_list)
 
 
     except (KeyboardInterrupt):
