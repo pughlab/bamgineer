@@ -223,12 +223,7 @@ def mutate_reads(bamsortfn,chr, event):
 def split_bam_by_chr(chr_list):
 
     inbam = params.GetInputBam()
-
-
-
     spltbams_path = "/".join([res_path, 'splitbams'])
-    print(spltbams_path)
-
 
     if not os.path.exists(spltbams_path):
         os.makedirs(spltbams_path)
