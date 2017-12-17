@@ -230,6 +230,7 @@ def split_bam_by_chr(chr_list):
         if not terminating.is_set():
             logger.debug("___ spliting bam by chromosome ___")
             splitBamByChr( inbam ,spltbams_path,'chr'+str(chr_list))
+            sortByName("/".join([spltbams_path, str(chr) + ".bam"]), "/".join([spltbams_path, str(chr) + ".byname"]))
 
     except (KeyboardInterrupt):
         logger.error('Exception Crtl+C pressed in the child process  in split_bam_by_chr')
