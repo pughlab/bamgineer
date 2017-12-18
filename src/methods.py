@@ -296,7 +296,16 @@ def mutate_reads(bamsortfn, chr, event):
                 covfile.close()
                 snpaltratiofile.close()
                 sortBam(outbamfn, outbamsortfn + '.bam')
-                #bamDiff(bamsortfn, outbamsortfn + '.bam', tmpbams_path)
+
+                bamDiff(bamsortfn, outbamsortfn + '.bam', tmpbams_path)
+
+                if("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfn)])):
+
+                    merge_bams("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfn)]), outbamsortfn + '.bam',
+                                          mergedsortfn)
+
+                else:
+                    merge_bams(bamsortfn,outbamsortfn + '.bam',mergedsortfn)
 
                 #merge_bams("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfn)]), outbamsortfn + '.bam',
                 #           mergedsortfn)
