@@ -792,7 +792,7 @@ def implement_cnv_amp(chromosome_event):
 
                     logger.debug("ratios kept for:" + ntpath.basename(bamsortfn) + ": " + str(ratio_kept))
 
-                    print(' ratio kept for amp '+ratio_kept)
+                    print(' ratio kept for amp '+str(ratio_kept))
                     # os.remove(bamfn)
                     #if (samplerate < 1.0):
                     #    subsample(mergedrenamedfn, GAIN_FINAL, str(samplerate))  # calculate it later
