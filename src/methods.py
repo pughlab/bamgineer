@@ -674,8 +674,8 @@ def re_pair_reads_amp(bamsortfn):
                             if (
                                     read1.reference_id != read1.next_reference_id or read2.reference_id != read2.next_reference_id or
                                     read1next.reference_id != read1next.next_reference_id or read2next.reference_id != read2next.next_reference_id or
-                                    tlenabs1 < 0.1 * abs(read1.tlen) or tlenabs1 > 10 * abs(read1.tlen) or
-                                    tlenabs2 < 0.1 * abs(read1next.tlen) or tlenabs2 > 10 * abs(read1next.tlen)):
+                                    tlenabs1 < 0.05 * abs(read1.tlen) or tlenabs1 > 20 * abs(read1.tlen) or
+                                    tlenabs2 < 0.05 * abs(read1next.tlen) or tlenabs2 > 20 * abs(read1next.tlen)):
                                 continue
 
                             if (strand == 'pos'):
@@ -712,10 +712,10 @@ def re_pair_reads_amp(bamsortfn):
 
                                 if (not params.GetctDNA()):
                                     criteria1 = (
-                                            tlenabs1 > 0.2 * tlenmean and tlenabs1 < 5 * tlenmean and read2next.qname != read1.qname and tlenabs1 > 0 and
+                                            tlenabs1 > 0.05 * tlenmean and tlenabs1 < 20 * tlenmean and read2next.qname != read1.qname and tlenabs1 > 0 and
                                             not read1.is_duplicate and not read1.is_secondary and not read2next.is_duplicate and not read2next.is_secondary)
                                     criteria2 = (
-                                            tlenabs2 > 0.2 * tlenmean and tlenabs2 < 5 * tlenmean and read1next.qname != read2.qname and tlenabs2 > 0 and
+                                            tlenabs2 > 0.05 * tlenmean and tlenabs2 < 20 * tlenmean and read1next.qname != read2.qname and tlenabs2 > 0 and
                                             not read2.is_duplicate and not read2.is_secondary and not read1next.is_duplicate and not read1next.is_secondary)
                                 else:  # ctDNA
 
