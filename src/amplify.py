@@ -6,6 +6,8 @@ from helpers import parameters as params
 from methods import *
 
 def main(args):
+    configReader = params.GetConfigReader()
+    params.InitConfigReader(args.configfile)
     outbamfn = args.outBamFile
     params.SetGainCNV(args.cnvAmpFile)
     params.SetCopyNumber(args.copyNumber)
