@@ -553,11 +553,43 @@ def initialize_amp(results_path, haplotype_path, cancer_dir_path):
         reference_path = bamhelp.GetRef()
         vpath, vcf = os.path.split(vcf_path)
         vcftobed = "/".join([results_path, sub('.vcf$', '.bed', vcf)])
-        convertvcftobed(vcf_path, vcftobed )
+        convertvcftobed(vcf_path, "/".join([haplotype_path,vcftobed ]) )
     except:
         logger.exception("Initialization error !")
         raise
     logger.debug("--- initialization complete ---")
+    return
+
+
+def find_roi_amp(chromosome_event):
+    chr, event = chromosome_event.split("_")
+    roi, sortbyname, sortbyCoord, hetsnp = init_file_names(chr, event, tmpbams_path, haplotype_path)
+    exonsinroibed = "/".join([haplotype_path, event + "_exons_in_roi_" + chr + '.bed'])
+    success = True
+    try:
+        if not terminating.is_set():
+            roisort = sub('.bam$', '.sorted', roi)
+            if (os.path.isfile(exonsinroibed)):
+                cmd = " ".join(["sort -u", exonsinroibed, "-o", exonsinroibed]);
+                runCommand(cmd)
+                extractPairedReadfromROI(sortbyname, exonsinroibed, roi)
+                removeIfEmpty(tmpbams_path, ntpath.basename(roi))
+                pysam.sort(roi, roisort)
+                pysam.index(roisort + '.bam')
+                os.remove(roi)
+
+    except (KeyboardInterrupt):
+        logger.error('Exception Crtl+C pressed in the child process  in find_roi_bam for chr ' + chr + event)
+        terminating.set()
+        success = False
+        return
+    except Exception as e:
+        logger.exception("Exception in find_roi_bam %s", e)
+        terminating.set()
+        success = False
+        return
+    if (success):
+        logger.debug("find_roi_bam complete successfully for " + chr + event)
     return
 
 
@@ -588,7 +620,7 @@ def run_amp_pipeline(results_path):
 
             result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
 
-        result1 = pool1.map_async(find_roi_bam, chromosome_event).get(9999999)
+        result1 = pool1.map_async(find_roi_amp, chromosome_event).get(9999999)
 
     except KeyboardInterrupt:
         logger.debug('You cancelled the program!')
