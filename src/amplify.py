@@ -9,6 +9,7 @@ def main(args):
     outbamfn = args.outBamFile
     params.SetGainCNV(args.cnvAmpFile)
     params.SetCopyNumber(args.copyNumber)
+    params.SetSplitBamsPath(args.splitbams)
 
     if(args.copyNumber <= 3):
         print('please use simulate module for copy number below 4')
@@ -41,6 +42,8 @@ if __name__ == '__main__':
                         help='sam/bam file from which to obtain reads')
     parser.add_argument('-c', '--configFile', action='store', required=True, dest='configfile',
                         help='/path/to/config_file.cfg')
+    parser.add_argument('-splitbamdir', dest='splitbams', required=False,
+                        help='input bam split by chromosomes')
 
     args = parser.parse_args()
 
