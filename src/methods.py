@@ -126,95 +126,6 @@ def find_roi_bam(chromosome_event):
         logger.debug("find_roi_bam complete successfully for "+chr + event) 
     return           
     
-# def mutate_reads(bamsortfn,chr, event):
-#     fn,sortbyname,sortbyCoord, bedfn = init_file_names(chr, event, tmpbams_path, haplotype_path)
-#     cmd=" ".join(["sort -u", bedfn, "-o", bedfn]); runCommand(cmd)
-#     outbamfn = sub('.sorted.bam$',".mutated_het.bam", bamsortfn)
-#     outbamsortfn = sub('.sorted.bam$',".mutated_het.sorted", bamsortfn)
-#     allreadsfn = sub('.sorted.bam$',".all.reads.bam", bamsortfn)
-#     allreadssortfn = sub('.sorted.bam$',".all.reads.sorted", bamsortfn)
-#     mergedsortfn = sub('.sorted.bam$',".mutated_merged.sorted.bam", bamsortfn)
-#     try:
-#         if not terminating.is_set():
-#
-#             if(os.path.isfile(bamsortfn) and os.path.isfile(bedfn) ):
-#                 samfile = pysam.Samfile(bamsortfn, "rb" )
-#                 alignmentfile = pysam.AlignmentFile(bamsortfn, "rb" )
-#                 outbam = pysam.Samfile(outbamfn, 'wb', template=samfile)
-#                 allreads = pysam.Samfile(allreadsfn, 'wb', template=samfile)
-#
-#                 bedfile = open(bedfn, 'r')
-#                 covpath = "/".join([haplotype_path, "written_coverage_het.txt"])
-#                 covfile = open(covpath, 'w')
-#                 snpratiopath = "/".join([haplotype_path, "het_snp_ratio.txt"])
-#                 snpaltratiofile = open(snpratiopath,'w')
-#                 writtenreads = []
-#
-#                 num_reads_written = 0
-#                 num_total_reads = 0
-#
-#                 for bedline in bedfile:
-#                     c = bedline.strip().split()
-#                     if (len(c) == 6 ):
-#                         chr2 = c[0]; chr = c[0].strip("chr"); start = int(c[1]);end = int(c[2])
-#                         refbase = str(c[3]); altbase = str(c[4]); haplotype = str(c[5])
-#                     else:
-#                         continue
-#
-#                     readmappings = alignmentfile.fetch(chr2, start, end)
-#                     for shortread in readmappings:
-#
-#                         allreads.write(shortread)
-#                         num_total_reads += 1
-#                         problem_with_read = False
-#
-#                         try:
-#                             index = shortread.get_reference_positions(full_length=True).index(start)
-#                             tmpread = shortread.query_sequence
-#                             qual = shortread.query_qualities
-#                             mutated_hap1 = tmpread[:index] +  altbase + tmpread[index + 1:]
-#                             mutated_hap2 = tmpread[:index] +  refbase + tmpread[index + 1:]
-#                             if(haplotype == "hap1"):
-#                                 shortread.query_sequence = mutated_hap1
-#
-#                             elif(haplotype == "hap2"):
-#                                 shortread.query_sequence = mutated_hap2
-#
-#                             shortread.query_qualities = qual
-#
-#                         except Exception as e:
-#                             print('Exception! ')
-#                             problem_with_read = True
-#                             pass
-#
-#                         #if(shortread.cigarstring == "122M"):
-#                         if(not problem_with_read):
-#                             outbam.write(shortread)
-#                             num_reads_written+=1
-#
-#                 outbam.close()
-#                 allreads.close()
-#
-#                 ratio = float(num_reads_written)/float(num_total_reads)
-#                 bamsortfnsampled = sub('.sorted.bam$',".sampled.nh.bam", bamsortfn)
-#
-#                 subsample(bamsortfn, bamsortfnsampled ,str(ratio))
-#
-#                 #os.remove("/".join([tmpbams_path,  'diff_only1_' +  os.path.basename(bamsortfnsampled)]))
-#                 #os.remove(outbamfn)
-#
-#
-#     except (KeyboardInterrupt):
-#         logger.error('Exception Crtl+C pressed in the child process  in mutaute_reads')
-#         terminating.set()
-#         return
-#     except Exception as e:
-#         logger.exception("Exception in mutate_reads %s" ,e )
-#         terminating.set()
-#         return
-#     return
-
-
 def mutate_reads(bamsortfn, chr, event):
     fn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, event, tmpbams_path, haplotype_path)
     cmd = " ".join(["sort -u", bedfn, "-o", bedfn]);
@@ -307,11 +218,7 @@ def mutate_reads(bamsortfn, chr, event):
                 else:
                     merge_bams(bamsortfn,outbamsortfn + '.bam',mergedsortfn)
 
-                #merge_bams("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfn)]), outbamsortfn + '.bam',
-                #           mergedsortfn)
-                #os.remove("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfn)]))
                 os.remove(outbamfn)
-                #os.remove(outbamsortfn + '.bam')
 
     except (KeyboardInterrupt):
         logger.error('Exception Crtl+C pressed in the child process  in mutaute_reads')
@@ -627,6 +534,72 @@ def run_pipeline(results_path):
     time.sleep(.1)
     mergeSortBamFiles(outbamfn, finalbams_path )
     t1 = time.time()
-    #shutil.rmtree(tmpbams_path)
+    shutil.rmtree(tmpbams_path)
+    logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0)/60.0, 1)) +' minutes ***** ')
+    logging.shutdown()
+
+########################################################################################################################
+########################################################################################################################
+########################################################################################################################
+
+def initialize_amp(results_path, haplotype_path, cancer_dir_path):
+    try:
+        event_list = ['gain', 'loss']
+        gaincnv = params.GetGainCNV()
+        losscnv = params.GetLossCNV()
+        logger.debug(' --- Initializing input files  --- ')
+        vcf_path = bamhelp.GetVCF()
+        exons_path = bamhelp.GetExons()
+        reference_path = bamhelp.GetRef()
+        vpath, vcf = os.path.split(vcf_path)
+        vcftobed = "/".join([results_path, sub('.vcf$', '.bed', vcf)])
+        convertvcftobed(vcf_path, vcftobed )
+    except:
+        logger.exception("Initialization error !")
+        raise
+    logger.debug("--- initialization complete ---")
+    return
+
+
+def run_amp_pipeline(results_path):
+    """Amplification pipeline"""
+    global haplotype_path, cancer_dir_path, tmpbams_path, finalbams_path, log_path, logfile, terminating, logger, logQueue, res_path
+    res_path = results_path
+    haplotype_path, cancer_dir_path, tmpbams_path, finalbams_path, log_path, logfile = handle.GetProjectPaths(
+        results_path)
+    terminating, logger, logQueue = handle.GetLoggings(logfile)
+
+    t0 = time.time()
+    outbamfn = params.GetOutputFileName()
+    chromosome_event = create_chr_event_list()
+    chromosomes_bamfiles = create_chr_bam_list()
+    logger.debug('pipeline started!')
+
+    initialize_amp(results_path, haplotype_path, cancer_dir_path)
+    pool1 = multiprocessing.Pool(processes=12, initializer=initPool,
+                                 initargs=[logQueue, logger.getEffectiveLevel(), terminating])
+    # try:
+    #     if (not params.GetSplitBamsPath()):
+    #         chr_list = range(1, 22)
+    #
+    #         if not os.path.exists("/".join([res_path, 'splitbams'])):
+    #             os.makedirs("/".join([res_path, 'splitbams']))
+    #
+    #         result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
+    #
+    #     result1 = pool1.map_async(find_roi_bam, chromosome_event).get(9999999)
+
+    except KeyboardInterrupt:
+        logger.debug('You cancelled the program!')
+        pool1.terminate()
+    except Exception as e:
+        logger.exception("Exception in main %s" , e)
+        pool1.terminate()
+    finally:
+        pool1.join()
+    time.sleep(.1)
+    mergeSortBamFiles(outbamfn, finalbams_path )
+    t1 = time.time()
+    shutil.rmtree(tmpbams_path)
     logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0)/60.0, 1)) +' minutes ***** ')
     logging.shutdown()

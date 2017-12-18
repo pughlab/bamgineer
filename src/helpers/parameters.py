@@ -21,6 +21,8 @@ bedtools_path=''
 vcftools_path=''
 phase=True
 ctDNA=False
+copyNumber=4
+
 
 def InitConfigReader(configFile):
     """init the config file"""
@@ -104,6 +106,13 @@ def SetInputBam(in_bam_fn):
 def GetInputBam():
     return inbamfn
 
+
+
+def SetCopyNumber(copy_number):
+    global copyNumber
+    copyNumber = copy_number
+def GetCopyNumber():
+    return copyNumber
 
 
 def SetSoftwarePath(j_path, b_path, s_path, bd_path, v_path,sb_path):
