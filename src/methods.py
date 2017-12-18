@@ -296,13 +296,13 @@ def mutate_reads(bamsortfn, chr, event):
                 covfile.close()
                 snpaltratiofile.close()
                 sortBam(outbamfn, outbamsortfn + '.bam')
-                bamDiff(bamsortfn, outbamsortfn + '.bam', tmpbams_path)
+                #bamDiff(bamsortfn, outbamsortfn + '.bam', tmpbams_path)
 
-                merge_bams("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfn)]), outbamsortfn + '.bam',
-                           mergedsortfn)
-                os.remove("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfn)]))
+                #merge_bams("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfn)]), outbamsortfn + '.bam',
+                #           mergedsortfn)
+                #os.remove("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfn)]))
                 os.remove(outbamfn)
-                os.remove(outbamsortfn + '.bam')
+                #os.remove(outbamsortfn + '.bam')
 
     except (KeyboardInterrupt):
         logger.error('Exception Crtl+C pressed in the child process  in mutaute_reads')
