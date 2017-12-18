@@ -633,6 +633,214 @@ def find_roi_amp(chromosome_event):
     return
 
 
+def re_pair_reads_amp(bamsortfn):
+    try:
+        if not terminating.is_set():
+            logger.debug(" calling  re-pair-reads version")
+            bamrepairedfn = sub('.sorted.bam$', ".re_paired.bam", bamsortfn)
+            bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
+
+            if (os.path.isfile(bamsortfn)):
+
+                inbam = pysam.Samfile(bamsortfn, 'rb')
+                outbam = pysam.Samfile(bamrepairedfn, 'wb', template=inbam)
+
+                writtencount = 0
+                strands = ['pos', 'neg']
+
+                for strand in strands:
+                    read1fn = sub('.bam$', '.read1_' + strand + '.bam', bamsortfn)
+                    read2fn = sub('.bam$', '.read2_' + strand + '.bam', bamsortfn)
+
+                    if (not os.path.isfile(read1fn) or not os.path.isfile(read2fn)):
+                        splitPairAndStrands(bamsortfn)
+
+                    splt1 = pysam.Samfile(read1fn, 'rb')
+                    splt2 = pysam.Samfile(read2fn, 'rb')
+                    itr1 = splt1.fetch(until_eof=True)
+                    itr2 = splt2.fetch(until_eof=True)
+                    start = True
+
+                    for read1, read2 in izip(itr1, itr2):
+
+                        try:
+
+                            read1next = itr1.next()
+                            read2next = itr2.next()
+
+                            tlenabs2 = abs(read2.pos - read1next.pos + abs(read2.qlen))
+                            tlenabs1 = abs(read2next.pos - read1.pos + abs(read2next.qlen))
+
+                            if (
+                                    read1.reference_id != read1.next_reference_id or read2.reference_id != read2.next_reference_id or
+                                    read1next.reference_id != read1next.next_reference_id or read2next.reference_id != read2next.next_reference_id or
+                                    tlenabs1 < 0.1 * abs(read1.tlen) or tlenabs1 > 10 * abs(read1.tlen) or
+                                    tlenabs2 < 0.1 * abs(read1next.tlen) or tlenabs2 > 10 * abs(read1next.tlen)):
+                                continue
+
+                            if (strand == 'pos'):
+                                tlenabs1 = read2next.pos - read1.pos + abs(read2next.qlen)
+                                tlenabs2 = read2.pos - read1next.pos + abs(read2.qlen)
+                                tlenmean = (abs(read1.tlen) + abs(read1next.tlen)) / 2
+                                criteria1 = True
+                                criteria2 = True
+
+                                if (criteria1):
+                                    read1.tlen = tlenabs1
+                                    read2next.tlen = -tlenabs1
+                                    read1.pnext = read2next.pos
+                                    read2next.pnext = read1.pos
+                                    read2next.qname = read1.qname
+                                    outbam.write(read1)
+                                    outbam.write(read2next)
+                                    writtencount = writtencount + 1
+
+                                if (criteria2):
+                                    read1next.tlen = tlenabs2
+                                    read2next.tlen = -tlenabs2
+                                    read2.pnext = read1next.pos
+                                    read1next.pnext = read2.pos
+                                    read2.qname = read1next.qname
+                                    outbam.write(read1next)
+                                    outbam.write(read2)
+                                    writtencount = writtencount + 1
+                            elif (strand == 'neg'):
+
+                                tlenabs1 = read1.pos - read2next.pos + abs(read1.qlen)
+                                tlenabs2 = read1next.pos - read2.pos + abs(read1next.qlen)
+                                tlenmean = (abs(read1.tlen) + abs(read1next.tlen)) / 2
+
+                                if (not params.GetctDNA()):
+                                    criteria1 = (
+                                            tlenabs1 > 0.2 * tlenmean and tlenabs1 < 5 * tlenmean and read2next.qname != read1.qname and tlenabs1 > 0 and
+                                            not read1.is_duplicate and not read1.is_secondary and not read2next.is_duplicate and not read2next.is_secondary)
+                                    criteria2 = (
+                                            tlenabs2 > 0.2 * tlenmean and tlenabs2 < 5 * tlenmean and read1next.qname != read2.qname and tlenabs2 > 0 and
+                                            not read2.is_duplicate and not read2.is_secondary and not read1next.is_duplicate and not read1next.is_secondary)
+                                else:  # ctDNA
+
+                                    criteria2 = True
+
+                                    if (criteria1):
+                                        read1.tlen = -tlenabs1
+                                        read2next.tlen = tlenabs1
+                                        read1.pnext = read2next.pos
+                                        read2next.pnext = read1.pos
+                                        read2next.qname = read1.qname
+                                        outbam.write(read1)
+                                        outbam.write(read2next)
+                                        writtencount = writtencount + 1
+
+                                    if (criteria2):
+                                        read1next.tlen = -tlenabs2
+                                        read2.tlen = tlenabs2
+                                        read2.pnext = read1next.pos
+                                        read1next.pnext = read2.pos
+                                        read2.qname = read1next.qname
+                                        outbam.write(read1next)
+                                        outbam.write(read2)
+                                        writtencount = writtencount + 1
+                            else:
+                                print(
+                                        "problem with reads :    " + read1next.qname + '   ' + read1.qname + '   ' + read2next.qname)
+
+                        except StopIteration:
+                            break
+
+                    splt1.close();
+                    splt2.close()
+
+                inbam.close()
+                outbam.close()
+
+                sortBam(bamrepairedfn, bamrepairedsortfn)
+                os.remove(bamrepairedfn)
+
+    except (KeyboardInterrupt):
+        logger.error('Exception Crtl+C pressed in the child process  in re_pair_reads')
+        terminating.set()
+        return False
+    except Exception as e:
+        logger.exception("Exception in re_pair_reads %s", e)
+        terminating.set()
+        return False
+    return
+
+
+def implement_cnv_amp(chromosome_event):
+    chr, event = chromosome_event.split("_")
+
+    logger.debug("___ Bamgineer main engine started ___")
+    success = True
+    try:
+        if not terminating.is_set():
+            bamfn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, event, tmpbams_path, haplotype_path)
+            bamsortfn = sub('.bam$', '.sorted.bam', bamfn)
+
+            if (event == 'gain'):
+                bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
+                mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamrepairedsortfn)
+                mergedrenamedfn = sub('.sorted.bam$', ".mutated_merged_renamed.sorted.bam", bamrepairedsortfn)
+
+                GAIN_FINAL = "/".join([finalbams_path, str(chr).upper() + '_GAIN.bam'])
+                if (os.path.isfile(bamsortfn)):
+                    re_pair_reads_amp(bamsortfn)
+                    mutate_reads(bamrepairedsortfn, chr, 'gain')
+                    renamereads(mergedsortfn, mergedrenamedfn)
+                    ratio_kept = float(countReads(mergedrenamedfn)) / float(countReads(bamsortfn))
+                    samplerate = round(0.5 / (ratio_kept), 2)
+
+                    logger.debug("ratios kept for:" + ntpath.basename(bamsortfn) + ": " + str(ratio_kept))
+
+                    print(' ratio kept for amp '+ratio_kept)
+                    # os.remove(bamfn)
+                    #if (samplerate < 1.0):
+                    #    subsample(mergedrenamedfn, GAIN_FINAL, str(samplerate))  # calculate it later
+                    #    logger.debug("___ sampling rate for " + ntpath.basename(bamsortfn) + " : " + str(samplerate))
+                    #elif (samplerate > 1.0 and samplerate < 1.05):
+                    #    os.rename(mergedrenamedfn, GAIN_FINAL)
+                    #else:
+                    #    logger.error('not enough reads for ' + ntpath.basename(bamsortfn) + 'rate: ' + str(samplerate))
+                    #    success = False
+                    #    return
+
+            elif (event == 'loss'):
+
+                inbam_deletion = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
+                if (os.path.isfile(bamsortfn)):
+
+                    mutate_reads(bamsortfn, chr, 'loss')
+                    mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamsortfn)
+                    mergedsortsampledfn = sub('.sorted.bam$', ".mutated_merged.sampled.sorted.bam", bamsortfn)
+
+                    ratio_kept = float(countReads(bamsortfn)) / float(countReads(bamfn))
+                    samplerate = round(0.5 / (ratio_kept), 2)
+                    LOSS_FINAL = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
+                    logger.debug("ratios kept for:" + ntpath.basename(bamsortfn) + ": " + str(ratio_kept))
+                    subsample(mergedsortfn, mergedsortsampledfn, str(samplerate))
+                    bamDiff(sortbyCoord, mergedsortsampledfn, tmpbams_path)
+                    os.rename("/".join([tmpbams_path, 'diff_only1_' + chr + '.bam']), LOSS_FINAL)
+
+                elif (not os.path.isfile(inbam_deletion) and os.path.isfile(
+                        sortbyCoord)):  # if it exists from previous runs
+
+                    os.symlink(sortbyCoord, inbam_deletion)
+
+    except (KeyboardInterrupt):
+        logger.error('Exception Crtl+C pressed in the child process  in find_roi_bam for chr ' + chr + event)
+        terminating.set()
+        success = False
+        return
+    except Exception as e:
+        logger.exception("Exception in find_roi_bam %s", e)
+        terminating.set()
+        success = False
+        return
+    if (success):
+        logger.debug("implement_cnv complete successfully for " + chr + event)
+    return
+
+
 def run_amp_pipeline(results_path):
     """Amplification pipeline"""
     global haplotype_path, cancer_dir_path, tmpbams_path, finalbams_path, log_path, logfile, terminating, logger, logQueue, res_path
@@ -661,7 +869,8 @@ def run_amp_pipeline(results_path):
             result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
 
         result1 = pool1.map_async(find_roi_amp, chromosome_event).get(9999999)
-
+        result2 = pool1.map_async(implement_cnv_amp, chromosome_event).get(9999999)
+        pool1.close()
     except KeyboardInterrupt:
         logger.debug('You cancelled the program!')
         pool1.terminate()
