@@ -26,10 +26,9 @@ def main(args):
     java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     params.SetSoftwarePath(java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path)
 
-    if (args.phase):
-        run_amp_pipeline(results_path)
-    else:
-        print ("user should provide phased vcf files")
+
+    run_amp_pipeline(results_path)
+
 
 
 if __name__ == '__main__':
