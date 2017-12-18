@@ -579,6 +579,7 @@ def run_amp_pipeline(results_path):
     pool1 = multiprocessing.Pool(processes=12, initializer=initPool,
                                  initargs=[logQueue, logger.getEffectiveLevel(), terminating])
     try:
+        print('testing amp')
         # if (not params.GetSplitBamsPath()):
         #     chr_list = range(1, 22)
         #
