@@ -578,16 +578,16 @@ def run_amp_pipeline(results_path):
     initialize_amp(results_path, haplotype_path, cancer_dir_path)
     pool1 = multiprocessing.Pool(processes=12, initializer=initPool,
                                  initargs=[logQueue, logger.getEffectiveLevel(), terminating])
-    # try:
-    #     if (not params.GetSplitBamsPath()):
-    #         chr_list = range(1, 22)
-    #
-    #         if not os.path.exists("/".join([res_path, 'splitbams'])):
-    #             os.makedirs("/".join([res_path, 'splitbams']))
-    #
-    #         result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
-    #
-    #     result1 = pool1.map_async(find_roi_bam, chromosome_event).get(9999999)
+    try:
+        # if (not params.GetSplitBamsPath()):
+        #     chr_list = range(1, 22)
+        #
+        #     if not os.path.exists("/".join([res_path, 'splitbams'])):
+        #         os.makedirs("/".join([res_path, 'splitbams']))
+        #
+        #     result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
+        #
+        # result1 = pool1.map_async(find_roi_bam, chromosome_event).get(9999999)
 
     except KeyboardInterrupt:
         logger.debug('You cancelled the program!')
