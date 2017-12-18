@@ -10,6 +10,7 @@ def main(args):
     params.SetGainCNV(args.cnvAmpFile)
     params.SetCopyNumber(args.copyNumber)
     params.SetSplitBamsPath(args.splitbams)
+    params.SetCancerType(args.cancerType)
 
     if(args.copyNumber <= 3):
         print('please use simulate module for copy number below 4')
@@ -44,6 +45,8 @@ if __name__ == '__main__':
                         help='/path/to/config_file.cfg')
     parser.add_argument('-splitbamdir', dest='splitbams', required=False,
                         help='input bam split by chromosomes')
+    parser.add_argument('-cancertype', dest='cancerType', required=False,
+                        help='acronyms for cancer type')
 
     args = parser.parse_args()
 
