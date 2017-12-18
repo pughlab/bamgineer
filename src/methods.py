@@ -126,93 +126,193 @@ def find_roi_bam(chromosome_event):
         logger.debug("find_roi_bam complete successfully for "+chr + event) 
     return           
     
-def mutate_reads(bamsortfn,chr, event):
-    fn,sortbyname,sortbyCoord, bedfn = init_file_names(chr, event, tmpbams_path, haplotype_path)
-    cmd=" ".join(["sort -u", bedfn, "-o", bedfn]); runCommand(cmd)
-    outbamfn = sub('.sorted.bam$',".mutated_het.bam", bamsortfn)
-    outbamsortfn = sub('.sorted.bam$',".mutated_het.sorted", bamsortfn)
-    allreadsfn = sub('.sorted.bam$',".all.reads.bam", bamsortfn)
-    allreadssortfn = sub('.sorted.bam$',".all.reads.sorted", bamsortfn)
-    mergedsortfn = sub('.sorted.bam$',".mutated_merged.sorted.bam", bamsortfn)
+# def mutate_reads(bamsortfn,chr, event):
+#     fn,sortbyname,sortbyCoord, bedfn = init_file_names(chr, event, tmpbams_path, haplotype_path)
+#     cmd=" ".join(["sort -u", bedfn, "-o", bedfn]); runCommand(cmd)
+#     outbamfn = sub('.sorted.bam$',".mutated_het.bam", bamsortfn)
+#     outbamsortfn = sub('.sorted.bam$',".mutated_het.sorted", bamsortfn)
+#     allreadsfn = sub('.sorted.bam$',".all.reads.bam", bamsortfn)
+#     allreadssortfn = sub('.sorted.bam$',".all.reads.sorted", bamsortfn)
+#     mergedsortfn = sub('.sorted.bam$',".mutated_merged.sorted.bam", bamsortfn)
+#     try:
+#         if not terminating.is_set():
+#
+#             if(os.path.isfile(bamsortfn) and os.path.isfile(bedfn) ):
+#                 samfile = pysam.Samfile(bamsortfn, "rb" )
+#                 alignmentfile = pysam.AlignmentFile(bamsortfn, "rb" )
+#                 outbam = pysam.Samfile(outbamfn, 'wb', template=samfile)
+#                 allreads = pysam.Samfile(allreadsfn, 'wb', template=samfile)
+#
+#                 bedfile = open(bedfn, 'r')
+#                 covpath = "/".join([haplotype_path, "written_coverage_het.txt"])
+#                 covfile = open(covpath, 'w')
+#                 snpratiopath = "/".join([haplotype_path, "het_snp_ratio.txt"])
+#                 snpaltratiofile = open(snpratiopath,'w')
+#                 writtenreads = []
+#
+#                 num_reads_written = 0
+#                 num_total_reads = 0
+#
+#                 for bedline in bedfile:
+#                     c = bedline.strip().split()
+#                     if (len(c) == 6 ):
+#                         chr2 = c[0]; chr = c[0].strip("chr"); start = int(c[1]);end = int(c[2])
+#                         refbase = str(c[3]); altbase = str(c[4]); haplotype = str(c[5])
+#                     else:
+#                         continue
+#
+#                     readmappings = alignmentfile.fetch(chr2, start, end)
+#                     for shortread in readmappings:
+#
+#                         allreads.write(shortread)
+#                         num_total_reads += 1
+#                         problem_with_read = False
+#
+#                         try:
+#                             index = shortread.get_reference_positions(full_length=True).index(start)
+#                             tmpread = shortread.query_sequence
+#                             qual = shortread.query_qualities
+#                             mutated_hap1 = tmpread[:index] +  altbase + tmpread[index + 1:]
+#                             mutated_hap2 = tmpread[:index] +  refbase + tmpread[index + 1:]
+#                             if(haplotype == "hap1"):
+#                                 shortread.query_sequence = mutated_hap1
+#
+#                             elif(haplotype == "hap2"):
+#                                 shortread.query_sequence = mutated_hap2
+#
+#                             shortread.query_qualities = qual
+#
+#                         except Exception as e:
+#                             print('Exception! ')
+#                             problem_with_read = True
+#                             pass
+#
+#                         #if(shortread.cigarstring == "122M"):
+#                         if(not problem_with_read):
+#                             outbam.write(shortread)
+#                             num_reads_written+=1
+#
+#                 outbam.close()
+#                 allreads.close()
+#
+#                 ratio = float(num_reads_written)/float(num_total_reads)
+#                 bamsortfnsampled = sub('.sorted.bam$',".sampled.nh.bam", bamsortfn)
+#
+#                 subsample(bamsortfn, bamsortfnsampled ,str(ratio))
+#
+#                 #os.remove("/".join([tmpbams_path,  'diff_only1_' +  os.path.basename(bamsortfnsampled)]))
+#                 #os.remove(outbamfn)
+#
+#
+#     except (KeyboardInterrupt):
+#         logger.error('Exception Crtl+C pressed in the child process  in mutaute_reads')
+#         terminating.set()
+#         return
+#     except Exception as e:
+#         logger.exception("Exception in mutate_reads %s" ,e )
+#         terminating.set()
+#         return
+#     return
+
+
+def mutate_reads(bamsortfn, chr, event):
+    fn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, event, tmpbams_path, haplotype_path)
+    cmd = " ".join(["sort -u", bedfn, "-o", bedfn]);
+    runCommand(cmd)
+    outbamfn = sub('.sorted.bam$', ".mutated_het.bam", bamsortfn)
+    outbamsortfn = sub('.sorted.bam$', ".mutated_het.sorted", bamsortfn)
+
+    mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamsortfn)
     try:
         if not terminating.is_set():
-            
-            if(os.path.isfile(bamsortfn) and os.path.isfile(bedfn) ):
-                samfile = pysam.Samfile(bamsortfn, "rb" )
-                alignmentfile = pysam.AlignmentFile(bamsortfn, "rb" )
-                outbam = pysam.Samfile(outbamfn, 'wb', template=samfile) 
-                allreads = pysam.Samfile(allreadsfn, 'wb', template=samfile)
-                
+
+            if (os.path.isfile(bamsortfn) and os.path.isfile(bedfn)):
+                samfile = pysam.Samfile(bamsortfn, "rb")
+                alignmentfile = pysam.AlignmentFile(bamsortfn, "rb")
+                outbam = pysam.Samfile(outbamfn, 'wb', template=samfile)
                 bedfile = open(bedfn, 'r')
                 covpath = "/".join([haplotype_path, "written_coverage_het.txt"])
                 covfile = open(covpath, 'w')
                 snpratiopath = "/".join([haplotype_path, "het_snp_ratio.txt"])
-                snpaltratiofile = open(snpratiopath,'w')
+                snpaltratiofile = open(snpratiopath, 'w')
                 writtenreads = []
-                
-                num_reads_written = 0
-                num_total_reads = 0
-                
+
                 for bedline in bedfile:
                     c = bedline.strip().split()
-                    if (len(c) == 6 ):
-                        chr2 = c[0]; chr = c[0].strip("chr"); start = int(c[1]);end = int(c[2])
-                        refbase = str(c[3]); altbase = str(c[4]); haplotype = str(c[5])
+                    if (len(c) == 6):
+                        chr2 = c[0];
+                        chr = c[0].strip("chr");
+                        start = int(c[1]);
+                        end = int(c[2])
+                        refbase = str(c[3]);
+                        altbase = str(c[4]);
+                        haplotype = str(c[5])
                     else:
                         continue
-                    
+
                     readmappings = alignmentfile.fetch(chr2, start, end)
+                    num_reads_written = 0
                     for shortread in readmappings:
-                       
-                        allreads.write(shortread)
-                        num_total_reads += 1
-                        problem_with_read = False
-                        
                         try:
-                            index = shortread.get_reference_positions(full_length=True).index(start)
-                            tmpread = shortread.query_sequence
-                            qual = shortread.query_qualities
-                            mutated_hap1 = tmpread[:index] +  altbase + tmpread[index + 1:]
-                            mutated_hap2 = tmpread[:index] +  refbase + tmpread[index + 1:]
-                            if(haplotype == "hap1"):
-                                shortread.query_sequence = mutated_hap1
-                                
-                            elif(haplotype == "hap2"):
-                                shortread.query_sequence = mutated_hap2
-                                
-                            shortread.query_qualities = qual
-                            
-                        except Exception as e:
-                            print('Exception! ')
-                            problem_with_read = True
-                            pass
-                            
-                        #if(shortread.cigarstring == "122M"):
-                        if(not problem_with_read):
+                            mate = alignmentfile.mate(shortread)
+                        except:
+                            continue
+
+                        if (shortread.is_paired and shortread.is_proper_pair and not shortread.is_duplicate
+                                and not shortread.is_secondary and not shortread.qname in writtenreads and shortread.mapping_quality >= 30
+                                and mate.mapping_quality >= 30 and not mate.is_duplicate and mate.is_proper_pair and not mate.is_secondary):
+
+                            try:
+                                index = shortread.get_reference_positions().index(start)
+                                tmpread = shortread.query_sequence
+                                mutated_hap1 = tmpread[:index] + altbase + tmpread[index + 1:]
+                                mutated_hap2 = tmpread[:index] + refbase + tmpread[index + 1:]
+                                if (haplotype == "hap1"):
+                                    shortread.query_sequence = mutated_hap1
+                                elif (haplotype == "hap2"):
+                                    shortread.query_sequence = mutated_hap2
+                            except:
+                                continue
+
+                            try:
+                                index_mate = mate.get_reference_positions().index(start)
+                                nuecleotide_mate = mate.seq[index_mate]
+                                tmpread_mate = mate.query_sequence
+                                mutated_mate_hap1 = tmpread_mate[:index_mate] + altbase + tmpread_mate[index_mate + 1:]
+                                mutated_mate_hap2 = tmpread_mate[:index_mate] + refbase + tmpread_mate[index_mate + 1:]
+                                if (haplotype == "hap1"):
+                                    mate.query_sequence = mutated_mate_hap1
+                                elif (haplotype == "hap2"):
+                                    mate.query_sequence = mutated_mate_hap2
+                            except (KeyError, ValueError) as e:
+                                pass
+
                             outbam.write(shortread)
-                            num_reads_written+=1
-                        
+                            outbam.write(mate)
+                            writtenreads.append(shortread.qname)
+                            num_reads_written += 2
+                            continue
                 outbam.close()
-                allreads.close()
-                
-                ratio = float(num_reads_written)/float(num_total_reads)
-                bamsortfnsampled = sub('.sorted.bam$',".sampled.nh.bam", bamsortfn)
-                
-                subsample(bamsortfn, bamsortfnsampled ,str(ratio))
+                covfile.close()
+                snpaltratiofile.close()
+                sortBam(outbamfn, outbamsortfn + '.bam')
+                bamDiff(bamsortfn, outbamsortfn + '.bam', tmpbams_path)
 
-                #os.remove("/".join([tmpbams_path,  'diff_only1_' +  os.path.basename(bamsortfnsampled)]))
+                merge_bams("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfn)]), outbamsortfn + '.bam',
+                           mergedsortfn)
+                os.remove("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfn)]))
                 os.remove(outbamfn)
+                os.remove(outbamsortfn + '.bam')
 
-    
     except (KeyboardInterrupt):
         logger.error('Exception Crtl+C pressed in the child process  in mutaute_reads')
         terminating.set()
         return
-    except Exception as e:   
-        logger.exception("Exception in mutate_reads %s" ,e )
+    except Exception as e:
+        logger.exception("Exception in mutate_reads %s", e)
         terminating.set()
         return
-    return        
+    return
 
 def split_bam_by_chr(chr_list):
 
