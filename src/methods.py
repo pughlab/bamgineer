@@ -580,15 +580,15 @@ def run_amp_pipeline(results_path):
                                  initargs=[logQueue, logger.getEffectiveLevel(), terminating])
     try:
         print('testing amp')
-        # if (not params.GetSplitBamsPath()):
-        #     chr_list = range(1, 22)
-        #
-        #     if not os.path.exists("/".join([res_path, 'splitbams'])):
-        #         os.makedirs("/".join([res_path, 'splitbams']))
-        #
-        #     result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
-        #
-        # result1 = pool1.map_async(find_roi_bam, chromosome_event).get(9999999)
+        if (not params.GetSplitBamsPath()):
+            chr_list = range(1, 22)
+
+            if not os.path.exists("/".join([res_path, 'splitbams'])):
+                os.makedirs("/".join([res_path, 'splitbams']))
+
+            result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
+
+        result1 = pool1.map_async(find_roi_bam, chromosome_event).get(9999999)
 
     except KeyboardInterrupt:
         logger.debug('You cancelled the program!')
