@@ -200,7 +200,7 @@ def mutate_reads(bamsortfn,chr, event):
                 
                 subsample(bamsortfn, bamsortfnsampled ,str(ratio))
 
-                os.remove("/".join([tmpbams_path,  'diff_only1_' +  os.path.basename(bamsortfnsampled)]))
+                #os.remove("/".join([tmpbams_path,  'diff_only1_' +  os.path.basename(bamsortfnsampled)]))
                 os.remove(outbamfn)
 
     
