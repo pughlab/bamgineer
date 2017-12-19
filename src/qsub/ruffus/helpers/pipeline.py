@@ -256,6 +256,7 @@ def repair_gain( inputs, output_sentinel, outputs, sample_id, prev_sentinel):
 
         for inp in inputs[0]:
 
+            print('### ' + str(os.path.basename(inp)))
             chr= os.path.basename(inp).strip().split(".")[0]
 
             script = open('{0}re-pair_{1}_{2}.sh'.format(script_path, chr, "gain"), 'w')
@@ -288,7 +289,7 @@ def mutate_gain(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
         current_path = params.GetProgramPath()
         script_path = pipelineHelpers.GetScriptPath(
             sample_id, bamhelp.name)
-        bamgineer_mem = bamhelp.GetBamgineerMem('med')
+        bamgineer_mem = bamhelp.GetBamgineerMem('high')
         sentinel_path, results_path,haplotype_path,cancer_dir_path,tmpbams_path,finalbams_path = taskHelpers.GetProjectNamePathRunID()
 
         for inp in inputs[0]:
