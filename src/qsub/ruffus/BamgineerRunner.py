@@ -123,9 +123,9 @@ if __name__ == '__main__':
     if( args.phase):    
        
         if(not args.splitbams):
-            pipeline_run([pipeline.split_bams], multiprocess=num_procs, verbose=1)
-            #pipeline_run([pipeline.find_roi_bam], multiprocess=num_procs, verbose=1)
-            #pipeline_run([pipeline.complete_pipeline])
+            #pipeline_run([pipeline.split_bams], multiprocess=num_procs, verbose=1)
+            pipeline_run([pipeline.find_roi_bam], multiprocess=num_procs, verbose=1)
+            pipeline_run([pipeline.complete_pipeline])
             
         else:
             
