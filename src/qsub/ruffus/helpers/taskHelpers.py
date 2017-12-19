@@ -6,7 +6,7 @@ from helpers import parameters as params
 import itertools
 import subprocess
 
-chr_list = range(1,22)
+chr_list = range(1,23)
 event_list = ['gain','loss']
 
 

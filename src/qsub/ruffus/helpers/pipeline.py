@@ -24,7 +24,7 @@ import utils
 import vcf
 import gzip
 import shutil
-chr_list = range(1,22)
+chr_list = range(1,23)
 event_list=['gain','loss']
 
 sentinel_path, results_path,haplotype_path,cancer_dir_path,tmpbams_path,finalbams_path = taskHelpers.GetProjectNamePathRunID()
@@ -252,10 +252,9 @@ def repair_gain( inputs, output_sentinel, outputs, sample_id, prev_sentinel):
                 sample_id, bamhelp.name)
         bamgineer_mem = bamhelp.GetBamgineerMem('high')
 
+        for inp in map(''.join,inputs[0]):
 
-        for inp in inputs[0]:
-
-            chr= os.path.basename(str(inp)).strip().split(".")[0]
+            chr= os.path.basename(inp).strip().split(".")[0]
 
             script = open('{0}re-pair_{1}_{2}.sh'.format(script_path, chr, "gain"), 'w')
             script.write('#!/bin/bash\n\n')
