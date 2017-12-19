@@ -252,12 +252,10 @@ def repair_gain( inputs, output_sentinel, outputs, sample_id, prev_sentinel):
                 sample_id, bamhelp.name)
         bamgineer_mem = bamhelp.GetBamgineerMem('high')
 
-        print('**** ' + str(inputs[0]))
 
         for inp in inputs[0]:
 
-            print('### ' + str(os.path.basename(str(inp))))
-            chr= os.path.basename(inp).strip().split(".")[0]
+            chr= os.path.basename(str(inp)).strip().split(".")[0]
 
             script = open('{0}re-pair_{1}_{2}.sh'.format(script_path, chr, "gain"), 'w')
             script.write('#!/bin/bash\n\n')
