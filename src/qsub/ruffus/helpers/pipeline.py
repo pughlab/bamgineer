@@ -250,9 +250,9 @@ def repair_gain( inputs, output_sentinel, outputs, sample_id, prev_sentinel):
         current_path = params.GetProgramPath()
         script_path = pipelineHelpers.GetScriptPath(
                 sample_id, bamhelp.name)
-        bamgineer_mem = bamhelp.GetBamgineerMem('med')
+        bamgineer_mem = bamhelp.GetBamgineerMem('high')
 
-        print('****** ' + str(inputs))
+        print('**** ' + str(inputs))
 
         for inp in inputs[0]:
 
