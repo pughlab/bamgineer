@@ -252,7 +252,7 @@ def repair_gain( inputs, output_sentinel, outputs, sample_id, prev_sentinel):
                 sample_id, bamhelp.name)
         bamgineer_mem = bamhelp.GetBamgineerMem('high')
 
-        print('**** ' + str(inputs))
+        print('**** ' + str(inputs[0]))
 
         for inp in inputs[0]:
 
