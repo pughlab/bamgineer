@@ -135,7 +135,7 @@ def CreateTaskList(inputs, sentinels, outputs, sample_ids, prev_sentinels):
        output_list = []
        prev_sentinel_list = []
 
-       if(len(inputs) > 0):
+       if(len(inpt) > 0):
 
            for inpt in inputs:
                input_list.append(inpt[count])
