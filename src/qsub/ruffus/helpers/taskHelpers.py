@@ -137,7 +137,7 @@ def CreateTaskList(inputs, sentinels, outputs, sample_ids, prev_sentinels):
 
 
        for inpt in inputs:
-           print(sentinels+ '  ==== ' + str(inpt) + str(count))
+           print(sentinels+ '  ==== ' + str(inpt[count]))
            input_list.append(inpt[count])
            for output in outputs:
                output_list.append(output[count])
