@@ -502,3 +502,41 @@ def complete_pipeline(inputs, output_sentinel, outputs, sample_id, prev_sentinel
 
 
     pipelineHelpers.Logging('INFO', log, log_msg + 'COMPLETE!')
+
+
+@follows(subsample_gain)
+@files(bamgineerTasks.complete_pipeline_task_list)
+def complete_pipeline_gain(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
+    """merge, sort, clean up """
+    task_list = []
+    log_msg = ' [Final merge] ' + '[' + sample_id + '] '
+
+    pipelineHelpers.Logging('INFO', log, log_msg + 'Starting')
+    if pipelineHelpers.CheckSentinel(prev_sentinel, log, log_msg):
+
+        python = sys.executable
+        current_path = params.GetProgramPath()
+        script_path = pipelineHelpers.GetScriptPath(
+                sample_id, bamhelp.name)
+        bamgineer_mem = bamhelp.GetBamgineerMem('high')
+        mergedbamname = params.GetOutputFileName()
+
+        script = open('{0}mergesort.sh'.format(script_path), 'w')
+        script.write('#!/bin/bash\n')
+        script.write('#\n')
+        script.write('#$ -cwd \n')
+        script.write('module load sambamba \n')
+
+        script.write('python {path}/mergesort.py '
+                                     ' {mergedfinal} {finalbamdir}\n'.format(path=current_path,  mergedfinal=mergedbamname, finalbamdir=finalbams_path))
+
+        script.close()
+        process = pipelineHelpers.RunTask( os.path.abspath(script.name), 4, bamgineer_mem,
+                            sample_id, bamhelp.name)
+        task_list.append(process)
+        pipelineHelpers.CheckTaskStatus(
+                    task_list, output_sentinel, log, log_msg)
+
+
+    pipelineHelpers.Logging('INFO', log, log_msg + 'COMPLETE!')
+
