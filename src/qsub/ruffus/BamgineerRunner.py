@@ -118,13 +118,14 @@ if __name__ == '__main__':
     log = pipelineHelpers.GetLogFile('MAIN')
     pipelineHelpers.Logging('INFO', log, pipeline_msg)
 
-    num_procs = line_count * 2
+    num_procs = line_count * 4
     
     if( args.phase):    
        
         if(not args.splitbams):
-            pipeline_run([pipeline.find_roi_bam], multiprocess=num_procs, verbose=1)
-            pipeline_run([pipeline.complete_pipeline])
+            pipeline_run([pipeline.split_bams], multiprocess=num_procs, verbose=1)
+            #pipeline_run([pipeline.find_roi_bam], multiprocess=num_procs, verbose=1)
+            #pipeline_run([pipeline.complete_pipeline])
             
         else:
             
