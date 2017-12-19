@@ -671,11 +671,11 @@ def re_pair_reads_amp(bamsortfn):
                             tlenabs2 = abs(read2.pos - read1next.pos + abs(read2.qlen))
                             tlenabs1 = abs(read2next.pos - read1.pos + abs(read2next.qlen))
 
-                            if (
-                                    read1.reference_id != read1.next_reference_id or read2.reference_id != read2.next_reference_id or
-                                    read1next.reference_id != read1next.next_reference_id or read2next.reference_id != read2next.next_reference_id or
-                                    tlenabs1 < 0.05 * abs(read1.tlen) or tlenabs1 > 20 * abs(read1.tlen) or
-                                    tlenabs2 < 0.05 * abs(read1next.tlen) or tlenabs2 > 20 * abs(read1next.tlen)):
+                            if (read1.reference_id != read1.next_reference_id or read2.reference_id != read2.next_reference_id or
+                                read1next.reference_id != read1next.next_reference_id or read2next.reference_id != read2next.next_reference_id or
+                                tlenabs1 < 0.05 * abs(read1.tlen) or tlenabs1 > 20 * abs(read1.tlen) or
+                                tlenabs2 < 0.05 * abs(read1next.tlen) or tlenabs2 > 20 * abs(read1next.tlen)):
+
                                 continue
 
                             if (strand == 'pos'):

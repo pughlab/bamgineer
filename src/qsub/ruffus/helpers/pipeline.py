@@ -237,39 +237,6 @@ def find_roi_bam(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
     pipelineHelpers.Logging('INFO', log, log_msg + 'Finished FindROI')
     
 
-# @follows(find_roi_bam)
-# def implement_cnv(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
-#         """implementing cnv module"""
-#         task_list = []
-#         log_msg = ' [re-pairing reads] ' + '[' + sample_id + '] '
-#         pipelineHelpers.Logging('INFO', log, log_msg + 'Starting')
-#
-#         if pipelineHelpers.CheckSentinel(prev_sentinel, log, log_msg):
-#         python = sys.executable
-#         current_path = params.GetProgramPath()
-#         script_path = pipelineHelpers.GetScriptPath(
-#                 sample_id, bamhelp.name)
-#         bamgineer_mem = bamhelp.GetBamgineerMem('med')
-#
-#         for inp in inputs[0]:
-#             chr= os.path.basename(inp).strip().split(".")[0]
-#
-#             script = open('{0}re-pair_{1}_{2}.sh'.format(script_path, chr, "gain"), 'w')
-#             script.write('#!/bin/bash\n\n')
-#             script.write('module load samtools/1.2 \n')
-#             script.write('module load sambamba \n')
-#             script.write('python {path}/re-pair.py {inbam} \n'.format(inbam=inp, path=current_path ))
-#             script.close()
-#             process = pipelineHelpers.RunTask(
-#                 os.path.abspath(script.name),4, bamgineer_mem,
-#                 sample_id, bamhelp.name)
-#             task_list.append(process)
-#
-#         pipelineHelpers.CheckTaskStatus(
-#                         task_list, output_sentinel, log, log_msg)
-#         pipelineHelpers.Logging('INFO', log, log_msg + 'Finished Re-pairing')
-
-
 @follows(find_roi_bam)
 @files(bamgineerTasks.repair_task_list)
 def repair_gain( inputs, output_sentinel, outputs, sample_id, prev_sentinel):
