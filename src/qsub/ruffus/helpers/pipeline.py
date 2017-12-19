@@ -256,7 +256,7 @@ def repair_gain( inputs, output_sentinel, outputs, sample_id, prev_sentinel):
 
         for inp in inputs[0]:
 
-            print('### ' + str(os.path.basename(inp)))
+            print('### ' + str(os.path.basename(str(inp))))
             chr= os.path.basename(inp).strip().split(".")[0]
 
             script = open('{0}re-pair_{1}_{2}.sh'.format(script_path, chr, "gain"), 'w')
