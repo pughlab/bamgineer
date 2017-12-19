@@ -22,7 +22,7 @@ def split_bam_task_list():
     inputs.append(taskHelpers.CreateFileList(
         'bam', 1, split_path+"/"))
     outputs.append(taskHelpers.CreateFileList(
-        'chr{1}.bam', 2, split_path+"/")) 
+        'chr{1}.bam', 22, split_path+"/"))
     sample_ids = taskHelpers.CreateFileList('{0}', 1, '')
     job_parameters = taskHelpers.CreateTaskList(inputs, sentinels, outputs,
                                                 sample_ids, prev_sentinels)
