@@ -156,12 +156,12 @@ def mutate_loss_task_list():
 
     sample_ids = taskHelpers.CreateFileList('{0}', 1, '')
 
-    if(len(inputs) > 0):
-        job_parameters = taskHelpers.CreateTaskList(inputs, sentinels, outputs,
-                                               sample_ids, prev_sentinels)
-        for job in job_parameters:
-            yield job
-  
+
+    job_parameters = taskHelpers.CreateTaskList(inputs, sentinels, outputs,
+                                           sample_ids, prev_sentinels)
+    for job in job_parameters:
+        yield job
+
 def subsample_loss_task_list():
     (sentinel_path,results_path,haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path) = taskHelpers.GetProjectNamePathRunID()
     inputs = []
@@ -174,7 +174,7 @@ def subsample_loss_task_list():
      
     inputs.append(taskHelpers.CreateFileList('{0}.{1}.mutated.merged.sorted.bam', 88, tmpbams_path, "loss"))
     outputs.append(taskHelpers.CreateFileList(
-        '{0}{1}_GAIN.bam', 88, tmpbams_path, "loss"))
+        '{0}{1}_LOSS.bam', 88, tmpbams_path, "loss"))
 
     sample_ids = taskHelpers.CreateFileList('{0}', 1, '')
     job_parameters = taskHelpers.CreateTaskList(inputs, sentinels, outputs,
