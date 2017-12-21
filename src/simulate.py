@@ -54,6 +54,7 @@ if __name__ == '__main__':
                         help='/path/to/config_file.cfg')
     parser.add_argument('-phase',dest= 'phase', action="store_true")
     parser.add_argument('-ctDNA', dest='ctDNA', action="store_true")
+    parser.add_argument('-female', dest='female', action="store_true")
     args = parser.parse_args()
     
     t0 = time.time()
