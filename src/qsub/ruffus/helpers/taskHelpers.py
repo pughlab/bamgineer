@@ -95,7 +95,7 @@ def CreateFileList(file_type, num_files, path, flag= None):
                job_list.append(file_list)
                
       elif(flag=="gain"):
-
+        
          for chr  in  chr_list:
             splittmpbams = "/".join([path])
             if(os.path.isfile(splittmpbams+ '/'+ 'chr'+ str(chr)+ '.gain.roi.sorted.bam')):
@@ -134,19 +134,16 @@ def CreateTaskList(inputs, sentinels, outputs, sample_ids, prev_sentinels):
        input_list = []
        output_list = []
        prev_sentinel_list = []
-
-
        for inpt in inputs:
-
            input_list.append(inpt[count])
-           for output in outputs:
-               output_list.append(output[count])
-           for prev_sentinel in prev_sentinels:
-               prev_sentinel_list.append(prev_sentinel[count])
-
-           mylist = [input_list, sentinel[0], output_list, sample_id[0], prev_sentinel_list]
-           job_list.append(mylist)
-           count = count + 1
+       for output in outputs:
+           output_list.append(output[count])
+       for prev_sentinel in prev_sentinels:
+           prev_sentinel_list.append(prev_sentinel[count])
+      
+       mylist = [input_list, sentinel[0], output_list, sample_id[0], prev_sentinel_list]
+       job_list.append(mylist)
+       count = count + 1
     
     return job_list
 
