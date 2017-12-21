@@ -28,7 +28,6 @@ Note: the latest version of pysam (0.9.0) is not backward compatible with Samtoo
 -splitdir: input bam split by chromosomes
 -phased(optional): Binary flag to perform phasing (BEAGLE) of SNPs prior to spiking CNV's
 
-It is recommend
 
 ***Output***
 
