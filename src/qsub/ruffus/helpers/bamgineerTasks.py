@@ -183,7 +183,7 @@ def subsample_loss_task_list():
        yield job  
   
   
-def complete_pipeline_task_list(): 
+def complete_pipeline_task_list():
      (sentinel_path,results_path,haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path) = taskHelpers.GetProjectNamePathRunID()
      inputs = []
      outputs = []
@@ -209,7 +209,31 @@ def complete_pipeline_task_list():
      job_parameters = taskHelpers.CreateTaskList(inputs, sentinels, outputs,
                                                  sample_ids, prev_sentinels)
      for job in job_parameters:
-        yield job  
-  
-  
-  
+        yield job
+
+
+def complete_pipeline_gain_task_list():
+     (sentinel_path,results_path,haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path) = taskHelpers.GetProjectNamePathRunID()
+     inputs = []
+     outputs = []
+     prev_sentinels = []
+
+
+     prev_sentinels.append(taskHelpers.CreateFileList(
+        '{0}_subsample_gain.sentinel', 1, sentinel_path))
+
+     sentinels = taskHelpers.CreateFileList(
+        '{0}_sortmerge.sentinel', 1, sentinel_path)
+
+     inputs.append(taskHelpers.CreateFileList(
+         '{0}_{1}_{2}.bam', 88, finalbams_path, "FINAL"))
+
+
+     outputs.append(taskHelpers.CreateFileList(params.GetOutputFileName(),1,finalbams_path ))
+
+     sample_ids = taskHelpers.CreateFileList('{0}', 1, '')
+
+     job_parameters = taskHelpers.CreateTaskList(inputs, sentinels, outputs,
+                                                 sample_ids, prev_sentinels)
+     for job in job_parameters:
+        yield job

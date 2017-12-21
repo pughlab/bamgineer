@@ -505,7 +505,7 @@ def complete_pipeline(inputs, output_sentinel, outputs, sample_id, prev_sentinel
 
 
 @follows(subsample_gain)
-@files(bamgineerTasks.complete_pipeline_task_list)
+@files(bamgineerTasks.complete_pipeline_gain_task_list)
 def complete_pipeline_gain(inputs, output_sentinel, outputs, sample_id, prev_sentinel):
     """merge, sort, clean up """
     task_list = []

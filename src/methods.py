@@ -657,97 +657,57 @@ def re_pair_reads_amp(bamsortfn):
 
                     splt1 = pysam.Samfile(read1fn, 'rb')
                     splt2 = pysam.Samfile(read2fn, 'rb')
-                    itr1 = splt1.fetch(until_eof=True)
-                    itr2 = splt2.fetch(until_eof=True)
+                    itrA = splt1.fetch(until_eof=True)
+                    itrB = splt2.fetch(until_eof=True)
                     start = True
 
-                    for read1, read2 in izip(itr1, itr2):
+                    for readA, readB in izip(itrA, itrB):
 
+                        lista = []
+                        listb = []
                         try:
 
-                            read1next = itr1.next()
-                            read2next = itr2.next()
+                            lista.extend(itrA.next(),itrA.next(),itrA.next(),itrA.next())
+                            listb.extend(itrB.next(), itrB.next(), itrB.next(), itrB.next())
 
-                            tlenabs2 = abs(read2.pos - read1next.pos + abs(read2.qlen))
-                            tlenabs1 = abs(read2next.pos - read1.pos + abs(read2next.qlen))
 
-                            if (read1.reference_id != read1.next_reference_id or read2.reference_id != read2.next_reference_id or
-                                read1next.reference_id != read1next.next_reference_id or read2next.reference_id != read2next.next_reference_id or
-                                tlenabs1 < 0.05 * abs(read1.tlen) or tlenabs1 > 20 * abs(read1.tlen) or
-                                tlenabs2 < 0.05 * abs(read1next.tlen) or tlenabs2 > 20 * abs(read1next.tlen)):
+                            for i in range(1,5):
+                                for j in range(1,5) :
+                                    if(i != j):
+                                        readA = lista[i]
+                                        readB = lista[j]
+                                        tlelAB = globals()[''.join(['tlen','A',str(i),'B',str(j)])]
+                                        globals()[''.join(['tlen','A',str(i),'B',str(j)])] = abs(readB.pos - readA.pos + abs(readB.qlen))
 
-                                continue
+                                        if (readA.reference_id != readA.next_reference_id or readB.reference_id != readB.next_reference_id or
+                                            tlelAB < 0.1 * abs(readA.tlen) or tlelAB > 10 * abs(readA.tlen)):
+                                            continue
 
-                            if (strand == 'pos'):
-                                tlenabs1 = read2next.pos - read1.pos + abs(read2next.qlen)
-                                tlenabs2 = read2.pos - read1next.pos + abs(read2.qlen)
-                                tlenmean = (abs(read1.tlen) + abs(read1next.tlen)) / 2
-                                criteria1 = True
-                                criteria2 = True
+                                            if (strand == 'pos'):
+                                                tlenabs = readB.pos - readA.pos + abs(readB.qlen)
+                                                readA.tlen = tlenabs
+                                                readB.tlen = -tlenabs
+                                                readA.pnext= readB.pos
+                                                readB.pnext = readA.pos
+                                                readA.qname = readB.qname
+                                                outbam.write(readA)
+                                                outbam.write(readB)
 
-                                if (criteria1):
-                                    read1.tlen = tlenabs1
-                                    read2next.tlen = -tlenabs1
-                                    read1.pnext = read2next.pos
-                                    read2next.pnext = read1.pos
-                                    read2next.qname = read1.qname
-                                    outbam.write(read1)
-                                    outbam.write(read2next)
-                                    writtencount = writtencount + 1
+                                            elif (strand == 'neg'):
 
-                                if (criteria2):
-                                    read1next.tlen = tlenabs2
-                                    read2next.tlen = -tlenabs2
-                                    read2.pnext = read1next.pos
-                                    read1next.pnext = read2.pos
-                                    read2.qname = read1next.qname
-                                    outbam.write(read1next)
-                                    outbam.write(read2)
-                                    writtencount = writtencount + 1
-                            elif (strand == 'neg'):
-
-                                tlenabs1 = read1.pos - read2next.pos + abs(read1.qlen)
-                                tlenabs2 = read1next.pos - read2.pos + abs(read1next.qlen)
-                                tlenmean = (abs(read1.tlen) + abs(read1next.tlen)) / 2
-
-                                if (not params.GetctDNA()):
-                                    criteria1 = (
-                                            tlenabs1 > 0.05 * tlenmean and tlenabs1 < 20 * tlenmean and read2next.qname != read1.qname and tlenabs1 > 0 and
-                                            not read1.is_duplicate and not read1.is_secondary and not read2next.is_duplicate and not read2next.is_secondary)
-                                    criteria2 = (
-                                            tlenabs2 > 0.05 * tlenmean and tlenabs2 < 20 * tlenmean and read1next.qname != read2.qname and tlenabs2 > 0 and
-                                            not read2.is_duplicate and not read2.is_secondary and not read1next.is_duplicate and not read1next.is_secondary)
-                                else:  # ctDNA
-
-                                    criteria2 = True
-
-                                    if (criteria1):
-                                        read1.tlen = -tlenabs1
-                                        read2next.tlen = tlenabs1
-                                        read1.pnext = read2next.pos
-                                        read2next.pnext = read1.pos
-                                        read2next.qname = read1.qname
-                                        outbam.write(read1)
-                                        outbam.write(read2next)
-                                        writtencount = writtencount + 1
-
-                                    if (criteria2):
-                                        read1next.tlen = -tlenabs2
-                                        read2.tlen = tlenabs2
-                                        read2.pnext = read1next.pos
-                                        read1next.pnext = read2.pos
-                                        read2.qname = read1next.qname
-                                        outbam.write(read1next)
-                                        outbam.write(read2)
-                                        writtencount = writtencount + 1
-                            else:
-                                print(
-                                        "problem with reads :    " + read1next.qname + '   ' + read1.qname + '   ' + read2next.qname)
+                                                tlenabs = readA.pos - readB.pos + abs(readA.qlen)
+                                                readA.tlen = -tlenabs
+                                                readB.tlen = tlenabs
+                                                readA.pnext = readB.pos
+                                                readB.pnext = readA.pos
+                                                readA.qname = readB.qname
+                                                outbam.write(readA)
+                                                outbam.write(readB)
 
                         except StopIteration:
                             break
 
-                    splt1.close();
+                    splt1.close()
                     splt2.close()
 
                 inbam.close()
