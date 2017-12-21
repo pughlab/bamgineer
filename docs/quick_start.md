@@ -7,7 +7,8 @@
 
 *Samtools (version 1.2): [samtools](http://samtools.sourceforge.net)* \
 *Bedtools:[bedtools](http://bedtools.readthedocs.io/en/latest/)*\
-*VCFtools:[vcftools](http://vcftools.sourceforge.net/index.html)*
+*VCFtools:[vcftools](http://vcftools.sourceforge.net/index.html)*\
+*BamUtil:[bamutil](https://genome.sph.umich.edu/wiki/BamUtil)*
 
 ***Python packages***
 
@@ -27,7 +28,6 @@ Note: the latest version of pysam (0.9.0) is not backward compatible with Samtoo
 -splitdir: input bam split by chromosomes
 -phased(optional): Binary flag to perform phasing (BEAGLE) of SNPs prior to spiking CNV's
 
-It is recommend
 
 ***Output***
 
