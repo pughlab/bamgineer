@@ -37,8 +37,9 @@ if __name__ == '__main__':
     parser.add_argument('-splitbamdir', dest='splitbams', required=False,
                         help='input bam split by chromosomes')
     parser.add_argument('-c', '--configFile', action='store', required=True, dest='configfile',
-                        help='/path/to/config_file.cfg')
+                        help='path to config_file.cfg')
     parser.add_argument('-phase',dest= 'phase', action="store_true")
+    parser.add_argument('-ctDNA', dest='ctDNA', action="store_true")
     
     parser.add_argument(
         '--project-name', action='store', required=True, dest='project_name',
@@ -117,14 +118,16 @@ if __name__ == '__main__':
     log = pipelineHelpers.GetLogFile('MAIN')
     pipelineHelpers.Logging('INFO', log, pipeline_msg)
 
-    num_procs = line_count * 2
+    num_procs = line_count * 4
     
     if( args.phase):    
        
         if(not args.splitbams):
             pipeline_run([pipeline.find_roi_bam], multiprocess=num_procs, verbose=1)
-            pipeline_run([pipeline.complete_pipeline])
-            
+            if(args.cnvDelFile):
+                pipeline_run([pipeline.complete_pipeline])
+            else:
+                pipeline_run([pipeline.complete_pipeline_gain])
         else:
             
             params.SetSplitBamsPath(args.splitbams)
