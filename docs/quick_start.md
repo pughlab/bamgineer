@@ -7,7 +7,8 @@
 
 *Samtools (version 1.2): [samtools](http://samtools.sourceforge.net)* \
 *Bedtools:[bedtools](http://bedtools.readthedocs.io/en/latest/)*\
-*VCFtools:[vcftools](http://vcftools.sourceforge.net/index.html)*
+*VCFtools:[vcftools](http://vcftools.sourceforge.net/index.html)*\
+*BamUtil:[bamutil](https://genome.sph.umich.edu/wiki/BamUtil)*
 
 ***Python packages***
 
