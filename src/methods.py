@@ -59,19 +59,11 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
             runCommand(cmd4)
             os.remove('tmp.bed')
 
-    #     for  event in event_list:
-    #         roibed = "/".join([haplotype_path,  event + "_roi.bed"])
-    #         exonsinroibed = "/".join([haplotype_path,   event + "_exons_in_roi.bed"])
-    #         nonhetbed = "/".join([haplotype_path, event + "_non_het.bed"])
-    #         hetbed = "/".join([haplotype_path, event + "_het.bed"])
-    #         hetsnpbed = "/".join([haplotype_path,  event + "_het_snp.bed"])
-    #
-    #         if(locals()[event + 'cnv']):
-    #             intersectBed( exons_path, locals()[event + 'cnv'], exonsinroibed, wa=True)
-    #             intersectBed(phased_bed, exonsinroibed, hetsnpbed, wa=True)
-    #             splitBed(exonsinroibed, event+'_exons_in_roi_')
-    #             splitBed(hetsnpbed, event+'_het_snp_')
-    #
+            roibed = "/".join([haplotype_path, "cnv_roi.bed"])
+            exonsinroibed = "/".join([haplotype_path, "exons_in_roi.bed"])
+
+            intersectBed(exons_path, cnv_path, exonsinroibed, wa=True)
+            splitBed(exonsinroibed, 'exons_in_roi_')
     except:
         logger.exception("Initialization error !")
         raise
