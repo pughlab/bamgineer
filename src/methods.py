@@ -634,96 +634,96 @@ def find_roi_amp(chromosome_event):
 
 
 def re_pair_reads_amp(bamsortfn):
-    try:
-        if not terminating.is_set():
-            logger.debug(" calling  re-pair-reads version")
-            bamrepairedfn = sub('.sorted.bam$', ".re_paired.bam", bamsortfn)
-            bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
+    bamrepairedfn = sub('.bam$', ".re_paired.bam", bamsortfn)
+    bamrepairedsortfn = sub('.bam$', ".re_paired.sorted.bam", bamsortfn)
 
-            if (os.path.isfile(bamsortfn)):
+    if (os.path.isfile(bamsortfn)):
 
-                inbam = pysam.Samfile(bamsortfn, 'rb')
-                outbam = pysam.Samfile(bamrepairedfn, 'wb', template=inbam)
+        inbam = pysam.Samfile(bamsortfn, 'rb')
+        outbam = pysam.Samfile(bamrepairedfn, 'wb', template=inbam)
 
-                writtencount = 0
-                strands = ['pos', 'neg']
+        writtencount = 0
+        strands = ['pos', 'neg']
 
-                for strand in strands:
-                    read1fn = sub('.bam$', '.read1_' + strand + '.bam', bamsortfn)
-                    read2fn = sub('.bam$', '.read2_' + strand + '.bam', bamsortfn)
+        for strand in strands:
+            read1fn = sub('.bam$', '.read1_' + strand + '.bam', bamsortfn)
+            read2fn = sub('.bam$', '.read2_' + strand + '.bam', bamsortfn)
 
-                    if (not os.path.isfile(read1fn) or not os.path.isfile(read2fn)):
-                        splitPairAndStrands(bamsortfn)
+            if (not os.path.isfile(read1fn) or not os.path.isfile(read2fn)):
+                split_PairAndStrands(bamsortfn)
 
-                    splt1 = pysam.Samfile(read1fn, 'rb')
-                    splt2 = pysam.Samfile(read2fn, 'rb')
-                    itrA = splt1.fetch(until_eof=True)
-                    itrB = splt2.fetch(until_eof=True)
-                    start = True
+            splt1 = pysam.Samfile(read1fn, 'rb')
+            splt2 = pysam.Samfile(read2fn, 'rb')
 
-                    for readA, readB in izip(itrA, itrB):
+            itrA = splt1.fetch(until_eof=True, multiple_iterators=True)
+            itrB = splt2.fetch(until_eof=True, multiple_iterators=True)
 
-                        lista = []
-                        listb = []
-                        try:
+            sigma = 40
+            while (True):
 
-                            lista.extend(itrA.next(),itrA.next(),itrA.next(),itrA.next())
-                            listb.extend(itrB.next(), itrB.next(), itrB.next(), itrB.next())
+                try:
+                    lista = []
+                    listb = []
 
+                    while (True):
 
-                            for i in range(1,5):
-                                for j in range(1,5) :
-                                    if(i != j):
-                                        readA = lista[i]
-                                        readB = lista[j]
-                                        tlelAB = globals()[''.join(['tlen','A',str(i),'B',str(j)])]
-                                        globals()[''.join(['tlen','A',str(i),'B',str(j)])] = abs(readB.pos - readA.pos + abs(readB.qlen))
+                        readA = itrA.next()
+                        lista.append(readA)
 
-                                        if (readA.reference_id != readA.next_reference_id or readB.reference_id != readB.next_reference_id or
-                                            tlelAB < 0.1 * abs(readA.tlen) or tlelAB > 10 * abs(readA.tlen)):
-                                            continue
-
-                                            if (strand == 'pos'):
-                                                tlenabs = readB.pos - readA.pos + abs(readB.qlen)
-                                                readA.tlen = tlenabs
-                                                readB.tlen = -tlenabs
-                                                readA.pnext= readB.pos
-                                                readB.pnext = readA.pos
-                                                readA.qname = readB.qname
-                                                outbam.write(readA)
-                                                outbam.write(readB)
-
-                                            elif (strand == 'neg'):
-
-                                                tlenabs = readA.pos - readB.pos + abs(readA.qlen)
-                                                readA.tlen = -tlenabs
-                                                readB.tlen = tlenabs
-                                                readA.pnext = readB.pos
-                                                readB.pnext = readA.pos
-                                                readA.qname = readB.qname
-                                                outbam.write(readA)
-                                                outbam.write(readB)
-
-                        except StopIteration:
+                        if (len(lista) == 10):
                             break
 
-                    splt1.close()
-                    splt2.close()
+                    while (True):
 
-                inbam.close()
-                outbam.close()
+                        readB = itrB.next()
+                        listb.append(readB)
 
-                sortBam(bamrepairedfn, bamrepairedsortfn)
-                os.remove(bamrepairedfn)
+                        if (len(listb) == 10):
+                            break
 
-    except (KeyboardInterrupt):
-        logger.error('Exception Crtl+C pressed in the child process  in re_pair_reads')
-        terminating.set()
-        return False
-    except Exception as e:
-        logger.exception("Exception in re_pair_reads %s", e)
-        terminating.set()
-        return False
+                    for i in range(0, 10):
+                        for j in range(0, 10):
+
+                            readA = lista[i]
+                            readB = listb[j]
+                            tlenFR = readB.pos - readA.pos + readB.qlen
+                            tlenRF = readA.pos - readB.pos + readA.qlen
+
+                            if (readA.qname != readB.qname or readA.is_duplicate):
+
+                                if (strand == 'pos'):
+
+                                    if (tlenFR >= readA.tlen - 2 * sigma and tlenFR < readA.tlen + 2 * sigma):
+                                        readA.tlen = tlenFR
+                                        readB.tlen = -tlenFR
+                                        readA.pnext = readB.pos
+                                        readB.pnext = readA.pos
+                                        readA.qname = readB.qname
+                                        outbam.write(readA)
+                                        outbam.write(readB)
+
+                                elif (strand == 'neg'):
+
+                                    if (tlenRF >= readB.tlen - 2 * sigma and tlenRF < readB.tlen + 2 * sigma):
+                                        readA.tlen = -tlenRF
+                                        readB.tlen = tlenRF
+                                        readA.pnext = readB.pos
+                                        readB.pnext = readA.pos
+                                        readA.qname = readB.qname
+                                        outbam.write(readA)
+                                        outbam.write(readB)
+                except StopIteration:
+                    break
+
+        splt1.close()
+        splt2.close()
+
+        inbam.close()
+        outbam.close()
+
+        sortBam(bamrepairedfn, bamrepairedsortfn)
+        os.remove(bamrepairedfn)
+
     return
 
 
