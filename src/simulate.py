@@ -10,7 +10,7 @@ def main(args):
     configReader = params.GetConfigReader()
     params.InitConfigReader(args.configfile)
     params.SetCNV(args.cnvBedFile)
-    params.SetCancerType(args.cancerType)
+    #params.SetCancerType(args.cancerType)
     params.SetOutputFileName(args.outBamFile)
     params.SetSplitBamsPath(args.splitbams)
     
