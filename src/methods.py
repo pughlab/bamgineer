@@ -256,9 +256,9 @@ def split_bam_by_chr(chr_list):
     try:
         if not terminating.is_set():
             logger.debug("___ spliting bam by chromosome ___")
-            splitBamByChr( inbam ,spltbams_path,'chr'+str(chr_list))
-            sortByName("/".join([spltbams_path, 'chr'+str(chr_list) + ".bam"]),
-                       "/".join([spltbams_path, 'chr'+str(chr_list) + ".byname.bam"]))
+            splitBamByChr( inbam ,spltbams_path,str(chr_list))
+            sortByName("/".join([spltbams_path, str(chr_list) + ".bam"]),
+                       "/".join([spltbams_path, str(chr_list) + ".byname.bam"]))
 
     except (KeyboardInterrupt):
         logger.error('Exception Crtl+C pressed in the child process  in split_bam_by_chr')
@@ -493,7 +493,7 @@ def run_pipeline(results_path):
     initialize(results_path,haplotype_path,cancer_dir_path)
     pool1 = multiprocessing.Pool(processes=12, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating] )
     try:
-        chr_list = range(1, 23)
+        chr_list = ['chr' + str(x) for x in range(1, 23)]
         chr_list.extend(['chrX', 'chrY'])
 
         if(not params.GetSplitBamsPath()):
