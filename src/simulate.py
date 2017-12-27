@@ -14,7 +14,8 @@ def main(args):
     params.SetOutputFileName(args.outBamFile)
     params.SetSplitBamsPath(args.splitbams)
     params.SetPhase(args.phase)
-    
+    params.SetctDNA(args.ctDNA)
+
     results_path = configReader.get('RESULTS', 'results_path')
     
     #set software paths
