@@ -94,7 +94,7 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
     logger.debug("--- initialization complete ---")
     return
 
-def init_file_names(chr, event,tmpbams_path, haplotypedir):
+def init_file_names(chr, tmpbams_path, haplotypedir, event = None):
     
     flist=[]
 
