@@ -159,7 +159,7 @@ def bamDiff(bamfn1, bamfn2, path):
     command = " ".join([bamutil_path,"diff", "--in1", bamfn1, "--in2", bamfn2, "--out" ,"/".join([path,"diff.bam"])]) 
     runCommand(command ) 
 
-def intersectBed(bed1fn, bed2fn, intersectfile, wa=False):
+def intersectBed(bed1fn, bed2fn, intersectfile, wa=False, wb=False):
     cwd = os.path.dirname(__file__)
     bed1fncompletepath = os.path.realpath(bed1fn.format(cwd))
     bed2fncompletepath = os.path.realpath(bed2fn.format(cwd))
@@ -171,8 +171,10 @@ def intersectBed(bed1fn, bed2fn, intersectfile, wa=False):
     if(wa == False):
         
         print >> f, bed1.intersect(bed2,u=True)
-    elif(wa==True):
+    elif(wa==True and wb==False):
         print >> f, bed1.intersect(bed2,u=True,wa=True)
+    else:
+        print >> f, bed1.intersect(bed2, u=True, wa=True,wb=True)
             
     f.close()
     return intersectfile
