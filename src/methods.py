@@ -62,8 +62,13 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
 
             roibed = "/".join([haplotype_path, "cnv_roi.bed"])
             exonsinroibed = "/".join([haplotype_path, "exons_in_roi.bed"])
+
+            nonhetbed = "/".join([haplotype_path,  "non_het.bed"])
+            hetbed = "/".join([haplotype_path,  "het.bed"])
+            hetsnpbed = "/".join([haplotype_path, "het_snp.bed"])
+
             tmp = "/".join([haplotype_path, "tmp.bed"])
-            hetsnpbed = "/".join([haplotype_path,  "het_snp.bed"])
+
 
             command = " ".join([bedtools_path, "intersect -a", exons_path, "-b",cnv_path,  "-wa -wb > ", tmp])
             runCommand(command)
@@ -75,7 +80,7 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
             splitBed(exonsinroibed)
 
 
-            command = " ".join([bedtools_path, "intersect -a", exonsinroibed, "-b", cnv_path, "-wa -wb >", hetsnpbed])
+            command = " ".join([bedtools_path, "intersect -a", phased_bed, "-b", exonsinroibed, "-wa -wb >", hetsnpbed])
             runCommand(command)
             splitBed(hetsnpbed)
 
