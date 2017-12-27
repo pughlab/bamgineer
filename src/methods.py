@@ -83,7 +83,7 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
             command = " ".join([bedtools_path, "intersect -a", phased_bed, "-b", exonsinroibed, "-wa -wb >", tmp])
             runCommand(command)
 
-            cmd = "".join(["""awk '{print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$NF}' """, tmp, " > ", hetsnpbed])
+            cmd = "".join(["""awk '{print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$NF}' """, tmp, " > ", hetsnpbed])
             runCommand(cmd)
             splitBed(hetsnpbed)
             os.remove(tmp)
@@ -112,10 +112,10 @@ def init_file_names(chr, event,tmpbams_path, haplotypedir):
     return flist
 
 
-def find_roi_bam(chromosome_event):
-    chr,event = chromosome_event .split("_")
-    roi,sortbyname,sortbyCoord, hetsnp = init_file_names(chr, event, tmpbams_path, haplotype_path)
-    exonsinroibed = "/".join([haplotype_path,   event + "_exons_in_roi_"+ chr +'.bed'])
+def find_roi_bam(chr):
+    #chr,event = chromosome_event .split("_")
+    roi,sortbyname,sortbyCoord, hetsnp = init_file_names(chr, tmpbams_path, haplotype_path)
+    exonsinroibed = "/".join([haplotype_path,    "exons_in_roi"+ chr +'.bed'])
     success = True
     try:
         if not terminating.is_set():
@@ -491,33 +491,34 @@ def run_pipeline(results_path):
     logger.debug('pipeline started!')
     
     initialize(results_path,haplotype_path,cancer_dir_path)
-    # pool1 = multiprocessing.Pool(processes=12, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating] )
-    # try:
-    #     if(not params.GetSplitBamsPath()):
-    #         chr_list = range(1, 23)
-    #
-    #         if not os.path.exists("/".join([res_path, 'splitbams'])):
-    #             os.makedirs("/".join([res_path, 'splitbams']))
-    #
-    #         result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
-    #
-    #     result1 = pool1.map_async(find_roi_bam, chromosome_event ).get(9999999)
-    #     result2 = pool1.map_async(implement_cnv, chromosome_event ).get(9999999)
-    #     pool1.close()
-    # except KeyboardInterrupt:
-    #     logger.debug('You cancelled the program!')
-    #     pool1.terminate()
-    # except Exception as e:
-    #     logger.exception("Exception in main %s" , e)
-    #     pool1.terminate()
-    # finally:
-    #     pool1.join()
-    # time.sleep(.1)
-    # mergeSortBamFiles(outbamfn, finalbams_path )
-    # t1 = time.time()
-    # shutil.rmtree(tmpbams_path)
-    # logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0)/60.0, 1)) +' minutes ***** ')
-    # logging.shutdown()
+    pool1 = multiprocessing.Pool(processes=12, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating] )
+    try:
+        if(not params.GetSplitBamsPath()):
+            chr_list = range(1, 23)
+            chr_list.extend(['chrX', 'chrY'])
+
+            if not os.path.exists("/".join([res_path, 'splitbams'])):
+                os.makedirs("/".join([res_path, 'splitbams']))
+
+                result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
+
+        result1 = pool1.map_async(find_roi_bam, chr_list ).get(9999999)
+        #result2 = pool1.map_async(implement_cnv, chromosome_event ).get(9999999)
+        pool1.close()
+    except KeyboardInterrupt:
+        logger.debug('You cancelled the program!')
+        pool1.terminate()
+    except Exception as e:
+        logger.exception("Exception in main %s" , e)
+        pool1.terminate()
+    finally:
+        pool1.join()
+    time.sleep(.1)
+    mergeSortBamFiles(outbamfn, finalbams_path )
+    t1 = time.time()
+    shutil.rmtree(tmpbams_path)
+    logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0)/60.0, 1)) +' minutes ***** ')
+    logging.shutdown()
 
 ########################################################################################################################
 ########################################################################################################################
