@@ -80,11 +80,11 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
     #             splitBed(exonsinroibed, event+'_exons_in_roi_')
     #             splitBed(hetsnpbed, event+'_het_snp_')
     #
-    # except:
-    #     logger.exception("Initialization error !")
-    #     raise
-    # logger.debug("--- initialization complete ---")
-    # return
+    except:
+        logger.exception("Initialization error !")
+        raise
+    logger.debug("--- initialization complete ---")
+    return
 
 def init_file_names(chr, event,tmpbams_path, haplotypedir):
     
