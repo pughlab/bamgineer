@@ -13,6 +13,7 @@ def main(args):
     #params.SetCancerType(args.cancerType)
     params.SetOutputFileName(args.outBamFile)
     params.SetSplitBamsPath(args.splitbams)
+    params.SetPhase(args.phase)
     
     results_path = configReader.get('RESULTS', 'results_path')
     

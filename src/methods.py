@@ -37,7 +37,8 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
     #     reference_path = bamhelp.GetRef()
     #     vpath, vcf = os.path.split(vcf_path)
     #
-    #
+          if(params.GetPhase()):
+              print 'HEREEE'
     #     phasedvcf = "/".join([results_path, sub('.vcf$', '_phased.vcf.gz', vcf)])
     #     vcftobed =  "/".join([results_path, sub('.vcf$', '.bed', vcf)])
     #
@@ -486,7 +487,7 @@ def run_pipeline(results_path):
     # pool1 = multiprocessing.Pool(processes=12, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating] )
     # try:
     #     if(not params.GetSplitBamsPath()):
-    #         chr_list = range(1, 22)
+    #         chr_list = range(1, 23)
     #
     #         if not os.path.exists("/".join([res_path, 'splitbams'])):
     #             os.makedirs("/".join([res_path, 'splitbams']))

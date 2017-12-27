@@ -19,6 +19,7 @@ beagle_path=''
 samtools_path=''
 bedtools_path='' 
 vcftools_path=''
+phase=False
 
 def InitConfigReader(configFile):
     """init the config file"""
@@ -91,6 +92,12 @@ def SetCNV(cnv):
     cnv_path= cnv
 def GetCNV():
     return cnv_path
+
+def SetPhase(Phase):
+    global phase
+    phase = Phase
+def GetPhase():
+    return phase
 
 def SetSoftwarePath(j_path, b_path, s_path, bd_path, v_path,sb_path):
     
