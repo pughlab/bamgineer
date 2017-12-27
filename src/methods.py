@@ -83,7 +83,7 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
             command = " ".join([bedtools_path, "intersect -a", phased_bed, "-b", exonsinroibed, "-wa -wb >", tmp])
             runCommand(command)
 
-            cmd = "".join(["""awk '{print $1"\t"$2"\t"$3"\t"$NF}' """, tmp, " > ", hetsnpbed])
+            cmd = "".join(["""awk '{print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$NF}' """, tmp, " > ", hetsnpbed])
             runCommand(cmd)
             splitBed(hetsnpbed)
             os.remove(tmp)
