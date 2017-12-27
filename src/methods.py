@@ -62,13 +62,17 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
 
             roibed = "/".join([haplotype_path, "cnv_roi.bed"])
             exonsinroibed = "/".join([haplotype_path, "exons_in_roi.bed"])
-
-            #intersectBed(exons_path, cnv_path, exonsinroibed, wa = True, wb = True)
+            hetsnpbed = "/".join([haplotype_path,  "het_snp.bed"])
 
             command = " ".join([bedtools_path, "intersect -a", exons_path, "-b",cnv_path,  "-wa -wb >", exonsinroibed])
-            print(command)
             runCommand(command)
             splitBed(exonsinroibed)
+
+
+            command = " ".join([bedtools_path, "intersect -a", exonsinroibed, "-b", cnv_path, "-wa -wb >", hetsnpbed])
+            runCommand(command)
+            splitBed(hetsnpbed)
+
     except:
         logger.exception("Initialization error !")
         raise
