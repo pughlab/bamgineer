@@ -7,6 +7,7 @@ project_name = ''
 infile = ''
 gaincnv_path = ''
 losscnv_path = ''
+cnv_path = ''
 cancer_type  = ''
 spltbams_path  = ''
 het_path = ''
@@ -83,6 +84,13 @@ def SetBeaglePath(path):
     java_path = path
 def GetBeaglePath():
     return java_path
+
+
+def SetCNV(cnv):
+    global cnv_path
+    cnv_path= cnv
+def GetCNV():
+    return cnv_path
 
 def SetSoftwarePath(j_path, b_path, s_path, bd_path, v_path,sb_path):
     

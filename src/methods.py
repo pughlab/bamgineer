@@ -21,61 +21,70 @@ def initPool(queue, level, terminating_):
 def initialize(results_path,haplotype_path,cancer_dir_path):
     
     try:
-        event_list=['gain','loss']
-        gaincnv = params.GetGainCNV()
-        losscnv = params.GetLossCNV()
-        logger.debug(' --- Initializing input files  --- ')
-        vcf_path = bamhelp.GetVCF()
-        exons_path = bamhelp.GetExons()
-        reference_path = bamhelp.GetRef()
-        vpath, vcf = os.path.split(vcf_path)
-        phasedvcf = "/".join([results_path, sub('.vcf$', '_phased.vcf.gz', vcf)])
-        vcftobed =  "/".join([results_path, sub('.vcf$', '.bed', vcf)])
-        
-        hap1vcf = "/".join([results_path,"hap1_het.vcf"])
-        hap2vcf = "/".join([results_path, "hap2_het.vcf"])
-        hap1vcffiltered = "/".join([results_path, "hap1_het_filtered"])
-        hap2vcffiltered = "/".join([results_path, "hap2_het_filtered"])
-        hap1vcffilteredtobed = "/".join([results_path, "hap1_het_filtered.bed"])
-        hap2vcffilteredtobed = "/".join([results_path, "hap2_het_filtered.bed"])
-        phased_bed =  "/".join([results_path, "PHASED.BED"])
-        
-        phaseVCF(vcf_path, phasedvcf)
-        getVCFHaplotypes(phasedvcf, hap1vcf, hap2vcf)
-        thinVCF(hap1vcf, hap1vcffiltered)
-        thinVCF(hap2vcf, hap2vcffiltered)
-        convertvcftobed(hap1vcffiltered+".recode.vcf", hap1vcffilteredtobed)
-        convertvcftobed(hap2vcffiltered+".recode.vcf", hap2vcffilteredtobed)
-       
-        cmd1 = """sed -i 's/$/\thap1/' """+ hap1vcffilteredtobed
-        cmd2 = """sed -i 's/$/\thap2/' """+ hap2vcffilteredtobed
-        cmd3 = "cat " + hap1vcffilteredtobed + " " + hap2vcffilteredtobed + " > " + 'tmp.bed'
-        cmd4 = "sort -V -k1,1 -k2,2 tmp.bed > " + phased_bed  
-            
-        runCommand(cmd1)
-        runCommand(cmd2)
-        runCommand(cmd3)
-        runCommand(cmd4)
-        os.remove('tmp.bed')  
-        
-        for  event in event_list: 
-            roibed = "/".join([haplotype_path,  event + "_roi.bed"])
-            exonsinroibed = "/".join([haplotype_path,   event + "_exons_in_roi.bed"])
-            nonhetbed = "/".join([haplotype_path, event + "_non_het.bed"])
-            hetbed = "/".join([haplotype_path, event + "_het.bed"])
-            hetsnpbed = "/".join([haplotype_path,  event + "_het_snp.bed"])
-            
-            if(locals()[event + 'cnv']):
-                intersectBed( exons_path, locals()[event + 'cnv'], exonsinroibed, wa=True)
-                intersectBed(phased_bed, exonsinroibed, hetsnpbed, wa=True)
-                splitBed(exonsinroibed, event+'_exons_in_roi_')
-                splitBed(hetsnpbed, event+'_het_snp_')
+          logger.debug(' --- Initializing input files  --- ')
+          cnv_path = params.GetCNV()
+          vcf_path = bamhelp.GetVCF()
+          exons_path = bamhelp.GetExons()
+          reference_path = bamhelp.GetRef()
+          vpath, vcf = os.path.split(vcf_path)
 
-    except:  
-        logger.exception("Initialization error !")
-        raise
-    logger.debug("--- initialization complete ---")    
-    return 
+    #     event_list=['gain','loss']
+    #     gaincnv = params.GetGainCNV()
+    #     losscnv = params.GetLossCNV()
+    #     logger.debug(' --- Initializing input files  --- ')
+    #     vcf_path = bamhelp.GetVCF()
+    #     exons_path = bamhelp.GetExons()
+    #     reference_path = bamhelp.GetRef()
+    #     vpath, vcf = os.path.split(vcf_path)
+    #
+    #
+    #     phasedvcf = "/".join([results_path, sub('.vcf$', '_phased.vcf.gz', vcf)])
+    #     vcftobed =  "/".join([results_path, sub('.vcf$', '.bed', vcf)])
+    #
+    #     hap1vcf = "/".join([results_path,"hap1_het.vcf"])
+    #     hap2vcf = "/".join([results_path, "hap2_het.vcf"])
+    #     hap1vcffiltered = "/".join([results_path, "hap1_het_filtered"])
+    #     hap2vcffiltered = "/".join([results_path, "hap2_het_filtered"])
+    #     hap1vcffilteredtobed = "/".join([results_path, "hap1_het_filtered.bed"])
+    #     hap2vcffilteredtobed = "/".join([results_path, "hap2_het_filtered.bed"])
+    #     phased_bed =  "/".join([results_path, "PHASED.BED"])
+    #
+    #     phaseVCF(vcf_path, phasedvcf)
+    #     getVCFHaplotypes(phasedvcf, hap1vcf, hap2vcf)
+    #     thinVCF(hap1vcf, hap1vcffiltered)
+    #     thinVCF(hap2vcf, hap2vcffiltered)
+    #     convertvcftobed(hap1vcffiltered+".recode.vcf", hap1vcffilteredtobed)
+    #     convertvcftobed(hap2vcffiltered+".recode.vcf", hap2vcffilteredtobed)
+    #
+    #     cmd1 = """sed -i 's/$/\thap1/' """+ hap1vcffilteredtobed
+    #     cmd2 = """sed -i 's/$/\thap2/' """+ hap2vcffilteredtobed
+    #     cmd3 = "cat " + hap1vcffilteredtobed + " " + hap2vcffilteredtobed + " > " + 'tmp.bed'
+    #     cmd4 = "sort -V -k1,1 -k2,2 tmp.bed > " + phased_bed
+    #
+    #     runCommand(cmd1)
+    #     runCommand(cmd2)
+    #     runCommand(cmd3)
+    #     runCommand(cmd4)
+    #     os.remove('tmp.bed')
+    #
+    #     for  event in event_list:
+    #         roibed = "/".join([haplotype_path,  event + "_roi.bed"])
+    #         exonsinroibed = "/".join([haplotype_path,   event + "_exons_in_roi.bed"])
+    #         nonhetbed = "/".join([haplotype_path, event + "_non_het.bed"])
+    #         hetbed = "/".join([haplotype_path, event + "_het.bed"])
+    #         hetsnpbed = "/".join([haplotype_path,  event + "_het_snp.bed"])
+    #
+    #         if(locals()[event + 'cnv']):
+    #             intersectBed( exons_path, locals()[event + 'cnv'], exonsinroibed, wa=True)
+    #             intersectBed(phased_bed, exonsinroibed, hetsnpbed, wa=True)
+    #             splitBed(exonsinroibed, event+'_exons_in_roi_')
+    #             splitBed(hetsnpbed, event+'_het_snp_')
+    #
+    # except:
+    #     logger.exception("Initialization error !")
+    #     raise
+    # logger.debug("--- initialization complete ---")
+    # return
 
 def init_file_names(chr, event,tmpbams_path, haplotypedir):
     
@@ -328,136 +337,100 @@ def implement_cnv(chromosome_event):
         logger.debug("implement_cnv complete successfully for "+chr + event) 
     return           
 
+
 def re_pair_reads(bamsortfn):
-    try:
-        if not terminating.is_set():
-            logger.debug(" calling  re-pair-reads version" )
-            bamrepairedfn = sub('.sorted.bam$',  ".re_paired.bam", bamsortfn)
-            bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
-            
-            if(os.path.isfile(bamsortfn)):
-                  
-                inbam = pysam.Samfile(bamsortfn, 'rb')
-                outbam = pysam.Samfile(bamrepairedfn, 'wb', template=inbam)  
-    
-                writtencount = 0
-                strands=['pos','neg']
-                
-                for strand in strands :
-                    read1fn= sub('.bam$', '.read1_'+strand+'.bam', bamsortfn)
-                    read2fn= sub('.bam$', '.read2_'+strand+'.bam', bamsortfn)
-                    
-                    if(not os.path.isfile(read1fn) or not os.path.isfile(read2fn)):
-                        splitPairAndStrands(bamsortfn)
-                    
-                    splt1 = pysam.Samfile(read1fn , 'rb')
-                    splt2 = pysam.Samfile(read2fn , 'rb')
-                    itr1 =   splt1.fetch(until_eof=True)
-                    itr2 =   splt2.fetch(until_eof=True)
-                    start = True
-                
-                    for read1, read2 in  izip(itr1, itr2):                                      
-                        
-                        try:
-                            
-                            read1next = itr1.next()
-                            read2next = itr2.next()
-                            
-                            tlenabs2 =  abs(read2.pos - read1next.pos  + abs(read2.qlen))
-                            tlenabs1 = abs(read2next.pos - read1.pos + abs(read2next.qlen))
-                            
-                            if(read1.reference_id != read1.next_reference_id or read2.reference_id != read2.next_reference_id or
-                                  read1next.reference_id != read1next.next_reference_id  or read2next.reference_id != read2next.next_reference_id or
-                                  tlenabs1 < 0.5*abs(read1.tlen) or tlenabs1 > 5*abs(read1.tlen) or
-                                  tlenabs2 < 0.5*abs(read1next.tlen) or tlenabs2 > 5*abs(read1next.tlen)):
-                                continue
-                            
-                            if(strand == 'pos'):
-                                tlenabs1 = read2next.pos - read1.pos + abs(read2next.qlen)
-                                tlenabs2 =  read2.pos - read1next.pos  + abs(read2.qlen)  
-                                tlenmean = (abs(read1.tlen) + abs(read1next.tlen))/2
-                                criteria1 = True
-                                criteria2 = True
-                                
-                                if(criteria1 ):
-                                
-                                    read1.tlen = tlenabs1
-                                    read2next.tlen = -tlenabs1
-                                    read1.pnext = read2next.pos
-                                    read2next.pnext = read1.pos
-                                    read2next.qname = read1.qname 
-                                    outbam.write(read1)
-                                    outbam.write(read2next)
-                                    writtencount = writtencount + 1
-                                
-                                if(criteria2 ):
-                              
-                                    read1next.tlen = tlenabs2
-                                    read2next.tlen = -tlenabs2 
-                                    read2.pnext = read1next.pos
-                                    read1next.pnext = read2.pos
-                                    read2.qname = read1next.qname
-                                    outbam.write(read1next)
-                                    outbam.write(read2)
-                                    writtencount = writtencount + 1  
-                            elif(strand== 'neg'):
-                            
-                                    tlenabs1 = read1.pos - read2next.pos + abs(read1.qlen)
-                                    tlenabs2 = read1next.pos -read2.pos + abs(read1next.qlen)
-                                    tlenmean = (abs(read1.tlen) + abs(read1next.tlen))/2
-                                    
-                                    if(not params.GetctDNA()):
-                                        criteria1= (tlenabs1 > 0.2*tlenmean and tlenabs1 < 5*tlenmean and read2next.qname != read1.qname and tlenabs1 > 0 and
-                                        not read1.is_duplicate and not read1.is_secondary and not read2next.is_duplicate and not read2next.is_secondary)
-                                        criteria2=(tlenabs2 > 0.2*tlenmean and tlenabs2 < 5*tlenmean and read1next.qname != read2.qname and tlenabs2 > 0 and
-                                       not read2.is_duplicate and not read2.is_secondary and not read1next.is_duplicate and not read1next.is_secondary )
-                                    else: #ctDNA
-                                    
-                                        criteria2 = True
-                                       
-                                        if(criteria1 ):
-                                            read1.tlen = -tlenabs1
-                                            read2next.tlen = tlenabs1
-                                            read1.pnext = read2next.pos
-                                            read2next.pnext = read1.pos
-                                            read2next.qname = read1.qname
-                                            outbam.write(read1)
-                                            outbam.write(read2next)
-                                            writtencount = writtencount + 1
+    bamrepairedfn = sub('.bam$', ".re_paired.bam", bamsortfn)
+    bamrepairedsortfn = sub('.bam$', ".re_paired.sorted.bam", bamsortfn)
 
-                                        if(criteria2):
-                                    
-                                            read1next.tlen = -tlenabs2
-                                            read2.tlen = tlenabs2
-                                            read2.pnext = read1next.pos
-                                            read1next.pnext = read2.pos
-                                            read2.qname = read1next.qname
-                                            outbam.write(read1next)
-                                            outbam.write(read2)
-                                            writtencount = writtencount + 1 
-                            else:
-                                print("problem with reads :    " +read1next.qname + '   ' +read1.qname + '   ' +read2next.qname)
-                        
-                        except StopIteration:
-                            break        
-                
-                    splt1.close();splt2.close()
+    if (os.path.isfile(bamsortfn)):
 
-                inbam.close()
-                outbam.close() 
-                
-                sortBam(bamrepairedfn, bamrepairedsortfn)
-                os.remove(bamrepairedfn)
+        inbam = pysam.Samfile(bamsortfn, 'rb')
+        outbam = pysam.Samfile(bamrepairedfn, 'wb', template=inbam)
 
-    except (KeyboardInterrupt):
-        logger.error('Exception Crtl+C pressed in the child process  in re_pair_reads')
-        terminating.set()
-        return False
-    except Exception as e:   
-        logger.exception("Exception in re_pair_reads %s" ,e )
-        terminating.set()
-        return False
-    return             
+        writtencount = 0
+        strands = ['pos', 'neg']
+
+        for strand in strands:
+            read1fn = sub('.bam$', '.read1_' + strand + '.bam', bamsortfn)
+            read2fn = sub('.bam$', '.read2_' + strand + '.bam', bamsortfn)
+
+            if (not os.path.isfile(read1fn) or not os.path.isfile(read2fn)):
+                split_PairAndStrands(bamsortfn)
+
+            splt1 = pysam.Samfile(read1fn, 'rb')
+            splt2 = pysam.Samfile(read2fn, 'rb')
+
+            itrA = splt1.fetch(until_eof=True, multiple_iterators=True)
+            itrB = splt2.fetch(until_eof=True, multiple_iterators=True)
+
+            sigma = 40
+            while (True):
+
+                try:
+                    lista = []
+                    listb = []
+
+                    while (True):
+
+                        readA = itrA.next()
+                        lista.append(readA)
+
+                        if (len(lista) == 10):
+                            break
+
+                    while (True):
+
+                        readB = itrB.next()
+                        listb.append(readB)
+
+                        if (len(listb) == 10):
+                            break
+
+                    for i in range(0, 10):
+                        for j in range(0, 10):
+
+                            readA = lista[i]
+                            readB = listb[j]
+                            tlenFR = readB.pos - readA.pos + readB.qlen
+                            tlenRF = readA.pos - readB.pos + readA.qlen
+
+                            if (readA.qname != readB.qname or readA.is_duplicate):
+
+                                if (strand == 'pos'):
+
+                                    if (tlenFR >= readA.tlen - 2 * sigma and tlenFR < readA.tlen + 2 * sigma):
+                                        readA.tlen = tlenFR
+                                        readB.tlen = -tlenFR
+                                        readA.pnext = readB.pos
+                                        readB.pnext = readA.pos
+                                        readA.qname = readB.qname
+                                        outbam.write(readA)
+                                        outbam.write(readB)
+
+                                elif (strand == 'neg'):
+
+                                    if (tlenRF >= readB.tlen - 2 * sigma and tlenRF < readB.tlen + 2 * sigma):
+                                        readA.tlen = -tlenRF
+                                        readB.tlen = tlenRF
+                                        readA.pnext = readB.pos
+                                        readB.pnext = readA.pos
+                                        readA.qname = readB.qname
+                                        outbam.write(readA)
+                                        outbam.write(readB)
+                except StopIteration:
+                    break
+
+        splt1.close()
+        splt2.close()
+
+        inbam.close()
+        outbam.close()
+
+        sortBam(bamrepairedfn, bamrepairedsortfn)
+        os.remove(bamrepairedfn)
+
+    return
+
 
 def removeReadsOverlappingHetRegion(inbamfn, bedfn,outbamfn,path):
     print "___ removing reads overlapping heterozygous region ___"
@@ -505,38 +478,38 @@ def run_pipeline(results_path):
     
     t0 = time.time()
     outbamfn=params.GetOutputFileName() 
-    chromosome_event = create_chr_event_list()
-    chromosomes_bamfiles = create_chr_bam_list()
+    #chromosome_event = create_chr_event_list()
+    #chromosomes_bamfiles = create_chr_bam_list()
     logger.debug('pipeline started!')
     
     initialize(results_path,haplotype_path,cancer_dir_path)
-    pool1 = multiprocessing.Pool(processes=12, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating] ) 
-    try:
-        if(not params.GetSplitBamsPath()):
-            chr_list = range(1, 22)
-
-            if not os.path.exists("/".join([res_path, 'splitbams'])):
-                os.makedirs("/".join([res_path, 'splitbams']))
-
-            result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
-
-        result1 = pool1.map_async(find_roi_bam, chromosome_event ).get(9999999)
-        result2 = pool1.map_async(implement_cnv, chromosome_event ).get(9999999)
-        pool1.close()
-    except KeyboardInterrupt:  
-        logger.debug('You cancelled the program!')
-        pool1.terminate()
-    except Exception as e:     
-        logger.exception("Exception in main %s" , e)
-        pool1.terminate()
-    finally:
-        pool1.join()
-    time.sleep(.1)
-    mergeSortBamFiles(outbamfn, finalbams_path )
-    t1 = time.time()
-    shutil.rmtree(tmpbams_path)
-    logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0)/60.0, 1)) +' minutes ***** ')
-    logging.shutdown()
+    # pool1 = multiprocessing.Pool(processes=12, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating] )
+    # try:
+    #     if(not params.GetSplitBamsPath()):
+    #         chr_list = range(1, 22)
+    #
+    #         if not os.path.exists("/".join([res_path, 'splitbams'])):
+    #             os.makedirs("/".join([res_path, 'splitbams']))
+    #
+    #         result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
+    #
+    #     result1 = pool1.map_async(find_roi_bam, chromosome_event ).get(9999999)
+    #     result2 = pool1.map_async(implement_cnv, chromosome_event ).get(9999999)
+    #     pool1.close()
+    # except KeyboardInterrupt:
+    #     logger.debug('You cancelled the program!')
+    #     pool1.terminate()
+    # except Exception as e:
+    #     logger.exception("Exception in main %s" , e)
+    #     pool1.terminate()
+    # finally:
+    #     pool1.join()
+    # time.sleep(.1)
+    # mergeSortBamFiles(outbamfn, finalbams_path )
+    # t1 = time.time()
+    # shutil.rmtree(tmpbams_path)
+    # logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0)/60.0, 1)) +' minutes ***** ')
+    # logging.shutdown()
 
 ########################################################################################################################
 ########################################################################################################################

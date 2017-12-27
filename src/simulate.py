@@ -9,8 +9,7 @@ def main(args):
     outbamfn = args.outBamFile
     configReader = params.GetConfigReader()
     params.InitConfigReader(args.configfile)
-    params.SetGainCNV(args.cnvAmpFile)
-    params.SetLossCNV(args.cnvDelFile)
+    params.SetCNV(args.cnvAmpFile)
     params.SetCancerType(args.cancerType)
     params.SetOutputFileName(args.outBamFile)
     params.SetSplitBamsPath(args.splitbams)
@@ -34,20 +33,22 @@ if __name__ == '__main__':
     
     parser = argparse.ArgumentParser(description='adds CN spikes to reads, outputs modified reads as .bam along with mates')
     parser.add_argument('-outbam', dest='outBamFile', required=True,
-                        help='.bam file name for output')  
-    parser.add_argument('-cnv_amp', dest='cnvAmpFile', required=False,
-                        help='CNV amplification .bed file name')
-    parser.add_argument('-cnv_del', dest='cnvDelFile', required=False,
-                        help='CNV deletion .bed file name')
+                        help='.bam file name for output')
+    parser.add_argument('-cnv_bed', dest='cnvBedFile', required=False,
+                                            help='CNV .bed file name')
     parser.add_argument('-inbam', dest='inbamFile', required=False,
                         help='sam/bam file from which to obtain reads')
-    parser.add_argument('-cancertype', dest='cancerType', required=False,
-                        help='acronyms for cancer type')
-    parser.add_argument('-splitbamdir', dest='splitbams', required=False,
-                        help='input bam split by chromosomes')
     parser.add_argument('-c', '--configFile', action='store', required=True, dest='configfile',
                         help='/path/to/config_file.cfg')
     parser.add_argument('-phase',dest= 'phase', action="store_true")
+    parser.add_argument('-splitbamdir', dest='splitbams', required=False,
+                        help='input bam split by chromosomes')
+    parser.add_argument('-ctDNA', dest='ctDNA', action="store_true")
+    parser.add_argument('-single_XY', dest='singleXY', action="store_true")
+
+
+    # parser.add_argument('-cancertype', dest='cancerType', required=False,
+    #                     help='acronyms for cancer type')
     parser.add_argument('-ctDNA', dest='ctDNA', action="store_true")
 
     args = parser.parse_args()
