@@ -173,7 +173,7 @@ def intersectBed(bed1fn, bed2fn, intersectfile, wa=False, wb=False):
         print >> f, bed1.intersect(bed2,u=True)
     elif(wa==True and wb==False):
         print >> f, bed1.intersect(bed2,u=True,wa=True)
-    else:
+    elif(wa==True and wb==True):
         print >> f, bed1.intersect(bed2, u=True, wa=True,wb=True)
             
     f.close()

@@ -26,6 +26,7 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
           vcf_path = bamhelp.GetVCF()
           exons_path = bamhelp.GetExons()
           reference_path = bamhelp.GetRef()
+          bedtools_path = bamhelp.GetBedtoolsPath()
           vpath, vcf = os.path.split(vcf_path)
 
           if(params.GetPhase()):
@@ -62,7 +63,10 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
             roibed = "/".join([haplotype_path, "cnv_roi.bed"])
             exonsinroibed = "/".join([haplotype_path, "exons_in_roi.bed"])
 
-            intersectBed(exons_path, cnv_path, exonsinroibed, wa = True, wb = True)
+            #intersectBed(exons_path, cnv_path, exonsinroibed, wa = True, wb = True)
+
+            command = " ".join([bedtools_path, "intersect", exons_path, cnv_path,  "-wa -wb"])
+            runCommand(command)
             splitBed(exonsinroibed, 'exons_in_roi_')
     except:
         logger.exception("Initialization error !")
