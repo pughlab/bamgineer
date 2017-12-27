@@ -68,7 +68,7 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
             command = " ".join([bedtools_path, "intersect -a", exons_path, "-b",cnv_path,  "-wa -wb >", exonsinroibed])
             print(command)
             runCommand(command)
-            #splitBed(exonsinroibed, 'exons_in_roi_')
+            splitBed(exonsinroibed)
     except:
         logger.exception("Initialization error !")
         raise
