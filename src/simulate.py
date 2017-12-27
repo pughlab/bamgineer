@@ -9,7 +9,7 @@ def main(args):
     outbamfn = args.outBamFile
     configReader = params.GetConfigReader()
     params.InitConfigReader(args.configfile)
-    params.SetCNV(args.cnvAmpFile)
+    params.SetCNV(args.cnvBedFile)
     params.SetCancerType(args.cancerType)
     params.SetOutputFileName(args.outBamFile)
     params.SetSplitBamsPath(args.splitbams)
