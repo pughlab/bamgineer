@@ -49,7 +49,6 @@ if __name__ == '__main__':
 
     # parser.add_argument('-cancertype', dest='cancerType', required=False,
     #                     help='acronyms for cancer type')
-    parser.add_argument('-ctDNA', dest='ctDNA', action="store_true")
 
     args = parser.parse_args()
     
