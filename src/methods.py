@@ -65,7 +65,7 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
 
             #intersectBed(exons_path, cnv_path, exonsinroibed, wa = True, wb = True)
 
-            command = " ".join([bedtools_path, "intersect", exons_path, cnv_path,  "-wa -wb >", exonsinroibed])
+            command = " ".join([bedtools_path, "intersect -a", exons_path, "-b",cnv_path,  "-wa -wb >", exonsinroibed])
             print(command)
             runCommand(command)
             #splitBed(exonsinroibed, 'exons_in_roi_')
