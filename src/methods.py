@@ -28,46 +28,37 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
           reference_path = bamhelp.GetRef()
           vpath, vcf = os.path.split(vcf_path)
 
-    #     event_list=['gain','loss']
-    #     gaincnv = params.GetGainCNV()
-    #     losscnv = params.GetLossCNV()
-    #     logger.debug(' --- Initializing input files  --- ')
-    #     vcf_path = bamhelp.GetVCF()
-    #     exons_path = bamhelp.GetExons()
-    #     reference_path = bamhelp.GetRef()
-    #     vpath, vcf = os.path.split(vcf_path)
-    #
           if(params.GetPhase()):
-              print 'HEREEE'
-    #     phasedvcf = "/".join([results_path, sub('.vcf$', '_phased.vcf.gz', vcf)])
-    #     vcftobed =  "/".join([results_path, sub('.vcf$', '.bed', vcf)])
-    #
-    #     hap1vcf = "/".join([results_path,"hap1_het.vcf"])
-    #     hap2vcf = "/".join([results_path, "hap2_het.vcf"])
-    #     hap1vcffiltered = "/".join([results_path, "hap1_het_filtered"])
-    #     hap2vcffiltered = "/".join([results_path, "hap2_het_filtered"])
-    #     hap1vcffilteredtobed = "/".join([results_path, "hap1_het_filtered.bed"])
-    #     hap2vcffilteredtobed = "/".join([results_path, "hap2_het_filtered.bed"])
-    #     phased_bed =  "/".join([results_path, "PHASED.BED"])
-    #
-    #     phaseVCF(vcf_path, phasedvcf)
-    #     getVCFHaplotypes(phasedvcf, hap1vcf, hap2vcf)
-    #     thinVCF(hap1vcf, hap1vcffiltered)
-    #     thinVCF(hap2vcf, hap2vcffiltered)
-    #     convertvcftobed(hap1vcffiltered+".recode.vcf", hap1vcffilteredtobed)
-    #     convertvcftobed(hap2vcffiltered+".recode.vcf", hap2vcffilteredtobed)
-    #
-    #     cmd1 = """sed -i 's/$/\thap1/' """+ hap1vcffilteredtobed
-    #     cmd2 = """sed -i 's/$/\thap2/' """+ hap2vcffilteredtobed
-    #     cmd3 = "cat " + hap1vcffilteredtobed + " " + hap2vcffilteredtobed + " > " + 'tmp.bed'
-    #     cmd4 = "sort -V -k1,1 -k2,2 tmp.bed > " + phased_bed
-    #
-    #     runCommand(cmd1)
-    #     runCommand(cmd2)
-    #     runCommand(cmd3)
-    #     runCommand(cmd4)
-    #     os.remove('tmp.bed')
-    #
+
+            phasedvcf = "/".join([results_path, sub('.vcf$', '_phased.vcf.gz', vcf)])
+            vcftobed =  "/".join([results_path, sub('.vcf$', '.bed', vcf)])
+
+            hap1vcf = "/".join([results_path,"hap1_het.vcf"])
+            hap2vcf = "/".join([results_path, "hap2_het.vcf"])
+            hap1vcffiltered = "/".join([results_path, "hap1_het_filtered"])
+            hap2vcffiltered = "/".join([results_path, "hap2_het_filtered"])
+            hap1vcffilteredtobed = "/".join([results_path, "hap1_het_filtered.bed"])
+            hap2vcffilteredtobed = "/".join([results_path, "hap2_het_filtered.bed"])
+            phased_bed =  "/".join([results_path, "PHASED.BED"])
+
+            phaseVCF(vcf_path, phasedvcf)
+            getVCFHaplotypes(phasedvcf, hap1vcf, hap2vcf)
+            thinVCF(hap1vcf, hap1vcffiltered)
+            thinVCF(hap2vcf, hap2vcffiltered)
+            convertvcftobed(hap1vcffiltered+".recode.vcf", hap1vcffilteredtobed)
+            convertvcftobed(hap2vcffiltered+".recode.vcf", hap2vcffilteredtobed)
+
+            cmd1 = """sed -i 's/$/\thap1/' """+ hap1vcffilteredtobed
+            cmd2 = """sed -i 's/$/\thap2/' """+ hap2vcffilteredtobed
+            cmd3 = "cat " + hap1vcffilteredtobed + " " + hap2vcffilteredtobed + " > " + 'tmp.bed'
+            cmd4 = "sort -V -k1,1 -k2,2 tmp.bed > " + phased_bed
+
+            runCommand(cmd1)
+            runCommand(cmd2)
+            runCommand(cmd3)
+            runCommand(cmd4)
+            os.remove('tmp.bed')
+
     #     for  event in event_list:
     #         roibed = "/".join([haplotype_path,  event + "_roi.bed"])
     #         exonsinroibed = "/".join([haplotype_path,   event + "_exons_in_roi.bed"])
