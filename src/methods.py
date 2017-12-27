@@ -246,6 +246,12 @@ def mutate_reads(bamsortfn, chr, event=''):
                     os.remove("/".join([tmpbams_path, 'diff.bam']))
 
                 os.remove(bamsortfnsampled)
+                os.remove(allreadssortfn + '.bam')
+                os.remove(allreadssortfn + '.bam.bai')
+
+                os.remove(hetbamfnsorted + '.bam')
+                os.remove(hetbamfnsorted + '.bam.bai')
+
 
     except (KeyboardInterrupt):
         logger.error('Exception Crtl+C pressed in the child process  in mutaute_reads')
@@ -320,9 +326,11 @@ def implement_cnv(chr):
                     if (os.path.isfile(bamsortfn)):
                         re_pair_reads(bamsortfn, copy_number)
                         mutate_reads(bamrepairedsortfn, chr)
+
+                        coverageratio = float(countReads(mergedrenamedfn)) / float(countReads(bamsortfn))
+                        print(coverageratio)
+
                         renamereads(mergedsortfn, mergedrenamedfn)
-                        ratio = float(countReads(mergedrenamedfn)) / float(countReads(bamsortfn))
-                        print(ratio)
 
                         # samplerate= round(0.5/(ratio_kept),2)
                         # logger.debug("ratios kept for:"+ ntpath.basename(bamsortfn)+ ": "+ str(ratio_kept) )
