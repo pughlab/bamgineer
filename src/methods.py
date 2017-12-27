@@ -80,9 +80,13 @@ def initialize(results_path,haplotype_path,cancer_dir_path):
             splitBed(exonsinroibed)
 
 
-            command = " ".join([bedtools_path, "intersect -a", phased_bed, "-b", exonsinroibed, "-wa -wb >", hetsnpbed])
+            command = " ".join([bedtools_path, "intersect -a", phased_bed, "-b", exonsinroibed, "-wa -wb >", tmp])
             runCommand(command)
+
+            cmd = "".join(["""awk '{print $1"\t"$2"\t"$3"\t"$NF}' """, tmp, " > ", hetsnpbed])
+            runCommand(cmd)
             splitBed(hetsnpbed)
+            os.remove(tmp)
 
     except:
         logger.exception("Initialization error !")
