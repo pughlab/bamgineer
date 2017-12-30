@@ -6,7 +6,8 @@ project_name = ''
 infile = ''
 gaincnv_path = ''
 losscnv_path = ''
-cnv_path = ''
+# cnv_path = ''
+cnv_list_dir = ''
 cancer_type = ''
 spltbams_path = ''
 het_path = ''
@@ -20,6 +21,7 @@ bedtools_path = ''
 vcftools_path = ''
 phase = False
 ctDNA = False
+singleXY = False
 
 
 def InitConfigReader(configFile):
@@ -140,6 +142,15 @@ def GetCNV():
     return cnv_path
 
 
+def SetCNVDir(cnv_l):
+    global cnv_list_dir
+    cnv_list_dir = cnv_l
+
+
+def GetCNVDir():
+    return cnv_list_dir
+
+
 def SetPhase(Phase):
     global phase
     phase = Phase
@@ -156,6 +167,15 @@ def GetctDNA():
 def SetctDNA(ctdna):
     global ctDNA
     ctDNA = ctdna
+
+
+def GetXY():
+    return singleXY
+
+
+def SetXY(xy):
+    global singleXY
+    singleXY = xy
 
 
 def SetSoftwarePath(j_path, b_path, s_path, bd_path, v_path, sb_path):
@@ -176,5 +196,3 @@ def GetSoftwarePath():
     sambamba_path = configReader.get('SOFTWARE', 'sambamba_path')
 
     return java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path
-
-

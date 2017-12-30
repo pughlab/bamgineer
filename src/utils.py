@@ -19,6 +19,7 @@ import signal
 import itertools
 import ntpath
 import fnmatch
+from helpers import handlers as handle
 
 from threading import Thread
 from helpers import parameters as params
@@ -43,9 +44,13 @@ def phaseVCF(vcfpath, phasevcfpath):
 
 def create_chr_bam_list():
     chrom_event = []
-    for c in range(1, 23):
+
+    chr_list = ['chr' + str(x) for x in range(1, 23)]
+    chr_list.extend(['chrX', 'chrY'])
+
+    for c in chr_list:
         for e in ['nonhet', 'mutated']:
-            chev = "_".join(['chr' + str(c), e])
+            chev = "_".join([str(c), e])
             chrom_event.append(chev)
     return chrom_event
 
@@ -323,6 +328,7 @@ def mergeSortBamFiles(mergedBamfn, finalbamdir):
     command = ""
     os.chdir(finalbamdir)
     matches = []
+    num_files = 0
 
     for root, dirnames, filenames in os.walk(finalbamdir):
         for filename in fnmatch.filter(filenames, '*.bam'):
@@ -334,9 +340,16 @@ def mergeSortBamFiles(mergedBamfn, finalbamdir):
             if (not matches.__contains__(path)):
                 matches.append(path)
                 command = " ".join([path, command])
+                num_files = num_files + 1
 
-    command2 = " ".join([sambamba_path, "merge", mergedBamfn, command])
-    runCommand(command2)
+    if (num_files > 1):
+        command2 = " ".join([sambamba_path, "merge", mergedBamfn, command])
+        runCommand(command2)
+    elif (num_files == 1):
+
+        outbam = sub('.bam$', '.sort.bam', str(command.strip()))
+        sortBam(command, outbam, finalbamdir)
+        os.remove(str(command.strip()))
 
 
 def getMeanSTD(inbam):
@@ -439,12 +452,24 @@ def createHaplotypes(hetsnp_orig_bed, hetsnp_hap1_bed):
 
 
 # chr 21 and 22 for test, change it to 1
-def create_chr_event_list():
+# def create_chr_event_list():
+#    chrom_event= []
+#
+#    chr_list = ['chr' + str(x) for x in range(1, 23)]
+#    chr_list.extend(['chrX', 'chrY'])
+#
+#    for c in chr_list:
+#        for e in ['amp','gain','loss']:
+#            chev = "_".join([str(c), e])
+#            chrom_event.append(chev)
+#    return chrom_event
+
+
+def create_chr_event_list(cnv_list, chr_list):
     chrom_event = []
-    for c in range(1, 23):
-        for e in ['gain', 'loss']:
-            chev = "_".join(['chr' + str(c), e])
+    for c in chr_list:
+        for cnv_path in cnv_list:
+            e = os.path.splitext(cnv_path)[1]
+            chev = "_".join([str(c), str(e)])
             chrom_event.append(chev)
     return chrom_event
-
-
