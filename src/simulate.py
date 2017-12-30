@@ -32,24 +32,10 @@ def main(args):
     params.SetSoftwarePath(java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path)
 
     if (args.phase):
-        # run_pipeline(results_path)
-        # cnv_list =  glob.glob("/".join([args.cnvBedList, '*']))
-        # haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path,log_path, logfile = handle.GetProjectPaths(results_path)
-
-        # if not os.path.exists('/'.join([results_path, 'phasedvcfdir'])):
-        #    os.makedirs('/'.join([results_path, 'phasedvcfdir']))
-        #    initialize0('/'.join([results_path, 'phasedvcfdir']),cancer_dir_path)
-        # for cnv_path in cnv_list:
-        # params.SetCNV(cnv_path)
-        # event=os.path.splitext(cnv_path)[1]
-
         run_pipeline(results_path)
 
-    else:  # testing
-
+    else:
         print()
-
-        # run_pipeline(results_path )
 
 
 if __name__ == '__main__':

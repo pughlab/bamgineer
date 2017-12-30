@@ -332,6 +332,10 @@ def mutate_reads(bamsortfn, chr, event=''):
 
                     readmappings = alignmentfile.fetch(chr2, start, end)
 
+                    # sex chromosome
+                    if (params.GetXY() and (chr == 'chrX' or chr == 'chrY')):
+                        haplotype = 'hap1'
+
                     for shortread in readmappings:
 
                         allreads.write(shortread)
@@ -447,6 +451,8 @@ def implement_cnv(chromosome_event):
                 else:
                     if (chr == 'chrX' and chr == 'chrY'):
                         logger.debug("*** handling single sex chromosome for: " + ntpath.basename(bamsortfn))
+                        if (copy_number == 1):
+                            event = '.loh'
 
                 if (event == '.amp'):
 
@@ -561,6 +567,7 @@ def run_pipeline(results_path):
 
             if not os.path.exists("/".join([res_path, 'splitbams'])):
                 os.makedirs("/".join([res_path, 'splitbams']))
+                params.SetSplitBamsPath("/".join([res_path, 'splitbams']))
 
             result0 = pool1.map_async(split_bam_by_chr, chromosome_event).get(9999999)
 
@@ -576,7 +583,7 @@ def run_pipeline(results_path):
     finally:
         pool1.join()
     time.sleep(.1)
-    mergeSortBamFiles(outbamfn, finalbams_path )
+    # mergeSortBamFiles(outbamfn, finalbams_path )
     t1 = time.time()
     # shutil.rmtree(tmpbams_path)
     logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0) / 60.0, 1)) + ' minutes ***** ')

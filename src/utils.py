@@ -451,20 +451,6 @@ def createHaplotypes(hetsnp_orig_bed, hetsnp_hap1_bed):
         print('exception')
 
 
-# chr 21 and 22 for test, change it to 1
-# def create_chr_event_list():
-#    chrom_event= []
-#
-#    chr_list = ['chr' + str(x) for x in range(1, 23)]
-#    chr_list.extend(['chrX', 'chrY'])
-#
-#    for c in chr_list:
-#        for e in ['amp','gain','loss']:
-#            chev = "_".join([str(c), e])
-#            chrom_event.append(chev)
-#    return chrom_event
-
-
 def create_chr_event_list(cnv_list, chr_list):
     chrom_event = []
     for c in chr_list:
