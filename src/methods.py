@@ -90,7 +90,6 @@ def initialize_pipeline(phase_path, haplotype_path, cnv_path):
         runCommand(cmd)
 
         splitBed(exonsinroibed, '_exons_in_roi' + str(event))
-
         command = " ".join([bedtools_path, "intersect -a", phased_bed, "-b", exonsinroibed, "-wa -wb >", tmp])
         runCommand(command)
 
@@ -335,6 +334,7 @@ def mutate_reads(bamsortfn, chr, event=''):
                     # sex chromosome
                     if (params.GetXY() and (chr == 'chrX' or chr == 'chrY')):
                         haplotype = 'hap1'
+                        print('sex chromosome ' + str(chr))
 
                     for shortread in readmappings:
 
@@ -444,17 +444,27 @@ def implement_cnv(chromosome_event):
                 fn = list(csv.reader(open(bedfn, 'rb'), delimiter='\t'))
                 copy_number = int(fn[0][6])
 
-                if (not params.GetXY()):
+                if (not params.GetXY() or (chr != 'chrX' and chr != 'chrY')):
 
                     if (copy_number == 2):
                         event = '.loh'
-                else:
-                    if (chr == 'chrX' and chr == 'chrY'):
-                        logger.debug("*** handling single sex chromosome for: " + ntpath.basename(bamsortfn))
-                        if (copy_number == 1):
-                            event = '.loh'
+                    elif (copy_number == 3):
+                        event = '.gain'
+                    elif (copy_number > 3):
+                        event = '.amp'
 
-                if (event == '.amp'):
+
+                else:
+
+                    logger.debug("*** handling single sex chromosome for: " + ntpath.basename(bamsortfn))
+                    if (copy_number == 1):
+                        event = '.loh'
+                    elif (copy_number == 2):
+                        event = '.gain'
+                    elif (copy_number > 2):
+                        event = '.amp'
+
+                if (event == '.amp' or event == '.gain'):
 
                     bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
                     mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamrepairedsortfn)

@@ -11,9 +11,8 @@ def main(args):
     outbamfn = args.outBamFile
     configReader = params.GetConfigReader()
     params.InitConfigReader(args.configfile)
-    # params.SetCNV(args.cnvBedFile)
     params.SetCNVDir(args.cnvListDir)
-    # params.SetCancerType(args.cancerType)
+    params.SetCancerType(args.cancerType)
     params.SetOutputFileName(args.outBamFile)
     params.SetSplitBamsPath(args.splitbams)
     params.SetPhase(args.phase)
@@ -43,8 +42,6 @@ if __name__ == '__main__':
         description='adds CN spikes to reads, outputs modified reads as .bam along with mates')
     parser.add_argument('-outbam', dest='outBamFile', required=True,
                         help='.bam file name for output')
-    # parser.add_argument('-cnv_bed', dest='cnvBedFile', required=False,
-    #                                        help='CNV .bed file name')
     parser.add_argument('-cnv_list_dir', dest='cnvListDir', required=False,
                         help='list of CNV .bed files for different events')
 
@@ -59,9 +56,8 @@ if __name__ == '__main__':
     parser.add_argument('-single_XY', dest='singleXY', action="store_true")
     parser.add_argument('-chr_list', dest='chrList', required=False,
                         help='list of chromosomes to process')
-
-    # parser.add_argument('-cancertype', dest='cancerType', required=False,
-    #                     help='acronyms for cancer type')
+    parser.add_argument('-cancertype', dest='cancerType', required=False,
+                        help='acronyms for cancer type')
 
     args = parser.parse_args()
 
