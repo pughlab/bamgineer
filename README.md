@@ -47,7 +47,7 @@ Below is a general description of the file formats and prerequizites. For detail
            --cancer CANCER_TYPE,        cancer type/acronym
            --splitdir BAM_SPLIT_DIR,    input bam split by chromosomes
            --p PHASE,                   whether SNP phasing should be applied
-           --chr_list                   list of chromosomes to process (default: all)
+           --chr_list CHR_LIST,         list of chromosomes to process (default: all)
            --ctdna CT_DNA,              whether simulation is on reads obtained from ctDNA sequencing data 
            --singleXY   SINGLE_XY       whether the input bam file includes single copy sex chromosome (e.g. XY in normal male)
 
