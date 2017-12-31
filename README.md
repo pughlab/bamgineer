@@ -71,9 +71,9 @@ Note: the latest version of pysam (0.9.0) is not backward compatible with Samtoo
 ***Input parameters***
 
 -inbam: input sorted and indexed normal bam file \
--cnv_list: path to the directory contaiing bed files for allele-specific and cancer-specific CNV events. Each bed file is a tab seperated file (no header) containing the following: \
+-cnv_list: path to the directory contaiing bed files for allele-specific and cancer-specific CNV events. Each bed file is a tab seperated file (no header) containing the following: 
 
-chr     start   stop    absolute_copy_number \
+chr     start   stop    absolute_copy_number 
 
 -vcf: normal heterozygous vcf file (could be from HaplotypeCaller output, not including indels and homozygous loci) \
 -target_region: bed file containing the target regions (exons or any user-specified region) \ 
