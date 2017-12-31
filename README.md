@@ -72,7 +72,7 @@ Note: the latest version of pysam (0.9.0) is not backward compatible with Samtoo
 ***Input parameters***
 
 -inbam: input sorted and indexed normal bam file \
--cnv_list: path to the directory contaiing bed files for allele-specific and cancer-specific CNV events. Each bed file is a tab seperated file (no header) containing the following: 
+-cnv_list: path to the directory contaiing bed files for allele-specific and cancer-specific CNV events. Each line of the bed files in the folder is a tab seperated file (no header) in the following format:
 
 chr     start   stop    absolute_copy_number 
 
