@@ -4,9 +4,7 @@ from ConfigParser import SafeConfigParser
 configReader = SafeConfigParser()
 project_name = ''
 infile = ''
-gaincnv_path = ''
-losscnv_path = ''
-# cnv_path = ''
+cnv_bed = ''
 cnv_list_dir = ''
 cancer_type = ''
 spltbams_path = ''
@@ -59,24 +57,6 @@ def SetCancerType(can_type):
 
 def GetCancerType():
     return cancer_type
-
-
-def SetGainCNV(cnv_gain):
-    global gaincnv_path
-    gaincnv_path = cnv_gain
-
-
-def GetGainCNV():
-    return gaincnv_path
-
-
-def SetLossCNV(cnv_loss):
-    global losscnv_path
-    losscnv_path = cnv_loss
-
-
-def GetLossCNV():
-    return losscnv_path
 
 
 def SetOutputFileName(out_bam_file):
@@ -134,12 +114,12 @@ def GetBeaglePath():
 
 
 def SetCNV(cnv):
-    global cnv_path
-    cnv_path = cnv
+    global cnv_bed
+    cnv_bed = cnv
 
 
 def GetCNV():
-    return cnv_path
+    return cnv_bed
 
 
 def SetCNVDir(cnv_l):

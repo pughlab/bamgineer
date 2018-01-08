@@ -70,7 +70,9 @@ def initialize0(results_path, cancer_dir_path):
 
 def initialize_pipeline(phase_path, haplotype_path, cnv_path):
     exons_path = bamhelp.GetExons()
-    event = os.path.splitext(cnv_path)[1]
+
+    event, extension = os.path.splitext(os.path.basename(cnv_path))
+
     phased_bed = "/".join([phase_path, "PHASED.BED"])
     bedtools_path = bamhelp.GetBedtoolsPath()
 
@@ -447,30 +449,30 @@ def implement_cnv(chromosome_event):
                 if (not params.GetXY() or (chr != 'chrX' and chr != 'chrY')):
 
                     if (copy_number == 2):
-                        event = '.loh'
+                        event = 'loh'
                     elif (copy_number == 3):
-                        event = '.gain'
+                        event = 'gain'
                     elif (copy_number > 3):
-                        event = '.amp'
+                        event = 'amp'
 
 
                 else:
 
                     logger.debug("*** handling single sex chromosome for: " + ntpath.basename(bamsortfn))
                     if (copy_number == 1):
-                        event = '.loh'
+                        event = 'loh'
                     elif (copy_number == 2):
-                        event = '.gain'
+                        event = 'gain'
                     elif (copy_number > 2):
-                        event = '.amp'
+                        event = 'amp'
 
-                if (event == '.amp' or event == '.gain'):
+                if (event.startswith('amp') or event.startswith('gain')):
 
                     bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
                     mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamrepairedsortfn)
                     GAIN_FINAL = "/".join([finalbams_path, str(chr).upper() + '_GAIN.bam'])
 
-                    if (os.path.isfile(bamsortfn)):
+                    if os.path.isfile(bamsortfn):
 
                         re_pair_reads(bamsortfn, copy_number)
                         mutate_reads(bamrepairedsortfn, chr, event)
@@ -478,12 +480,34 @@ def implement_cnv(chromosome_event):
                         logger.debug(
                             "+++ coverage ratio for: " + ntpath.basename(bamsortfn) + ": " + str(coverageratio))
 
-                        if (coverageratio < copy_number - 2):
+                        if coverageratio < copy_number - 2:
                             logger.error('not enough reads for ' + ntpath.basename(bamsortfn))
                             return
                         else:
                             samplerate = float(copy_number - 2) / coverageratio
                             subsample(mergedsortfn, GAIN_FINAL, str(samplerate))
+
+                elif event == 'loss':
+
+                    inbam_deletion = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
+                    if os.path.isfile(bamsortfn):
+
+                        mutate_reads(bamsortfn, chr, 'loss')
+                        mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamsortfn)
+                        mergedsortsampledfn = sub('.sorted.bam$', ".mutated_merged.sampled.sorted.bam", bamsortfn)
+
+                        ratio_kept = float(countReads(bamsortfn)) / float(countReads(bamfn))
+                        samplerate = round(0.5 / ratio_kept, 2)
+                        LOSS_FINAL = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
+                        logger.debug("ratios kept for:" + ntpath.basename(bamsortfn) + ": " + str(ratio_kept))
+                        subsample(mergedsortfn, mergedsortsampledfn, str(samplerate))
+                        bamDiff(sortbyCoord, mergedsortsampledfn, tmpbams_path)
+                        os.rename("/".join([tmpbams_path, 'diff_only1_' + chr + '.bam']), LOSS_FINAL)
+
+                    elif (not os.path.isfile(inbam_deletion) and os.path.isfile(
+                            sortbyCoord)):  # if it exists from previous runs
+
+                        os.symlink(sortbyCoord, inbam_deletion)
 
             else:
                 logger.debug(bedfn + ' does not exist!')
@@ -543,6 +567,7 @@ def removeReadsOverlappingHetRegion(inbamfn, bedfn, outbamfn, path):
 
 
 def run_pipeline(results_path):
+    print(results_path)
     global haplotype_path, cancer_dir_path, tmpbams_path, finalbams_path, log_path, logfile, terminating, logger, logQueue, res_path
     res_path = results_path
     haplotype_path, cancer_dir_path, tmpbams_path, finalbams_path, log_path, logfile = handle.GetProjectPaths(
@@ -555,7 +580,7 @@ def run_pipeline(results_path):
     t0 = time.time()
     outbamfn = params.GetOutputFileName()
 
-    cnv_list = glob.glob("/".join([params.GetCNVDir(), '*']))
+    cnv_list = glob.glob("/".join([params.GetCNVDir(), '*.*']))
     chromosome_event = create_chr_event_list(cnv_list, chr_list)
 
     logger.debug('pipeline started!')
@@ -573,7 +598,7 @@ def run_pipeline(results_path):
                                  initargs=[logQueue, logger.getEffectiveLevel(), terminating])
     try:
 
-        if (not params.GetSplitBamsPath()):
+        if not params.GetSplitBamsPath():
 
             if not os.path.exists("/".join([res_path, 'splitbams'])):
                 os.makedirs("/".join([res_path, 'splitbams']))
@@ -593,8 +618,8 @@ def run_pipeline(results_path):
     finally:
         pool1.join()
     time.sleep(.1)
-    # mergeSortBamFiles(outbamfn, finalbams_path )
+    mergeSortBamFiles(outbamfn, finalbams_path)
     t1 = time.time()
-    # shutil.rmtree(tmpbams_path)
+    shutil.rmtree(tmpbams_path)
     logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0) / 60.0, 1)) + ' minutes ***** ')
     logging.shutdown()

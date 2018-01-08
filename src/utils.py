@@ -23,6 +23,7 @@ from helpers import handlers as handle
 
 from threading import Thread
 from helpers import parameters as params
+import pandas as pd
 
 
 def phaseVCF(vcfpath, phasevcfpath):
@@ -459,3 +460,40 @@ def create_chr_event_list(cnv_list, chr_list):
             chev = "_".join([str(c), str(e)])
             chrom_event.append(chev)
     return chrom_event
+
+
+def createEventBedFiles(cnv_dir, bedfn):
+    cnv_number_list = []
+    event_list = []
+    df = pd.read_csv(bedfn, header=None, sep='\t')
+    cnv_number_list = list(set(df[df.columns[-1]].tolist()))
+
+    df.columns = ['chr', 'start', 'end', 'abs_cn']
+    for num in cnv_number_list:
+        cn = int(num)
+        dfi = df.loc[df['abs_cn'] == cn]
+
+        if (cn == 0):
+            fn = 'deepdel.bed'
+        elif (cn == 1):
+            fn = 'loss.bed'
+        elif (cn == 2):
+            fn = 'loh.bed'
+        elif (cn == 3):
+            fn = 'gain.bed'
+        elif (cn == 4):
+            fn = 'amp4.bed'
+        elif (cn == 5):
+            fn = 'amp5.bed'
+        elif (cn == 6):
+            fn = 'amp6.bed'
+        elif (cn == 7):
+            fn = 'amp7.bed'
+        elif (cn == 8):
+            fn = 'amp8.bed'
+        elif (cn > 8):
+            print('CNV number must be smaller than 8')
+
+        dfi.to_csv("/".join([cnv_dir, fn]), sep='\t', header=None, encoding='utf-8', index=False)
+
+    return
