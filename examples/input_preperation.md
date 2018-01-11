@@ -89,4 +89,10 @@ For instance navigate to input directory and create the following file and name 
 
 chr21	30227447	47076809	3
 
-### 12. You are now ready to run Bamgineer (Please see run_example)
+### 12. Create/edit config.cfg file
+
+The config.cfg file includes configuration file including paths to executables and references (see quickstart). A config file corresponding to the above generated data is created in inputs directory for convenience.
+
+**Please note that depending the specific runtime environment the paths may vary. Specifically if you are using HPC environment (such Sun Grid or Slurm), the paths can be set differently ("module load" command). A seperate documentation will be created for HPC cluster. 
+
+### 13. You are now ready to run Bamgineer (Please see run_example1.sh in /scripts folder)
