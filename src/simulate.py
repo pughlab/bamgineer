@@ -43,7 +43,7 @@ def main(args):
 
 
     else:
-        print('Please provide costum phasing algorithm')
+        print('Please provide costume phasing algorithm')
 
 
 if __name__ == '__main__':
