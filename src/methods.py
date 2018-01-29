@@ -8,592 +8,97 @@ from utils import *
 import logging, sys
 import random
 from shutil import move
+import csv
+from uuid import uuid4
+import glob
 
 global bases
-bases = ('A','T','C','G')
+bases = ('A', 'T', 'C', 'G')
+
 
 def initPool(queue, level, terminating_):
-    #This causes the logging module to be initialized with the necessary info in pool threads
+    # This causes the logging module to be initialized with the necessary info in pool threads
     logging.getLogger('').setLevel(level)
     global terminating
     terminating = terminating_
 
-def initialize(results_path,haplotype_path,cancer_dir_path):
-    
+
+def initialize0(results_path, cancer_dir_path):
     try:
-        event_list=['gain','loss']
-        gaincnv = params.GetGainCNV()
-        losscnv = params.GetLossCNV()
-        logger.debug(' --- Initializing input files  --- ')
         vcf_path = bamhelp.GetVCF()
         exons_path = bamhelp.GetExons()
         reference_path = bamhelp.GetRef()
+        bedtools_path = bamhelp.GetBedtoolsPath()
         vpath, vcf = os.path.split(vcf_path)
-        phasedvcf = "/".join([results_path, sub('.vcf$', '_phased.vcf.gz', vcf)])
-        vcftobed =  "/".join([results_path, sub('.vcf$', '.bed', vcf)])
-        
-        hap1vcf = "/".join([results_path,"hap1_het.vcf"])
-        hap2vcf = "/".join([results_path, "hap2_het.vcf"])
-        hap1vcffiltered = "/".join([results_path, "hap1_het_filtered"])
-        hap2vcffiltered = "/".join([results_path, "hap2_het_filtered"])
-        hap1vcffilteredtobed = "/".join([results_path, "hap1_het_filtered.bed"])
-        hap2vcffilteredtobed = "/".join([results_path, "hap2_het_filtered.bed"])
-        phased_bed =  "/".join([results_path, "PHASED.BED"])
-        
-        phaseVCF(vcf_path, phasedvcf)
-        getVCFHaplotypes(phasedvcf, hap1vcf, hap2vcf)
-        thinVCF(hap1vcf, hap1vcffiltered)
-        thinVCF(hap2vcf, hap2vcffiltered)
-        convertvcftobed(hap1vcffiltered+".recode.vcf", hap1vcffilteredtobed)
-        convertvcftobed(hap2vcffiltered+".recode.vcf", hap2vcffilteredtobed)
-       
-        cmd1 = """sed -i 's/$/\thap1/' """+ hap1vcffilteredtobed
-        cmd2 = """sed -i 's/$/\thap2/' """+ hap2vcffilteredtobed
-        cmd3 = "cat " + hap1vcffilteredtobed + " " + hap2vcffilteredtobed + " > " + 'tmp.bed'
-        cmd4 = "sort -V -k1,1 -k2,2 tmp.bed > " + phased_bed  
-            
-        runCommand(cmd1)
-        runCommand(cmd2)
-        runCommand(cmd3)
-        runCommand(cmd4)
-        os.remove('tmp.bed')  
-        
-        for  event in event_list: 
-            roibed = "/".join([haplotype_path,  event + "_roi.bed"])
-            exonsinroibed = "/".join([haplotype_path,   event + "_exons_in_roi.bed"])
-            nonhetbed = "/".join([haplotype_path, event + "_non_het.bed"])
-            hetbed = "/".join([haplotype_path, event + "_het.bed"])
-            hetsnpbed = "/".join([haplotype_path,  event + "_het_snp.bed"])
-            
-            if(locals()[event + 'cnv']):
-                intersectBed( exons_path, locals()[event + 'cnv'], exonsinroibed, wa=True)
-                intersectBed(phased_bed, exonsinroibed, hetsnpbed, wa=True)
-                splitBed(exonsinroibed, event+'_exons_in_roi_')
-                splitBed(hetsnpbed, event+'_het_snp_')
 
-    except:  
-        logger.exception("Initialization error !")
+        if (params.GetPhase()):
+            phasedvcf = "/".join([results_path, sub('.vcf$', '_phased.vcf.gz', vcf)])
+            vcftobed = "/".join([results_path, sub('.vcf$', '.bed', vcf)])
+
+            hap1vcf = "/".join([results_path, "hap1_het.vcf"])
+            hap2vcf = "/".join([results_path, "hap2_het.vcf"])
+            hap1vcffiltered = "/".join([results_path, "hap1_het_filtered"])
+            hap2vcffiltered = "/".join([results_path, "hap2_het_filtered"])
+            hap1vcffilteredtobed = "/".join([results_path, "hap1_het_filtered.bed"])
+            hap2vcffilteredtobed = "/".join([results_path, "hap2_het_filtered.bed"])
+            phased_bed = "/".join([results_path, "PHASED.BED"])
+
+            phaseVCF(vcf_path, phasedvcf)
+            getVCFHaplotypes(phasedvcf, hap1vcf, hap2vcf)
+            thinVCF(hap1vcf, hap1vcffiltered)
+            thinVCF(hap2vcf, hap2vcffiltered)
+            convertvcftobed(hap1vcffiltered + ".recode.vcf", hap1vcffilteredtobed)
+            convertvcftobed(hap2vcffiltered + ".recode.vcf", hap2vcffilteredtobed)
+
+            cmd1 = """sed -i 's/$/\thap1/' """ + hap1vcffilteredtobed
+            cmd2 = """sed -i 's/$/\thap2/' """ + hap2vcffilteredtobed
+            cmd3 = "cat " + hap1vcffilteredtobed + " " + hap2vcffilteredtobed + " > " + 'tmp.bed'
+            cmd4 = "sort -V -k1,1 -k2,2 tmp.bed > " + phased_bed
+
+            runCommand(cmd1)
+            runCommand(cmd2)
+            runCommand(cmd3)
+            runCommand(cmd4)
+            os.remove('tmp.bed')
+
+    except:
+
         raise
-    logger.debug("--- initialization complete ---")    
-    return 
 
-def init_file_names(chr, event,tmpbams_path, haplotypedir):
-    
-    flist=[]
-
-    roibam = "/".join([tmpbams_path, chr + event + "_roi.bam"])
-    splitbams = params.GetSplitBamsPath()
-    hetsnp = "/".join([haplotypedir, event + '_het_snp_' + chr + '.bed'])
-
-    if(not splitbams):
-        splitbams = "/".join([res_path, 'splitbams'])
-
-    sortbyname =  "/".join([splitbams,  chr + '.byname.bam'])
-    sortbyCoord = "/".join([splitbams,  chr + '.bam'])
-
-    flist.extend([roibam,sortbyname,sortbyCoord,hetsnp])
-    return flist
-
-
-def find_roi_bam(chromosome_event):
-    chr,event = chromosome_event .split("_")
-    roi,sortbyname,sortbyCoord, hetsnp = init_file_names(chr, event, tmpbams_path, haplotype_path)
-    exonsinroibed = "/".join([haplotype_path,   event + "_exons_in_roi_"+ chr +'.bed'])
-    success = True
-    try:
-        if not terminating.is_set():
-            roisort = sub('.bam$', '.sorted', roi)
-            if(os.path.isfile(exonsinroibed)):
-                 
-                 cmd=" ".join(["sort -u", exonsinroibed, "-o", exonsinroibed]); runCommand(cmd)
-                 extractPairedReadfromROI(sortbyname, exonsinroibed, roi)
-                 removeIfEmpty(tmpbams_path,ntpath.basename(roi))
-                 pysam.sort(roi ,roisort )
-                 pysam.index(roisort+'.bam')
-                 os.remove(roi)
-              
-    except (KeyboardInterrupt):
-        logger.error('Exception Crtl+C pressed in the child process  in find_roi_bam for chr ' +chr + event)
-        terminating.set()
-        success=False
-        return
-    except Exception as e:   
-        logger.exception("Exception in find_roi_bam %s" ,e )
-        terminating.set()
-        success=False
-        return
-    if(success):
-        logger.debug("find_roi_bam complete successfully for "+chr + event) 
-    return           
-    
-def mutate_reads(bamsortfn, chr, event):
-    fn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, event, tmpbams_path, haplotype_path)
-    cmd = " ".join(["sort -u", bedfn, "-o", bedfn]);
-    runCommand(cmd)
-    outbamfn = sub('.sorted.bam$', ".mutated_het.bam", bamsortfn)
-    outbamsortfn = sub('.sorted.bam$', ".mutated_het.sorted", bamsortfn)
-
-    mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamsortfn)
-    try:
-        if not terminating.is_set():
-
-            if (os.path.isfile(bamsortfn) and os.path.isfile(bedfn)):
-                samfile = pysam.Samfile(bamsortfn, "rb")
-                alignmentfile = pysam.AlignmentFile(bamsortfn, "rb")
-                outbam = pysam.Samfile(outbamfn, 'wb', template=samfile)
-                bedfile = open(bedfn, 'r')
-                covpath = "/".join([haplotype_path, "written_coverage_het.txt"])
-                covfile = open(covpath, 'w')
-                snpratiopath = "/".join([haplotype_path, "het_snp_ratio.txt"])
-                snpaltratiofile = open(snpratiopath, 'w')
-                writtenreads = []
-
-                for bedline in bedfile:
-                    c = bedline.strip().split()
-                    if (len(c) == 6):
-                        chr2 = c[0];
-                        chr = c[0].strip("chr");
-                        start = int(c[1]);
-                        end = int(c[2])
-                        refbase = str(c[3]);
-                        altbase = str(c[4]);
-                        haplotype = str(c[5])
-                    else:
-                        continue
-
-                    readmappings = alignmentfile.fetch(chr2, start, end)
-                    num_reads_written = 0
-                    for shortread in readmappings:
-                        try:
-                            mate = alignmentfile.mate(shortread)
-                        except:
-                            continue
-
-                        if (shortread.is_paired and shortread.is_proper_pair and not shortread.is_duplicate
-                                and not shortread.is_secondary and not shortread.qname in writtenreads and shortread.mapping_quality >= 30
-                                and mate.mapping_quality >= 30 and not mate.is_duplicate and mate.is_proper_pair and not mate.is_secondary):
-
-                            try:
-                                index = shortread.get_reference_positions().index(start)
-                                tmpread = shortread.query_sequence
-                                mutated_hap1 = tmpread[:index] + altbase + tmpread[index + 1:]
-                                mutated_hap2 = tmpread[:index] + refbase + tmpread[index + 1:]
-                                if (haplotype == "hap1"):
-                                    shortread.query_sequence = mutated_hap1
-                                elif (haplotype == "hap2"):
-                                    shortread.query_sequence = mutated_hap2
-                            except:
-                                continue
-
-                            try:
-                                index_mate = mate.get_reference_positions().index(start)
-                                nuecleotide_mate = mate.seq[index_mate]
-                                tmpread_mate = mate.query_sequence
-                                mutated_mate_hap1 = tmpread_mate[:index_mate] + altbase + tmpread_mate[index_mate + 1:]
-                                mutated_mate_hap2 = tmpread_mate[:index_mate] + refbase + tmpread_mate[index_mate + 1:]
-                                if (haplotype == "hap1"):
-                                    mate.query_sequence = mutated_mate_hap1
-                                elif (haplotype == "hap2"):
-                                    mate.query_sequence = mutated_mate_hap2
-                            except (KeyError, ValueError) as e:
-                                pass
-
-                            outbam.write(shortread)
-                            outbam.write(mate)
-                            writtenreads.append(shortread.qname)
-                            num_reads_written += 2
-                            continue
-                outbam.close()
-                covfile.close()
-                snpaltratiofile.close()
-                sortBam(outbamfn, outbamsortfn + '.bam')
-
-                bamDiff(bamsortfn, outbamsortfn + '.bam', tmpbams_path)
-
-                if("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfn)])):
-
-                    merge_bams("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfn)]), outbamsortfn + '.bam',
-                                          mergedsortfn)
-
-                else:
-                    merge_bams(bamsortfn,outbamsortfn + '.bam',mergedsortfn)
-
-                os.remove(outbamfn)
-
-    except (KeyboardInterrupt):
-        logger.error('Exception Crtl+C pressed in the child process  in mutaute_reads')
-        terminating.set()
-        return
-    except Exception as e:
-        logger.exception("Exception in mutate_reads %s", e)
-        terminating.set()
-        return
     return
 
-def split_bam_by_chr(chr_list):
 
-    inbam = params.GetInputBam()
-    spltbams_path = "/".join([res_path, 'splitbams'])
+def initialize_pipeline(phase_path, haplotype_path, cnv_path):
+    exons_path = bamhelp.GetExons()
 
+    event, extension = os.path.splitext(os.path.basename(cnv_path))
+
+    phased_bed = "/".join([phase_path, "PHASED.BED"])
+    bedtools_path = bamhelp.GetBedtoolsPath()
 
     try:
-        if not terminating.is_set():
-            logger.debug("___ spliting bam by chromosome ___")
-            splitBamByChr( inbam ,spltbams_path,'chr'+str(chr_list))
-            sortByName("/".join([spltbams_path, 'chr'+str(chr_list) + ".bam"]),
-                       "/".join([spltbams_path, 'chr'+str(chr_list) + ".byname.bam"]))
-
-    except (KeyboardInterrupt):
-        logger.error('Exception Crtl+C pressed in the child process  in split_bam_by_chr')
-        terminating.set()
-        return False
-    except Exception as e:
-        logger.exception("Exception in split_bam_by_chr %s" ,e )
-        terminating.set()
-        return False
-    return
-
-#cn change is 1 for CN=1,3 and 2 for CN=0,4
-def calculate_sample_rate(inbam, outbam, cnchange, purity):
-
-            logger.debug("___ adjusting sample rate ___")
-
-def implement_cnv(chromosome_event):
-    chr,event = chromosome_event .split("_")
-    
-    logger.debug("___ Bamgineer main engine started ___")
-    success = True
-    try:
-        if not terminating.is_set():
-            bamfn,sortbyname,sortbyCoord, bedfn = init_file_names(chr, event, tmpbams_path, haplotype_path)
-            bamsortfn = sub('.bam$', '.sorted.bam', bamfn)
-
-            if(event== 'gain'):
-                    bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
-                    mergedsortfn = sub('.sorted.bam$',".mutated_merged.sorted.bam", bamrepairedsortfn)
-                    mergedrenamedfn = sub('.sorted.bam$',".mutated_merged_renamed.sorted.bam", bamrepairedsortfn)
-
-                    GAIN_FINAL = "/".join([finalbams_path,  str(chr).upper() +'_GAIN.bam'])
-                    if(os.path.isfile(bamsortfn)):
-                        re_pair_reads(bamsortfn)
-                        mutate_reads(bamrepairedsortfn, chr, 'gain')
-                        renamereads(mergedsortfn, mergedrenamedfn)
-                        ratio_kept = float(countReads(mergedrenamedfn))/float(countReads(bamsortfn))
-                        samplerate= round(0.5/(ratio_kept),2)
-
-                        logger.debug("ratios kept for:"+ ntpath.basename(bamsortfn)+ ": "+ str(ratio_kept) )
-                        #os.remove(bamfn)
-                        if(samplerate < 1.0):
-                           subsample(mergedrenamedfn, GAIN_FINAL,str(samplerate)) #calculate it later
-                           logger.debug("___ sampling rate for " + ntpath.basename(bamsortfn)  +" : "+ str(samplerate))
-                        elif(samplerate > 1.0 and samplerate< 1.05):
-                           os.rename(mergedrenamedfn, GAIN_FINAL)
-                        else:
-                           logger.error('not enough reads for '+ntpath.basename(bamsortfn)+ 'rate: '+str(samplerate) )
-                           success = False
-                           return
-
-            elif(event== 'loss'):
-               
-                inbam_deletion = "/".join([finalbams_path , str(chr).upper() + '_LOSS.bam'])
-                if(os.path.isfile(bamsortfn)):
-                    
-                    mutate_reads(bamsortfn, chr, 'loss')
-                    mergedsortfn = sub('.sorted.bam$',".mutated_merged.sorted.bam", bamsortfn)
-                    mergedsortsampledfn = sub('.sorted.bam$',".mutated_merged.sampled.sorted.bam", bamsortfn)
-                    
-                    ratio_kept = float(countReads(bamsortfn))/float(countReads(bamfn))
-                    samplerate= round(0.5/(ratio_kept),2)
-                    LOSS_FINAL = "/".join([finalbams_path,  str(chr).upper() +'_LOSS.bam'])
-                    logger.debug("ratios kept for:"+ ntpath.basename(bamsortfn)+ ": "+ str(ratio_kept))
-                    subsample(mergedsortfn, mergedsortsampledfn,str(samplerate)) 
-                    bamDiff(sortbyCoord, mergedsortsampledfn, tmpbams_path)
-                    os.rename("/".join([tmpbams_path,  'diff_only1_' + chr + '.bam']), LOSS_FINAL)
-
-                elif(not os.path.isfile(inbam_deletion) and os.path.isfile(sortbyCoord) ):# if it exists from previous runs 
-                    
-                    os.symlink(sortbyCoord, inbam_deletion)
-                    
-    except (KeyboardInterrupt):
-        logger.error('Exception Crtl+C pressed in the child process  in find_roi_bam for chr ' +chr + event)
-        terminating.set()
-        success=False
-        return
-    except Exception as e:   
-        logger.exception("Exception in find_roi_bam %s" ,e )
-        terminating.set()
-        success=False
-        return
-    if(success):
-        logger.debug("implement_cnv complete successfully for "+chr + event) 
-    return           
-
-def re_pair_reads(bamsortfn):
-    try:
-        if not terminating.is_set():
-            logger.debug(" calling  re-pair-reads version" )
-            bamrepairedfn = sub('.sorted.bam$',  ".re_paired.bam", bamsortfn)
-            bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
-            
-            if(os.path.isfile(bamsortfn)):
-                  
-                inbam = pysam.Samfile(bamsortfn, 'rb')
-                outbam = pysam.Samfile(bamrepairedfn, 'wb', template=inbam)  
-    
-                writtencount = 0
-                strands=['pos','neg']
-                
-                for strand in strands :
-                    read1fn= sub('.bam$', '.read1_'+strand+'.bam', bamsortfn)
-                    read2fn= sub('.bam$', '.read2_'+strand+'.bam', bamsortfn)
-                    
-                    if(not os.path.isfile(read1fn) or not os.path.isfile(read2fn)):
-                        splitPairAndStrands(bamsortfn)
-                    
-                    splt1 = pysam.Samfile(read1fn , 'rb')
-                    splt2 = pysam.Samfile(read2fn , 'rb')
-                    itr1 =   splt1.fetch(until_eof=True)
-                    itr2 =   splt2.fetch(until_eof=True)
-                    start = True
-                
-                    for read1, read2 in  izip(itr1, itr2):                                      
-                        
-                        try:
-                            
-                            read1next = itr1.next()
-                            read2next = itr2.next()
-                            
-                            tlenabs2 =  abs(read2.pos - read1next.pos  + abs(read2.qlen))
-                            tlenabs1 = abs(read2next.pos - read1.pos + abs(read2next.qlen))
-                            
-                            if(read1.reference_id != read1.next_reference_id or read2.reference_id != read2.next_reference_id or
-                                  read1next.reference_id != read1next.next_reference_id  or read2next.reference_id != read2next.next_reference_id or
-                                  tlenabs1 < 0.5*abs(read1.tlen) or tlenabs1 > 5*abs(read1.tlen) or
-                                  tlenabs2 < 0.5*abs(read1next.tlen) or tlenabs2 > 5*abs(read1next.tlen)):
-                                continue
-                            
-                            if(strand == 'pos'):
-                                tlenabs1 = read2next.pos - read1.pos + abs(read2next.qlen)
-                                tlenabs2 =  read2.pos - read1next.pos  + abs(read2.qlen)  
-                                tlenmean = (abs(read1.tlen) + abs(read1next.tlen))/2
-                                criteria1 = True
-                                criteria2 = True
-                                
-                                if(criteria1 ):
-                                
-                                    read1.tlen = tlenabs1
-                                    read2next.tlen = -tlenabs1
-                                    read1.pnext = read2next.pos
-                                    read2next.pnext = read1.pos
-                                    read2next.qname = read1.qname 
-                                    outbam.write(read1)
-                                    outbam.write(read2next)
-                                    writtencount = writtencount + 1
-                                
-                                if(criteria2 ):
-                              
-                                    read1next.tlen = tlenabs2
-                                    read2next.tlen = -tlenabs2 
-                                    read2.pnext = read1next.pos
-                                    read1next.pnext = read2.pos
-                                    read2.qname = read1next.qname
-                                    outbam.write(read1next)
-                                    outbam.write(read2)
-                                    writtencount = writtencount + 1  
-                            elif(strand== 'neg'):
-                            
-                                    tlenabs1 = read1.pos - read2next.pos + abs(read1.qlen)
-                                    tlenabs2 = read1next.pos -read2.pos + abs(read1next.qlen)
-                                    tlenmean = (abs(read1.tlen) + abs(read1next.tlen))/2
-                                    
-                                    if(not params.GetctDNA()):
-                                        criteria1= (tlenabs1 > 0.2*tlenmean and tlenabs1 < 5*tlenmean and read2next.qname != read1.qname and tlenabs1 > 0 and
-                                        not read1.is_duplicate and not read1.is_secondary and not read2next.is_duplicate and not read2next.is_secondary)
-                                        criteria2=(tlenabs2 > 0.2*tlenmean and tlenabs2 < 5*tlenmean and read1next.qname != read2.qname and tlenabs2 > 0 and
-                                       not read2.is_duplicate and not read2.is_secondary and not read1next.is_duplicate and not read1next.is_secondary )
-                                    else: #ctDNA
-                                    
-                                        criteria2 = True
-                                       
-                                        if(criteria1 ):
-                                            read1.tlen = -tlenabs1
-                                            read2next.tlen = tlenabs1
-                                            read1.pnext = read2next.pos
-                                            read2next.pnext = read1.pos
-                                            read2next.qname = read1.qname
-                                            outbam.write(read1)
-                                            outbam.write(read2next)
-                                            writtencount = writtencount + 1
-
-                                        if(criteria2):
-                                    
-                                            read1next.tlen = -tlenabs2
-                                            read2.tlen = tlenabs2
-                                            read2.pnext = read1next.pos
-                                            read1next.pnext = read2.pos
-                                            read2.qname = read1next.qname
-                                            outbam.write(read1next)
-                                            outbam.write(read2)
-                                            writtencount = writtencount + 1 
-                            else:
-                                print("problem with reads :    " +read1next.qname + '   ' +read1.qname + '   ' +read2next.qname)
-                        
-                        except StopIteration:
-                            break        
-                
-                    splt1.close();splt2.close()
-
-                inbam.close()
-                outbam.close() 
-                
-                sortBam(bamrepairedfn, bamrepairedsortfn)
-                os.remove(bamrepairedfn)
-
-    except (KeyboardInterrupt):
-        logger.error('Exception Crtl+C pressed in the child process  in re_pair_reads')
-        terminating.set()
-        return False
-    except Exception as e:   
-        logger.exception("Exception in re_pair_reads %s" ,e )
-        terminating.set()
-        return False
-    return             
-
-def removeReadsOverlappingHetRegion(inbamfn, bedfn,outbamfn,path):
-    print "___ removing reads overlapping heterozygous region ___"
-    inbamsorted =  sub('.bam$','.sorted',inbamfn)
-    pysam.sort(inbamfn, inbamsorted)
-    pysam.index(inbamsorted+'.bam')
-    
-    alignmentfile = pysam.AlignmentFile(inbamsorted+'.bam', "rb" )
-    outbam = pysam.Samfile(outbamfn, 'wb', template=alignmentfile )
-    
-    bedfile = open(bedfn, 'r')
-    
-    for bedline in bedfile:
-        c = bedline.strip().split()
-        
-        if (len(c) == 3 ):
-            chr2 = c[0]
-            chr = c[0].strip("chr")
-            start = int(c[1])
-            end   = int(c[2])
-        else :
-            continue
-        
-        try:
-            readmappings = alignmentfile.fetch(chr2, start, end)
-        except  ValueError as e:
-            print("problem fetching the read ")
-        
-        for shortread in readmappings:
-            try:
-                outbam.write(shortread)
-            except ValueError as e:
-                print ("problem removing read :" + shortread.qname)
-    outbamsorted =  sub('.bam$','.sorted',outbamfn)            
-    pysam.sort(outbamfn, outbamsorted)
-    bamDiff(inbamsorted+'.bam', outbamsorted +'.bam', path )
-    outbam.close()           
-
-def run_pipeline(results_path):
-
-    global haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path,log_path, logfile ,terminating,logger,logQueue, res_path
-    res_path = results_path
-    haplotype_path,cancer_dir_path,tmpbams_path, finalbams_path,log_path, logfile = handle.GetProjectPaths(results_path)
-    terminating,logger,logQueue = handle.GetLoggings(logfile)
-    
-    t0 = time.time()
-    outbamfn=params.GetOutputFileName() 
-    chromosome_event = create_chr_event_list()
-    chromosomes_bamfiles = create_chr_bam_list()
-    logger.debug('pipeline started!')
-    
-    initialize(results_path,haplotype_path,cancer_dir_path)
-    pool1 = multiprocessing.Pool(processes=12, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating] ) 
-    try:
-        if(not params.GetSplitBamsPath()):
-            chr_list = range(1, 22)
-
-            if not os.path.exists("/".join([res_path, 'splitbams'])):
-                os.makedirs("/".join([res_path, 'splitbams']))
-
-            result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
-
-        result1 = pool1.map_async(find_roi_bam, chromosome_event ).get(9999999)
-        result2 = pool1.map_async(implement_cnv, chromosome_event ).get(9999999)
-        pool1.close()
-    except KeyboardInterrupt:  
-        logger.debug('You cancelled the program!')
-        pool1.terminate()
-    except Exception as e:     
-        logger.exception("Exception in main %s" , e)
-        pool1.terminate()
-    finally:
-        pool1.join()
-    time.sleep(.1)
-    mergeSortBamFiles(outbamfn, finalbams_path )
-    t1 = time.time()
-    shutil.rmtree(tmpbams_path)
-    logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0)/60.0, 1)) +' minutes ***** ')
-    logging.shutdown()
-
-########################################################################################################################
-########################################################################################################################
-########################################################################################################################
-
-def initialize_amp(results_path, haplotype_path, cancer_dir_path):
-    try:
-        event_list = ['gain', 'loss']
-        gaincnv = params.GetGainCNV()
-        losscnv = params.GetLossCNV()
         logger.debug(' --- Initializing input files  --- ')
-        vcf_path = bamhelp.GetVCF()
-        exons_path = bamhelp.GetExons()
-        reference_path = bamhelp.GetRef()
-        vpath, vcf = os.path.split(vcf_path)
-        phasedvcf = "/".join([results_path, sub('.vcf$', '_phased.vcf.gz', vcf)])
-        vcftobed = "/".join([results_path, sub('.vcf$', '.bed', vcf)])
+        exonsinroibed = "/".join([haplotype_path, "exons_in_roi" + str(event) + ".bed"])
 
-        hap1vcf = "/".join([results_path, "hap1_het.vcf"])
-        hap2vcf = "/".join([results_path, "hap2_het.vcf"])
-        hap1vcffiltered = "/".join([results_path, "hap1_het_filtered"])
-        hap2vcffiltered = "/".join([results_path, "hap2_het_filtered"])
-        hap1vcffilteredtobed = "/".join([results_path, "hap1_het_filtered.bed"])
-        hap2vcffilteredtobed = "/".join([results_path, "hap2_het_filtered.bed"])
-        phased_bed = "/".join([results_path, "PHASED.BED"])
+        nonhetbed = "/".join([haplotype_path, "non_het" + str(event) + ".bed"])
+        hetbed = "/".join([haplotype_path, "het" + str(event) + ".bed"])
+        hetsnpbed = "/".join([haplotype_path, "het_snp" + str(event) + ".bed"])
 
-        phaseVCF(vcf_path, phasedvcf)
-        getVCFHaplotypes(phasedvcf, hap1vcf, hap2vcf)
-        thinVCF(hap1vcf, hap1vcffiltered)
-        thinVCF(hap2vcf, hap2vcffiltered)
-        convertvcftobed(hap1vcffiltered + ".recode.vcf", hap1vcffilteredtobed)
-        convertvcftobed(hap2vcffiltered + ".recode.vcf", hap2vcffilteredtobed)
+        tmp = "/".join([haplotype_path, str(event) + "_tmp.bed"])
+        command = " ".join([bedtools_path, "intersect -a", exons_path, "-b", cnv_path, "-wa -wb > ", tmp])
+        runCommand(command)
 
-        cmd1 = """sed -i 's/$/\thap1/' """ + hap1vcffilteredtobed
-        cmd2 = """sed -i 's/$/\thap2/' """ + hap2vcffilteredtobed
-        cmd3 = "cat " + hap1vcffilteredtobed + " " + hap2vcffilteredtobed + " > " + 'tmp.bed'
-        cmd4 = "sort -V -k1,1 -k2,2 tmp.bed > " + phased_bed
+        cmd = "".join(["""awk '{print $1"\t"$2"\t"$3"\t"$NF}' """, tmp, " > ", exonsinroibed])
+        runCommand(cmd)
 
-        runCommand(cmd1)
-        runCommand(cmd2)
-        runCommand(cmd3)
-        runCommand(cmd4)
-        os.remove('tmp.bed')
+        splitBed(exonsinroibed, '_exons_in_roi' + str(event))
+        command = " ".join([bedtools_path, "intersect -a", phased_bed, "-b", exonsinroibed, "-wa -wb >", tmp])
+        runCommand(command)
 
-        for event in event_list:
-            roibed = "/".join([haplotype_path, event + "_roi.bed"])
-            exonsinroibed = "/".join([haplotype_path, event + "_exons_in_roi.bed"])
-            nonhetbed = "/".join([haplotype_path, event + "_non_het.bed"])
-            hetbed = "/".join([haplotype_path, event + "_het.bed"])
-            hetsnpbed = "/".join([haplotype_path, event + "_het_snp.bed"])
-
-            if (locals()[event + 'cnv']):
-                intersectBed(exons_path, locals()[event + 'cnv'], exonsinroibed, wa=True)
-                intersectBed(phased_bed, exonsinroibed, hetsnpbed, wa=True)
-                splitBed(exonsinroibed, event + '_exons_in_roi_')
-                splitBed(hetsnpbed, event + '_het_snp_')
-
+        cmd = "".join(["""awk '{print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$NF}' """, tmp, " > ", hetsnpbed])
+        runCommand(cmd)
+        splitBed(hetsnpbed, '_het_snp' + str(event))
+        os.remove(tmp)
     except:
         logger.exception("Initialization error !")
         raise
@@ -601,15 +106,33 @@ def initialize_amp(results_path, haplotype_path, cancer_dir_path):
     return
 
 
-def find_roi_amp(chromosome_event):
+def init_file_names(chr, tmpbams_path, haplotypedir, event=''):
+    flist = []
+
+    roibam = "/".join([tmpbams_path, chr + "_roi" + event + ".bam"])
+    splitbams = params.GetSplitBamsPath()
+    hetsnp = "/".join([haplotypedir, chr + '_het_snp' + event + '.bed'])
+
+    if (not splitbams):
+        splitbams = "/".join([res_path, 'splitbams'])
+
+    sortbyname = "/".join([splitbams, chr + '.byname.bam'])
+    sortbyCoord = "/".join([splitbams, chr + '.bam'])
+
+    flist.extend([roibam, sortbyname, sortbyCoord, hetsnp])
+    return flist
+
+
+def find_roi_bam(chromosome_event):
     chr, event = chromosome_event.split("_")
-    roi, sortbyname, sortbyCoord, hetsnp = init_file_names(chr, event, tmpbams_path, haplotype_path)
-    exonsinroibed = "/".join([haplotype_path, event + "_exons_in_roi_" + chr + '.bed'])
-    success = True
+    roi, sortbyname, sortbyCoord, hetsnp = init_file_names(chr, tmpbams_path, haplotype_path, event)
+    exonsinroibed = "/".join([haplotype_path, chr + "_exons_in_roi" + event + ".bed"])
+    success = False
     try:
         if not terminating.is_set():
             roisort = sub('.bam$', '.sorted', roi)
             if (os.path.isfile(exonsinroibed)):
+
                 cmd = " ".join(["sort -u", exonsinroibed, "-o", exonsinroibed]);
                 runCommand(cmd)
                 extractPairedReadfromROI(sortbyname, exonsinroibed, roi)
@@ -617,7 +140,11 @@ def find_roi_amp(chromosome_event):
                 pysam.sort(roi, roisort)
                 pysam.index(roisort + '.bam')
                 os.remove(roi)
+                success = True
 
+            else:
+                logger.debug(exonsinroibed + ' does not exist!')
+                return
     except (KeyboardInterrupt):
         logger.error('Exception Crtl+C pressed in the child process  in find_roi_bam for chr ' + chr + event)
         terminating.set()
@@ -633,11 +160,11 @@ def find_roi_amp(chromosome_event):
     return
 
 
-def re_pair_reads_amp(bamsortfn):
-    bamrepairedfn = sub('.bam$', ".re_paired.bam", bamsortfn)
-    bamrepairedsortfn = sub('.bam$', ".re_paired.sorted.bam", bamsortfn)
-
+def re_pair_reads(bamsortfn, copy_number):
     if (os.path.isfile(bamsortfn)):
+
+        bamrepairedfn = sub('.bam$', ".re_paired.bam", bamsortfn)
+        bamrepairedsortfn = sub('.bam$', ".re_paired.sorted.bam", bamsortfn)
 
         inbam = pysam.Samfile(bamsortfn, 'rb')
         outbam = pysam.Samfile(bamrepairedfn, 'wb', template=inbam)
@@ -650,70 +177,102 @@ def re_pair_reads_amp(bamsortfn):
             read2fn = sub('.bam$', '.read2_' + strand + '.bam', bamsortfn)
 
             if (not os.path.isfile(read1fn) or not os.path.isfile(read2fn)):
-                split_PairAndStrands(bamsortfn)
+                splitPairAndStrands(bamsortfn)
 
             splt1 = pysam.Samfile(read1fn, 'rb')
             splt2 = pysam.Samfile(read2fn, 'rb')
 
-            itrA = splt1.fetch(until_eof=True, multiple_iterators=True)
-            itrB = splt2.fetch(until_eof=True, multiple_iterators=True)
+            itrA = splt1.fetch(until_eof=True)
+            itrB = splt2.fetch(until_eof=True)
 
-            sigma = 40
+            if (params.GetctDNA()):
+                sigma = 40
+                coff = 2
+                block_size = int(copy_number)
+            else:
+                sigma = 85
+                coff = 5
+                block_size = int(copy_number) * 3
+
+            writtenreads = []
+
             while (True):
 
                 try:
                     lista = []
                     listb = []
+                    readsinblock = []
+                    poslist = []
 
                     while (True):
 
                         readA = itrA.next()
                         lista.append(readA)
+                        readsinblock.append(readA.qname)
+                        poslist.append(readA.pos)
 
-                        if (len(lista) == 10):
+                        if (len(lista) == block_size):
                             break
+
+                    minpos = min(poslist) - 1000
+                    maxpos = max(poslist) + 1000
 
                     while (True):
 
                         readB = itrB.next()
-                        listb.append(readB)
 
-                        if (len(listb) == 10):
+                        if (readB.qname in readsinblock or (readB.pos < maxpos or readB.pos > minpos)):
+                            listb.append(readB)
+
+                        if (len(listb) == block_size):
                             break
 
-                    for i in range(0, 10):
-                        for j in range(0, 10):
+                    for i in range(0, block_size):
+                        readA = lista[i]
+                        tmpA = readA
+                        for j in range(0, block_size):
 
-                            readA = lista[i]
                             readB = listb[j]
-                            tlenFR = readB.pos - readA.pos + readB.qlen
-                            tlenRF = readA.pos - readB.pos + readA.qlen
+                            tmpB = readB
 
-                            if (readA.qname != readB.qname or readA.is_duplicate):
+                            tlenFR = tmpB.pos - tmpA.pos + tmpB.qlen
+                            tlenRF = tmpA.pos - tmpB.pos + tmpA.qlen
+
+                            if (readA.qname != readB.qname):
+
+                                tmpqname = str(uuid4())
 
                                 if (strand == 'pos'):
-
-                                    if (tlenFR >= readA.tlen - 2 * sigma and tlenFR < readA.tlen + 2 * sigma):
-                                        readA.tlen = tlenFR
-                                        readB.tlen = -tlenFR
-                                        readA.pnext = readB.pos
-                                        readB.pnext = readA.pos
-                                        readA.qname = readB.qname
-                                        outbam.write(readA)
-                                        outbam.write(readB)
+                                    if (tlenFR >= abs(tmpB.tlen) - coff * sigma and tlenFR < abs(
+                                            tmpB.tlen) + coff * sigma):
+                                        tmpA.tlen = tlenFR
+                                        tmpB.tlen = -tlenFR
+                                        tmpA.pnext = tmpB.pos
+                                        tmpB.pnext = tmpA.pos
+                                        tmpA.qname = tmpqname
+                                        tmpB.qname = tmpqname
+                                        outbam.write(tmpA)
+                                        outbam.write(tmpB)
+                                        writtenreads.append(tmpB.qname)
 
                                 elif (strand == 'neg'):
+                                    if (tlenRF >= abs(tmpB.tlen) - coff * sigma and tlenRF < abs(
+                                            tmpB.tlen) + coff * sigma):
+                                        tmpA.tlen = -tlenRF
+                                        tmpB.tlen = tlenRF
+                                        tmpA.pnext = tmpB.pos
+                                        tmpB.pnext = tmpA.pos
+                                        tmpA.qname = tmpqname
+                                        tmpB.qname = tmpqname
+                                        outbam.write(tmpA)
+                                        outbam.write(tmpB)
+                                        writtenreads.append(tmpB.qname)
 
-                                    if (tlenRF >= readB.tlen - 2 * sigma and tlenRF < readB.tlen + 2 * sigma):
-                                        readA.tlen = -tlenRF
-                                        readB.tlen = tlenRF
-                                        readA.pnext = readB.pos
-                                        readB.pnext = readA.pos
-                                        readA.qname = readB.qname
-                                        outbam.write(readA)
-                                        outbam.write(readB)
                 except StopIteration:
                     break
+
+            os.remove(read1fn)
+            os.remove(read2fn)
 
         splt1.close()
         splt2.close()
@@ -721,70 +280,238 @@ def re_pair_reads_amp(bamsortfn):
         inbam.close()
         outbam.close()
 
-        sortBam(bamrepairedfn, bamrepairedsortfn)
+        bamrepairedsortfn = sub('sorted.re_paired', 're_paired', bamrepairedsortfn)
+        sortBam(bamrepairedfn, bamrepairedsortfn, tmpbams_path)
         os.remove(bamrepairedfn)
 
     return
 
 
-def implement_cnv_amp(chromosome_event):
+def mutate_reads(bamsortfn, chr, event=''):
+    fn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
+    cmd = " ".join(["sort -u", bedfn, "-o", bedfn]);
+    runCommand(cmd)
+    hetbamfn = sub('.sorted.bam$', ".mutated_het.bam", bamsortfn)
+    hetbamfnsorted = sub('.sorted.bam$', ".mutated_het.sorted", bamsortfn)
+    allreadsfn = sub('.sorted.bam$', ".all.reads.bam", bamsortfn)
+    allreadssortfn = sub('.sorted.bam$', ".all.reads.sorted", bamsortfn)
+    mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamsortfn)
+    try:
+        if not terminating.is_set():
+
+            if (os.path.isfile(bamsortfn) and os.path.isfile(bedfn)):
+
+                samfile = pysam.Samfile(bamsortfn, "rb")
+                alignmentfile = pysam.AlignmentFile(bamsortfn, "rb")
+                outbam = pysam.Samfile(hetbamfn, 'wb', template=samfile)
+                allreads = pysam.Samfile(allreadsfn, 'wb', template=samfile)
+
+                bedfile = open(bedfn, 'r')
+                covpath = "/".join([haplotype_path, "written_coverage_het.txt"])
+                covfile = open(covpath, 'w')
+                snpratiopath = "/".join([haplotype_path, "het_snp_ratio.txt"])
+                snpaltratiofile = open(snpratiopath, 'w')
+                writtenreads = []
+
+                num_reads_written = 0
+                num_total_reads = 0
+
+                for bedline in bedfile:
+                    c = bedline.strip().split()
+
+                    if (len(c) == 7):
+                        chr2 = c[0];
+                        chr = c[0].strip("chr");
+                        start = int(c[1]);
+                        end = int(c[2])
+                        refbase = str(c[3]);
+                        altbase = str(c[4]);
+                        haplotype = str(c[5])
+                        copy_number = int(c[6])
+                    else:
+                        continue
+
+                    readmappings = alignmentfile.fetch(chr2, start, end)
+
+                    # sex chromosome
+                    if (params.GetXY() and (chr == 'chrX' or chr == 'chrY')):
+                        haplotype = 'hap1'
+                        print('sex chromosome ' + str(chr))
+
+                    for shortread in readmappings:
+
+                        allreads.write(shortread)
+                        num_total_reads += 1
+                        problem_with_read = False
+
+                        try:
+                            index = shortread.get_reference_positions(full_length=True).index(start)
+                            tmpread = shortread.query_sequence
+                            qual = shortread.query_qualities
+                            mutated_hap1 = tmpread[:index] + altbase + tmpread[index + 1:]
+                            mutated_hap2 = tmpread[:index] + refbase + tmpread[index + 1:]
+                            if (haplotype == "hap1"):
+                                shortread.query_sequence = mutated_hap1
+
+                            elif (haplotype == "hap2"):
+                                shortread.query_sequence = mutated_hap2
+
+                            shortread.query_qualities = qual
+
+                        except Exception as e:
+                            print('Exception! ')
+                            problem_with_read = True
+                            pass
+
+                        if (not problem_with_read):
+                            outbam.write(shortread)
+                            num_reads_written += 1
+
+                outbam.close()
+                allreads.close()
+
+                sortBam(hetbamfn, hetbamfnsorted + '.bam', tmpbams_path)
+                sortBam(allreadsfn, allreadssortfn + '.bam', tmpbams_path)
+
+                os.remove(hetbamfn)
+                os.remove(allreadsfn)
+
+                # ratio of het reads to nonhet reads, we need to adjust the coverage
+                ratio = float(num_reads_written) / float(num_total_reads)
+                bamsortfnsampled = sub('.sorted.bam$', ".sampled.nh.bam", bamsortfn)
+                subsample(bamsortfn, bamsortfnsampled, str(ratio))
+                bamDiff(bamsortfnsampled, allreadssortfn + '.bam', tmpbams_path)
+
+                if ("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfnsampled)])):
+                    merge_bams("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfnsampled)]),
+                               hetbamfnsorted + '.bam', mergedsortfn)
+                    os.remove("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfnsampled)]))
+
+                os.remove(bamsortfnsampled)
+                os.remove(allreadssortfn + '.bam')
+                os.remove(allreadssortfn + '.bam.bai')
+
+                os.remove(hetbamfnsorted + '.bam')
+                os.remove(hetbamfnsorted + '.bam.bai')
+
+    except (KeyboardInterrupt):
+        logger.error('Exception Crtl+C pressed in the child process  in mutaute_reads')
+        terminating.set()
+        return
+    except Exception as e:
+        logger.exception("Exception in mutate_reads %s", e)
+        terminating.set()
+        return
+    return
+
+
+def split_bam_by_chr(chr):
+    inbam = params.GetInputBam()
+    spltbams_path = "/".join([res_path, 'splitbams'])
+
+    try:
+        if not terminating.is_set():
+            logger.debug("___ spliting bam by chromosome ___")
+            splitBamByChr(inbam, spltbams_path, str(chr))
+            sortByName("/".join([spltbams_path, str(chr) + ".bam"]),
+                       "/".join([spltbams_path, str(chr) + ".byname.bam"]))
+
+    except (KeyboardInterrupt):
+        logger.error('Exception Crtl+C pressed in the child process  in split_bam_by_chr')
+        terminating.set()
+        return False
+    except Exception as e:
+        logger.exception("Exception in split_bam_by_chr %s", e)
+        terminating.set()
+        return False
+    return
+
+
+# cn change is 1 for CN=1,2,...,8
+def calculate_sample_rate(inbam, outbam, cnchange, purity):
+    logger.debug("___ adjusting sample rate ___")
+
+
+def implement_cnv(chromosome_event):
     chr, event = chromosome_event.split("_")
 
     logger.debug("___ Bamgineer main engine started ___")
     success = True
     try:
         if not terminating.is_set():
-            bamfn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, event, tmpbams_path, haplotype_path)
+            bamfn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
             bamsortfn = sub('.bam$', '.sorted.bam', bamfn)
 
-            if (event == 'gain'):
-                bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
-                mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamrepairedsortfn)
-                mergedrenamedfn = sub('.sorted.bam$', ".mutated_merged_renamed.sorted.bam", bamrepairedsortfn)
+            if (os.path.isfile(bedfn)):
+                fn = list(csv.reader(open(bedfn, 'rb'), delimiter='\t'))
+                copy_number = int(fn[0][6])
 
-                GAIN_FINAL = "/".join([finalbams_path, str(chr).upper() + '_GAIN.bam'])
-                if (os.path.isfile(bamsortfn)):
-                    re_pair_reads_amp(bamsortfn)
-                    mutate_reads(bamrepairedsortfn, chr, 'gain')
-                    renamereads(mergedsortfn, mergedrenamedfn)
-                    ratio_kept = float(countReads(mergedrenamedfn)) / float(countReads(bamsortfn))
-                    samplerate = round(0.5 / (ratio_kept), 2)
+                if (not params.GetXY() or (chr != 'chrX' and chr != 'chrY')):
 
-                    logger.debug("ratios kept for:" + ntpath.basename(bamsortfn) + ": " + str(ratio_kept))
+                    if (copy_number == 2):
+                        event = 'loh'
+                    elif (copy_number == 3):
+                        event = 'gain'
+                    elif (copy_number > 3):
+                        event = 'amp'
 
-                    print(' ratio kept for amp '+str(ratio_kept))
-                    # os.remove(bamfn)
-                    #if (samplerate < 1.0):
-                    #    subsample(mergedrenamedfn, GAIN_FINAL, str(samplerate))  # calculate it later
-                    #    logger.debug("___ sampling rate for " + ntpath.basename(bamsortfn) + " : " + str(samplerate))
-                    #elif (samplerate > 1.0 and samplerate < 1.05):
-                    #    os.rename(mergedrenamedfn, GAIN_FINAL)
-                    #else:
-                    #    logger.error('not enough reads for ' + ntpath.basename(bamsortfn) + 'rate: ' + str(samplerate))
-                    #    success = False
-                    #    return
 
-            elif (event == 'loss'):
+                else:
 
-                inbam_deletion = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
-                if (os.path.isfile(bamsortfn)):
+                    logger.debug("*** handling single sex chromosome for: " + ntpath.basename(bamsortfn))
+                    if (copy_number == 1):
+                        event = 'loh'
+                    elif (copy_number == 2):
+                        event = 'gain'
+                    elif (copy_number > 2):
+                        event = 'amp'
 
-                    mutate_reads(bamsortfn, chr, 'loss')
-                    mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamsortfn)
-                    mergedsortsampledfn = sub('.sorted.bam$', ".mutated_merged.sampled.sorted.bam", bamsortfn)
+                if (event.startswith('amp') or event.startswith('gain')):
 
-                    ratio_kept = float(countReads(bamsortfn)) / float(countReads(bamfn))
-                    samplerate = round(0.5 / (ratio_kept), 2)
-                    LOSS_FINAL = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
-                    logger.debug("ratios kept for:" + ntpath.basename(bamsortfn) + ": " + str(ratio_kept))
-                    subsample(mergedsortfn, mergedsortsampledfn, str(samplerate))
-                    bamDiff(sortbyCoord, mergedsortsampledfn, tmpbams_path)
-                    os.rename("/".join([tmpbams_path, 'diff_only1_' + chr + '.bam']), LOSS_FINAL)
+                    bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
+                    mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamrepairedsortfn)
+                    GAIN_FINAL = "/".join([finalbams_path, str(chr).upper() + '_GAIN.bam'])
 
-                elif (not os.path.isfile(inbam_deletion) and os.path.isfile(
-                        sortbyCoord)):  # if it exists from previous runs
+                    if os.path.isfile(bamsortfn):
 
-                    os.symlink(sortbyCoord, inbam_deletion)
+                        re_pair_reads(bamsortfn, copy_number)
+                        mutate_reads(bamrepairedsortfn, chr, event)
+                        coverageratio = float(countReads(mergedsortfn)) / float(countReads(bamsortfn))
+                        logger.debug(
+                            "+++ coverage ratio for: " + ntpath.basename(bamsortfn) + ": " + str(coverageratio))
+
+                        if coverageratio < copy_number - 2:
+                            logger.error('not enough reads for ' + ntpath.basename(bamsortfn))
+                            return
+                        else:
+                            samplerate = float(copy_number - 2) / coverageratio
+                            subsample(mergedsortfn, GAIN_FINAL, str(samplerate))
+
+                elif event == 'loss':
+
+                    inbam_deletion = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
+                    if os.path.isfile(bamsortfn):
+
+                        mutate_reads(bamsortfn, chr, 'loss')
+                        mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamsortfn)
+                        mergedsortsampledfn = sub('.sorted.bam$', ".mutated_merged.sampled.sorted.bam", bamsortfn)
+
+                        ratio_kept = float(countReads(bamsortfn)) / float(countReads(bamfn))
+                        samplerate = round(0.5 / ratio_kept, 2)
+                        LOSS_FINAL = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
+                        logger.debug("ratios kept for:" + ntpath.basename(bamsortfn) + ": " + str(ratio_kept))
+                        subsample(mergedsortfn, mergedsortsampledfn, str(samplerate))
+                        bamDiff(sortbyCoord, mergedsortsampledfn, tmpbams_path)
+                        os.rename("/".join([tmpbams_path, 'diff_only1_' + chr + '.bam']), LOSS_FINAL)
+
+                    elif (not os.path.isfile(inbam_deletion) and os.path.isfile(
+                            sortbyCoord)):  # if it exists from previous runs
+
+                        os.symlink(sortbyCoord, inbam_deletion)
+
+            else:
+                logger.debug(bedfn + ' does not exist!')
+                success = False
 
     except (KeyboardInterrupt):
         logger.error('Exception Crtl+C pressed in the child process  in find_roi_bam for chr ' + chr + event)
@@ -801,47 +528,98 @@ def implement_cnv_amp(chromosome_event):
     return
 
 
-def run_amp_pipeline(results_path):
-    """Amplification pipeline"""
+def removeReadsOverlappingHetRegion(inbamfn, bedfn, outbamfn, path):
+    print "___ removing reads overlapping heterozygous region ___"
+    inbamsorted = sub('.bam$', '.sorted', inbamfn)
+    pysam.sort(inbamfn, inbamsorted)
+    pysam.index(inbamsorted + '.bam')
+
+    alignmentfile = pysam.AlignmentFile(inbamsorted + '.bam', "rb")
+    outbam = pysam.Samfile(outbamfn, 'wb', template=alignmentfile)
+
+    bedfile = open(bedfn, 'r')
+
+    for bedline in bedfile:
+        c = bedline.strip().split()
+
+        if (len(c) == 3):
+            chr2 = c[0]
+            chr = c[0].strip("chr")
+            start = int(c[1])
+            end = int(c[2])
+        else:
+            continue
+
+        try:
+            readmappings = alignmentfile.fetch(chr2, start, end)
+        except  ValueError as e:
+            print("problem fetching the read ")
+
+        for shortread in readmappings:
+            try:
+                outbam.write(shortread)
+            except ValueError as e:
+                print ("problem removing read :" + shortread.qname)
+    outbamsorted = sub('.bam$', '.sorted', outbamfn)
+    pysam.sort(outbamfn, outbamsorted)
+    bamDiff(inbamsorted + '.bam', outbamsorted + '.bam', path)
+    outbam.close()
+
+
+def run_pipeline(results_path):
+    print(results_path)
     global haplotype_path, cancer_dir_path, tmpbams_path, finalbams_path, log_path, logfile, terminating, logger, logQueue, res_path
     res_path = results_path
     haplotype_path, cancer_dir_path, tmpbams_path, finalbams_path, log_path, logfile = handle.GetProjectPaths(
         results_path)
     terminating, logger, logQueue = handle.GetLoggings(logfile)
 
+    chr_list = ['chr' + str(x) for x in range(1, 23)]
+    chr_list.extend(['chrX', 'chrY'])
+
     t0 = time.time()
     outbamfn = params.GetOutputFileName()
-    chromosome_event = create_chr_event_list()
-    chromosomes_bamfiles = create_chr_bam_list()
+
+    cnv_list = glob.glob("/".join([params.GetCNVDir(), '*.*']))
+    chromosome_event = create_chr_event_list(cnv_list, chr_list)
+
     logger.debug('pipeline started!')
 
-    initialize_amp(results_path, haplotype_path, cancer_dir_path)
+    phase_path = '/'.join([results_path, 'phasedvcfdir'])
+    if not os.path.exists('/'.join([results_path, 'phasedvcfdir'])):
+        os.makedirs(phase_path)
+
+    initialize0(phase_path, cancer_dir_path)
+
+    for cnv_path in cnv_list:
+        initialize_pipeline(phase_path, haplotype_path, cnv_path)
+
     pool1 = multiprocessing.Pool(processes=12, initializer=initPool,
                                  initargs=[logQueue, logger.getEffectiveLevel(), terminating])
     try:
-        print('testing amp')
-        if (not params.GetSplitBamsPath()):
-            chr_list = range(1, 22)
+
+        if not params.GetSplitBamsPath():
 
             if not os.path.exists("/".join([res_path, 'splitbams'])):
                 os.makedirs("/".join([res_path, 'splitbams']))
+                params.SetSplitBamsPath("/".join([res_path, 'splitbams']))
 
-            result0 = pool1.map_async(split_bam_by_chr, chr_list).get(9999999)
+            result0 = pool1.map_async(split_bam_by_chr, chromosome_event).get(9999999)
 
-        result1 = pool1.map_async(find_roi_amp, chromosome_event).get(9999999)
-        result2 = pool1.map_async(implement_cnv_amp, chromosome_event).get(9999999)
+        result1 = pool1.map_async(find_roi_bam, chromosome_event).get(9999999)
+        result2 = pool1.map_async(implement_cnv, chromosome_event).get(9999999)
         pool1.close()
     except KeyboardInterrupt:
         logger.debug('You cancelled the program!')
         pool1.terminate()
     except Exception as e:
-        logger.exception("Exception in main %s" , e)
+        logger.exception("Exception in main %s", e)
         pool1.terminate()
     finally:
         pool1.join()
     time.sleep(.1)
-    mergeSortBamFiles(outbamfn, finalbams_path )
+    mergeSortBamFiles(outbamfn, finalbams_path)
     t1 = time.time()
     shutil.rmtree(tmpbams_path)
-    logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0)/60.0, 1)) +' minutes ***** ')
+    logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0) / 60.0, 1)) + ' minutes ***** ')
     logging.shutdown()
