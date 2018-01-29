@@ -1,4 +1,4 @@
-## Input data preperation
+## Input data preparation
 
 In this document, we will walk users through an example run of Bamgineer on the data downlowded from Personal Genome Project
 (https://my.pgp-hms.org/profile_public?hex=huA2692E) website. For convinience the VCF and Bed files generated from this step are copied
