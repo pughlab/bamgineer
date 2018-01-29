@@ -2,9 +2,9 @@
 #
 #$ -cwd
 
-python ../../scr/simulate.py \
+python ../../src/simulate.py \
 -cnv_bed ../inputs/cnv.bed \
--c ../inputs/config.bed \
+-config ../inputs/config.cfg \
 -splitbamdir ../splitbams \
 -outbam test.bam \
 -phase
