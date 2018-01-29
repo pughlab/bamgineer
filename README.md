@@ -44,7 +44,7 @@ Below is a general description of the file formats and prerequizites. For detail
            
         optional arguments:
            --h, --help                  show this help message and exit
-           --cancer CANCER_TYPE,        cancer type/acronym
+           --cancertype CANCER_TYPE,    cancer type/acronym
            --splitdir BAM_SPLIT_DIR,    input bam split by chromosomes
            --p PHASE,                   whether SNP phasing should be applied
            --ctdna CT_DNA,              whether simulation is on reads obtained from ctDNA sequencing data   
