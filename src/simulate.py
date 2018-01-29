@@ -55,7 +55,7 @@ if __name__ == '__main__':
                         help='list of CNV .bed files for different events')
     parser.add_argument('-inbam', dest='inbamFile', required=False,
                         help='path to sam/bam file from which to obtain reads')
-    parser.add_argument('-c', '--configFile', action='store', required=True, dest='configfile',
+    parser.add_argument('-config', '--configFile', action='store', required=True, dest='configfile',
                         help='path to config_file.cfg')
     parser.add_argument('-phase', dest='phase', action="store_true")
     parser.add_argument('-splitbamdir', dest='splitbams', required=False,
