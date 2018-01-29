@@ -32,7 +32,7 @@ Below is a general description of the file formats and prerequizites. For detail
 ### Running options:
 
         usage: python simulate.py [-h] [--inbam INPUT_BAM] [--outbam OUTPUT_BAM]
-                         [--cnvgain CNV_LIST] [--splitdir BAM_SPLIT_DIR] 
+                         [--cnvgain CNV_GAIN_FILE] [--cnvloss CNV_LOSS_FILE] [--splitdir BAM_SPLIT_DIR] 
                          [--config CONFIG_FILE] [--cancer CANCER_TYPE][--phase PHASE] [--ctdna CT_DNA]
                          
         
@@ -40,16 +40,14 @@ Below is a general description of the file formats and prerequizites. For detail
            --inbam  INPUT_BAM ,         bam file from for input
            --outbam OUTPUT_BAM,         bam file name for output
            --config CONFIG_FILE,        configuration file including paths to executables and references
-           --cnvgain CNV_LIST,     bed file name containing non-overlapping CNV regions
-        
+           --cnvbed CNV_BED_FILE,       bed file name containing non-overlapping gain and loss regions
+           
         optional arguments:
            --h, --help                  show this help message and exit
            --cancer CANCER_TYPE,        cancer type/acronym
            --splitdir BAM_SPLIT_DIR,    input bam split by chromosomes
            --p PHASE,                   whether SNP phasing should be applied
-           --chr_list CHR_LIST,         list of chromosomes to process (default: all)
-           --ctdna CT_DNA,              whether simulation is on reads obtained from ctDNA sequencing data 
-           --singleXY   SINGLE_XY       whether the input bam file includes single copy sex chromosome (e.g. XY in normal male)
+           --ctdna CT_DNA,              whether simulation is on reads obtained from ctDNA sequencing data   
 
 
 ### Prerequisites
@@ -72,10 +70,8 @@ Note: the latest version of pysam (0.9.0) is not backward compatible with Samtoo
 ***Input parameters***
 
 -inbam: input sorted and indexed normal bam file \
--cnv_list: path to the directory contaiing bed files for allele-specific and cancer-specific CNV events. Each line of the bed files in the folder is a tab seperated file (no header) in the following format:
-
-chr     start   stop    absolute_copy_number 
-
+-cnv_amp: bed file for allele-specific and cancer-specific CNV amplifications (null is not specified) \
+-cnv_del: bed file for allele-specific and cancer-specific CNV deletions (null is not specified) \
 -vcf: normal heterozygous vcf file (could be from HaplotypeCaller output, not including indels and homozygous loci) \
 -target_region: bed file containing the target regions (exons or any user-specified region) \ 
 -phased(optional): Binary flag to perform phasing (BEAGLE) of SNPs prior to spiking CNV's
