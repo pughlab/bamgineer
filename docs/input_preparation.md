@@ -1,12 +1,12 @@
 ## Input data preparation
 
-In this document, we will walk users through an example run of Bamgineer on the data downlowded from Personal Genome Project
+In this document, we will walk users through an example run of Bamgineer on the data downloaded from Personal Genome Project
 (https://my.pgp-hms.org/profile_public?hex=huA2692E) website. For convinience the VCF and Bed files generated from this step are copied
 to examples/inputs. Howvever, due to space limitation the user is required to download the Bam files for chromosomes 21 and 22 from the
 website (see Steps 1-3 below).
 
 
-### 1. Create a foldr called splitbams; cd splitbams
+### 1. Create a folder called splitbams; cd splitbams
 
 ### 2. Download chr21 and chr22 bam files 
 
@@ -29,7 +29,7 @@ samtools sort -n chr22.bam chr22.byname
 ### 5. Download vcf file (for whole genome)
 
 *Note: The reason for downloading whole genome VCF instead of whole exome 
-is due to the fact that different vcf formats exist and the genome version is compatible
+is due to the fact that different vcf formats exist and the genome version should be compatible
 
 wget https://my.pgp-hms.org/user_file/download/2816
 mv huA2692-veritas-gVCF-4.2.vcf.bz2 genome.vcf.bz2
@@ -76,7 +76,7 @@ vcftools --vcf chr21_22_het_genome.vcf --bed exons.bed --out normal_het --recode
 
 mv normal_het.recode.vcf normal_het.vcf
 
-### 10. move normal_het.vcf and exons.bed to inputs dir
+### 10. move normal_het.vcf and exons.bed to inputs directory
 
 mv normal_het.vcf ../inputs
 mv exons.bed ../inputs
