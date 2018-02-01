@@ -44,13 +44,12 @@ tabix genome.vcf.gz chr21 > chr21.vcf \
 tabix genome.vcf.gz chr21 > chr22.vcf
 
 
-### 7. Extract heterozygous positions
+### 7. Extract heterozygous positions (used in step 9)
 
 
 grep "0/1" chr21.vcf > chr21_het.vcf \
 grep "0/1" chr22.vcf > chr22_het.vcf
 
-cat chr21_het.vcf chr22_het.vcf > chr21_22_het_genome.vcf
 
 ### 8. Create "exons.bed" file
 
