@@ -41,7 +41,7 @@ bgzip genome.vcf \
 tabix genome.vcf.gz
 
 tabix genome.vcf.gz chr21 > chr21.vcf \
-tabix genome.vcf.gz chr21 > chr22.vcf
+tabix genome.vcf.gz chr22 > chr22.vcf
 
 
 ### 7. Extract heterozygous positions (used in step 9)
