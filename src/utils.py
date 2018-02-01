@@ -456,7 +456,7 @@ def create_chr_event_list(cnv_list, chr_list):
     chrom_event = []
     for c in chr_list:
         for cnv_path in cnv_list:
-            e = os.path.splitext(cnv_path)[1]
+            e = os.path.splitext(ntpath.basename(cnv_path))[0]
             chev = "_".join([str(c), str(e)])
             chrom_event.append(chev)
     return chrom_event
