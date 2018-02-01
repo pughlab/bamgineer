@@ -69,12 +69,12 @@ bedtools merge -i chr22.gt50.bedgraphh > exons_chr22.bed
 
 cat exons_chr21.bed exons_chr22.bed > exons.bed
 
-### 9. Extract heterozygous SNPs (in step 7) that reside in the exons bed region
+### 9. Extract heterozygous SNPs (in step 7) that reside in the exons bed region, remove InDels
 
 
 vcftools --vcf chr21_22_het_genome.vcf --bed exons.bed --out normal_het --recode
-
-mv normal_het.recode.vcf normal_het.vcf
+vcftools --vcf normal_het.recode.vcf --remove-indels --recode --recode-INFO-all --out snps_only
+mv snps_only.recode.vcf normal_het.vcf
 
 ### 10. move normal_het.vcf and exons.bed to inputs directory
 
