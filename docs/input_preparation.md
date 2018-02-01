@@ -71,6 +71,8 @@ cat exons_chr21.bed exons_chr22.bed > exons.bed
 
 ### 9. Extract heterozygous SNPs (in step 7) that reside in the exons bed region, remove InDels
 
+zcat genome.vcf.gz | grep "^#" > header.txt \
+cat header.txt chr21_het.vcf chr22_het.vcf > chr21_22_het_genome.vcf
 
 vcftools --vcf chr21_22_het_genome.vcf --bed exons.bed --out normal_het --recode \
 vcftools --vcf normal_het.recode.vcf --remove-indels --recode --recode-INFO-all --out snps_only \
