@@ -58,13 +58,13 @@ Since the bed file used to generate the Bam file was not available, we can creat
 exon file by making a bed file from all contiguous regions (>50bp) above a coverage threshold (50X) as
 explained here : https://www.biostars.org/p/86027
 
-bedtools genomecov -ibam chr21.bam -bg > chr21.bedgraph\
-awk '$4 > 50' chr21.bedgraph > chr21.gt50.bedgraph\
+bedtools genomecov -ibam chr21.bam -bg > chr21.bedgraph \
+awk '$4 > 50' chr21.bedgraph > chr21.gt50.bedgraph
 
-bedtools genomecov -ibam chr22.bam -bg > chr22.bedgraph\
+bedtools genomecov -ibam chr22.bam -bg > chr22.bedgraph \
 awk '$4 > 50' chr22.bedgraph > chr22.gt50.bedgraph
 
-bedtools merge -i chr21.gt50.bedgraph  > exons_chr21.bed\
+bedtools merge -i chr21.gt50.bedgraph  > exons_chr21.bed \
 bedtools merge -i chr22.gt50.bedgraphh > exons_chr22.bed
 
 cat exons_chr21.bed exons_chr22.bed > exons.bed
