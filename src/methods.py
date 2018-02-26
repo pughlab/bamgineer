@@ -359,7 +359,6 @@ def mutate_reads(bamsortfn, chr, event=''):
                             shortread.query_qualities = qual
 
                         except Exception as e:
-                            print('Exception! ')
                             problem_with_read = True
                             pass
 
