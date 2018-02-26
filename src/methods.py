@@ -489,11 +489,14 @@ def implement_cnv(chromosome_event):
                 elif event == 'loss':
 
                     inbam_deletion = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
+
                     if os.path.isfile(bamsortfn):
 
                         mutate_reads(bamsortfn, chr, 'loss')
                         mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamsortfn)
                         mergedsortsampledfn = sub('.sorted.bam$', ".mutated_merged.sampled.sorted.bam", bamsortfn)
+
+                        print str(bamsortfn) + ' ____  ' + str(bamfn)
 
                         ratio_kept = float(countReads(bamsortfn)) / float(countReads(bamfn))
                         samplerate = round(0.5 / ratio_kept, 2)
