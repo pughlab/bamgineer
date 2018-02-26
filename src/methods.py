@@ -192,7 +192,7 @@ def re_pair_reads(bamsortfn, copy_number):
             else:
                 sigma = 85
                 coff = 5
-                block_size = int(copy_number) * 3
+                block_size = int(copy_number) * 4
 
             writtenreads = []
 
