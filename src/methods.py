@@ -496,9 +496,7 @@ def implement_cnv(chromosome_event):
                         mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamsortfn)
                         mergedsortsampledfn = sub('.sorted.bam$', ".mutated_merged.sampled.sorted.bam", bamsortfn)
 
-                        print str(bamsortfn) + ' ____  ' + str(bamfn)
-
-                        ratio_kept = float(countReads(bamsortfn)) / float(countReads(bamfn))
+                        ratio_kept = float(countReads(mergedsortfn)) / float(countReads(bamsortfn))
                         samplerate = round(0.5 / ratio_kept, 2)
                         LOSS_FINAL = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
                         logger.debug("ratios kept for:" + ntpath.basename(bamsortfn) + ": " + str(ratio_kept))
