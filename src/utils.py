@@ -344,9 +344,11 @@ def mergeSortBamFiles(mergedBamfn, finalbamdir):
                 num_files = num_files + 1
 
     if num_files > 1:
-        command2 = " ".join([sambamba_path, "merge", mergedBamfn, command])
+        command2 = " ".join([sambamba_path, "merge", mergedBamfn, command, "--nthreads", str(4)])
         runCommand(command2)
     elif num_files == 1:
+
+        print ' ****  ' + str(command.strip())
 
         outbam = sub('.bam$', '.sort.bam', str(command.strip()))
         sortBam(command, outbam, finalbamdir)
@@ -435,7 +437,7 @@ def createHaplotypes(hetsnp_orig_bed, hetsnp_hap1_bed):
             c = line.strip('\n').split("\t")
             c2 = ""
 
-            while (c2 != c):
+            while c2 != c:
                 c2 = inbedh2.readline.strip('\n').split("\t")
                 outbedh.write(c2 + '\t' + 'hap1' + '\n')
 
