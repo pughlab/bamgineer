@@ -1,10 +1,7 @@
 #!/usr/bin/env python
-import sys
-import argparse
-import time
-from helpers import parameters as params
-from methods import *
 import os
+import argparse
+from methods import *
 
 
 def main(args):
@@ -23,7 +20,7 @@ def main(args):
 
     cnvdir = "/".join([results_path, "cnv_dir"])
 
-    if (not os.path.exists(cnvdir)):
+    if not os.path.exists(cnvdir):
         os.makedirs(cnvdir)
         createEventBedFiles(cnvdir, params.GetCNV())
 
@@ -38,9 +35,8 @@ def main(args):
     sambamba_path = bamhelp.GetSambambaPath()
     params.SetSoftwarePath(java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path)
 
-    if (args.phase):
+    if args.phase:
         run_pipeline(results_path)
-
 
     else:
         print('Please provide costume phasing algorithm')
