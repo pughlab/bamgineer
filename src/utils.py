@@ -1,20 +1,30 @@
 #!/usr/bin/env python
-import fnmatch
-import gzip
-import ntpath
-import os
-import shutil
-import subprocess
 import sys
-from re import sub
-from threading import Thread
-from uuid import uuid4
-
-import pandas as pd
 import pybedtools
 import pysam
+import os
+import subprocess
+from uuid import uuid4
+from re import sub
+from itertools import izip
 
+import gzip
+import shutil
+import traceback
+import multiprocessing
+from multiprocessing import Pool
+from contextlib import closing
+from pathos.multiprocessing import ProcessingPool
+import signal
+import itertools
+import ntpath
+import fnmatch
+from helpers import handlers as handle
+
+from threading import Thread
 from helpers import parameters as params
+import pandas as pd
+
 
 
 def phaseVCF(vcfpath, phasevcfpath):

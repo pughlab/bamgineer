@@ -8,6 +8,8 @@ from helpers import parameters as params
 from helpers import bamgineerHelpers as bamhelp
 from utils import *
 
+
+
 global bases
 bases = ('A', 'T', 'C', 'G')
 
