@@ -348,11 +348,15 @@ def mergeSortBamFiles(mergedBamfn, finalbamdir):
         runCommand(command2)
     elif num_files == 1:
 
-        print ' ****  ' + str(command.strip())
+        if str(command.strip()).endswith("GAIN.bam"):
+            path, fname = os.path.split(str(command.strip()))
+            inbam_original = '/'.join([params.GetSplitBamsPath(), sub('_gain', '', fname.lower())])
 
-        outbam = sub('.bam$', '.sort.bam', str(command.strip()))
-        sortBam(command, outbam, finalbamdir)
-        os.remove(str(command.strip()))
+            print(' ***** ' + inbam_original)
+
+            outbam = sub('.bam$', '.sort.bam', str(command.strip()))
+            sortBam(command, outbam, finalbamdir)
+            os.remove(str(command.strip()))
 
 
 def splitPairs(inbamfn):
