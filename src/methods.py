@@ -31,7 +31,7 @@ def initialize0(results_path, cancer_dir_path):
         bedtools_path = bamhelp.GetBedtoolsPath()
         vpath, vcf = os.path.split(vcf_path)
 
-        if (params.GetPhase()):
+        if params.GetPhase():
             phasedvcf = "/".join([results_path, sub('.vcf$', '_phased.vcf.gz', vcf)])
             vcftobed = "/".join([results_path, sub('.vcf$', '.bed', vcf)])
 
@@ -113,7 +113,7 @@ def init_file_names(chr, tmpbams_path, haplotypedir, event=''):
     splitbams = params.GetSplitBamsPath()
     hetsnp = "/".join([haplotypedir, chr + '_het_snp' + event + '.bed'])
 
-    if (not splitbams):
+    if not splitbams:
         splitbams = "/".join([res_path, 'splitbams'])
 
     sortbyname = "/".join([splitbams, chr + '.byname.bam'])
@@ -131,7 +131,7 @@ def find_roi_bam(chromosome_event):
     try:
         if not terminating.is_set():
             roisort = sub('.bam$', '.sorted', roi)
-            if (os.path.isfile(exonsinroibed)):
+            if os.path.isfile(exonsinroibed):
 
                 cmd = " ".join(["sort -u", exonsinroibed, "-o", exonsinroibed]);
                 runCommand(cmd)
@@ -161,7 +161,7 @@ def find_roi_bam(chromosome_event):
 
 
 def re_pair_reads(bamsortfn, copy_number):
-    if (os.path.isfile(bamsortfn)):
+    if os.path.isfile(bamsortfn):
 
         bamrepairedfn = sub('.bam$', ".re_paired.bam", bamsortfn)
         bamrepairedsortfn = sub('.bam$', ".re_paired.sorted.bam", bamsortfn)
@@ -176,7 +176,7 @@ def re_pair_reads(bamsortfn, copy_number):
             read1fn = sub('.bam$', '.read1_' + strand + '.bam', bamsortfn)
             read2fn = sub('.bam$', '.read2_' + strand + '.bam', bamsortfn)
 
-            if (not os.path.isfile(read1fn) or not os.path.isfile(read2fn)):
+            if not os.path.isfile(read1fn) or not os.path.isfile(read2fn):
                 splitPairAndStrands(bamsortfn)
 
             splt1 = pysam.Samfile(read1fn, 'rb')
@@ -221,10 +221,10 @@ def re_pair_reads(bamsortfn, copy_number):
 
                         readB = itrB.next()
 
-                        if (readB.qname in readsinblock or (readB.pos < maxpos or readB.pos > minpos)):
+                        if readB.qname in readsinblock or (readB.pos < maxpos or readB.pos > minpos):
                             listb.append(readB)
 
-                        if (len(listb) == block_size):
+                        if len(listb) == block_size:
                             break
 
                     for i in range(0, block_size):
@@ -238,13 +238,12 @@ def re_pair_reads(bamsortfn, copy_number):
                             tlenFR = tmpB.pos - tmpA.pos + tmpB.qlen
                             tlenRF = tmpA.pos - tmpB.pos + tmpA.qlen
 
-                            if (readA.qname != readB.qname):
+                            if readA.qname != readB.qname:
 
                                 tmpqname = str(uuid4())
 
-                                if (strand == 'pos'):
-                                    if (tlenFR >= abs(tmpB.tlen) - coff * sigma and tlenFR < abs(
-                                            tmpB.tlen) + coff * sigma):
+                                if strand == 'pos':
+                                    if tlenFR >= abs(tmpB.tlen) - coff * sigma and tlenFR < abs(tmpB.tlen) + coff * sigma:
                                         tmpA.tlen = tlenFR
                                         tmpB.tlen = -tlenFR
                                         tmpA.pnext = tmpB.pos
@@ -255,9 +254,8 @@ def re_pair_reads(bamsortfn, copy_number):
                                         outbam.write(tmpB)
                                         writtenreads.append(tmpB.qname)
 
-                                elif (strand == 'neg'):
-                                    if (tlenRF >= abs(tmpB.tlen) - coff * sigma and tlenRF < abs(
-                                            tmpB.tlen) + coff * sigma):
+                                elif strand == 'neg':
+                                    if tlenRF >= abs(tmpB.tlen) - coff * sigma and tlenRF < abs(tmpB.tlen) + coff * sigma:
                                         tmpA.tlen = -tlenRF
                                         tmpB.tlen = tlenRF
                                         tmpA.pnext = tmpB.pos
@@ -308,10 +306,7 @@ def mutate_reads(bamsortfn, chr, event=''):
 
                 bedfile = open(bedfn, 'r')
                 covpath = "/".join([haplotype_path, "written_coverage_het.txt"])
-                covfile = open(covpath, 'w')
                 snpratiopath = "/".join([haplotype_path, "het_snp_ratio.txt"])
-                snpaltratiofile = open(snpratiopath, 'w')
-                writtenreads = []
 
                 num_reads_written = 0
                 num_total_reads = 0
@@ -319,13 +314,13 @@ def mutate_reads(bamsortfn, chr, event=''):
                 for bedline in bedfile:
                     c = bedline.strip().split()
 
-                    if (len(c) == 7):
-                        chr2 = c[0];
-                        chr = c[0].strip("chr");
-                        start = int(c[1]);
+                    if len(c) == 7:
+                        chr2 = c[0]
+                        chr = c[0].strip("chr")
+                        start = int(c[1])
                         end = int(c[2])
-                        refbase = str(c[3]);
-                        altbase = str(c[4]);
+                        refbase = str(c[3])
+                        altbase = str(c[4])
                         haplotype = str(c[5])
                         copy_number = int(c[6])
                     else:
@@ -334,7 +329,7 @@ def mutate_reads(bamsortfn, chr, event=''):
                     readmappings = alignmentfile.fetch(chr2, start, end)
 
                     # sex chromosome
-                    if (params.GetXY() and (chr == 'chrX' or chr == 'chrY')):
+                    if params.GetXY() and (chr == 'chrX' or chr == 'chrY'):
                         haplotype = 'hap1'
                         print('sex chromosome ' + str(chr))
 
@@ -350,10 +345,10 @@ def mutate_reads(bamsortfn, chr, event=''):
                             qual = shortread.query_qualities
                             mutated_hap1 = tmpread[:index] + altbase + tmpread[index + 1:]
                             mutated_hap2 = tmpread[:index] + refbase + tmpread[index + 1:]
-                            if (haplotype == "hap1"):
+                            if haplotype == "hap1":
                                 shortread.query_sequence = mutated_hap1
 
-                            elif (haplotype == "hap2"):
+                            elif haplotype == "hap2":
                                 shortread.query_sequence = mutated_hap2
 
                             shortread.query_qualities = qual
@@ -362,7 +357,7 @@ def mutate_reads(bamsortfn, chr, event=''):
                             problem_with_read = True
                             pass
 
-                        if (not problem_with_read):
+                        if not problem_with_read:
                             outbam.write(shortread)
                             num_reads_written += 1
 
@@ -381,7 +376,7 @@ def mutate_reads(bamsortfn, chr, event=''):
                 subsample(bamsortfn, bamsortfnsampled, str(ratio))
                 bamDiff(bamsortfnsampled, allreadssortfn + '.bam', tmpbams_path)
 
-                if ("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfnsampled)])):
+                if "/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfnsampled)]):
                     merge_bams("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfnsampled)]),
                                hetbamfnsorted + '.bam', mergedsortfn)
                     os.remove("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfnsampled)]))
@@ -393,7 +388,7 @@ def mutate_reads(bamsortfn, chr, event=''):
                 os.remove(hetbamfnsorted + '.bam')
                 os.remove(hetbamfnsorted + '.bam.bai')
 
-    except (KeyboardInterrupt):
+    except KeyboardInterrupt:
         logger.error('Exception Crtl+C pressed in the child process  in mutaute_reads')
         terminating.set()
         return
@@ -415,7 +410,7 @@ def split_bam_by_chr(chr):
             sortByName("/".join([spltbams_path, str(chr) + ".bam"]),
                        "/".join([spltbams_path, str(chr) + ".byname.bam"]))
 
-    except (KeyboardInterrupt):
+    except KeyboardInterrupt:
         logger.error('Exception Crtl+C pressed in the child process  in split_bam_by_chr')
         terminating.set()
         return False
@@ -441,31 +436,30 @@ def implement_cnv(chromosome_event):
             bamfn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
             bamsortfn = sub('.bam$', '.sorted.bam', bamfn)
 
-            if (os.path.isfile(bedfn)):
+            if os.path.isfile(bedfn):
                 fn = list(csv.reader(open(bedfn, 'rb'), delimiter='\t'))
                 copy_number = int(fn[0][6])
 
-                if (not params.GetXY() or (chr != 'chrX' and chr != 'chrY')):
+                if not params.GetXY() or (chr != 'chrX' and chr != 'chrY'):
 
-                    if (copy_number == 2):
+                    if copy_number == 2:
                         event = 'loh'
-                    elif (copy_number == 3):
+                    elif copy_number == 3:
                         event = 'gain'
-                    elif (copy_number > 3):
+                    elif copy_number > 3:
                         event = 'amp'
-
 
                 else:
 
                     logger.debug("*** handling single sex chromosome for: " + ntpath.basename(bamsortfn))
-                    if (copy_number == 1):
+                    if copy_number == 1:
                         event = 'loh'
-                    elif (copy_number == 2):
+                    elif copy_number == 2:
                         event = 'gain'
-                    elif (copy_number > 2):
+                    elif copy_number > 2:
                         event = 'amp'
 
-                if (event.startswith('amp') or event.startswith('gain')):
+                if event.startswith('amp') or event.startswith('gain'):
 
                     bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
                     mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamrepairedsortfn)
@@ -513,7 +507,7 @@ def implement_cnv(chromosome_event):
                 logger.debug(bedfn + ' does not exist!')
                 success = False
 
-    except (KeyboardInterrupt):
+    except KeyboardInterrupt:
         logger.error('Exception Crtl+C pressed in the child process  in find_roi_bam for chr ' + chr + event)
         terminating.set()
         success = False
@@ -523,7 +517,7 @@ def implement_cnv(chromosome_event):
         terminating.set()
         success = False
         return
-    if (success):
+    if success:
         logger.debug("implement_cnv complete successfully for " + chr + event)
     return
 
@@ -542,7 +536,7 @@ def removeReadsOverlappingHetRegion(inbamfn, bedfn, outbamfn, path):
     for bedline in bedfile:
         c = bedline.strip().split()
 
-        if (len(c) == 3):
+        if len(c) == 3:
             chr2 = c[0]
             chr = c[0].strip("chr")
             start = int(c[1])
@@ -620,6 +614,6 @@ def run_pipeline(results_path):
     time.sleep(.1)
     mergeSortBamFiles(outbamfn, finalbams_path)
     t1 = time.time()
-    # shutil.rmtree(tmpbams_path)
+    shutil.rmtree(tmpbams_path)
     logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0) / 60.0, 1)) + ' minutes ***** ')
     logging.shutdown()
