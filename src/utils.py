@@ -352,7 +352,10 @@ def mergeSortBamFiles(mergedBamfn, finalbamdir):
             path, fname = os.path.split(str(command.strip()))
             inbam_original = '/'.join([params.GetSplitBamsPath(), sub('_gain', '', fname.lower())])
 
-            print(' ***** ' + inbam_original)
+            command2 = " ".join([sambamba_path, "merge", mergedBamfn, command, inbam_original, "--nthreads", str(4)])
+            runCommand(command2)
+
+        elif str(command.strip()).endswith("LOSS.bam"):
 
             outbam = sub('.bam$', '.sort.bam', str(command.strip()))
             sortBam(command, outbam, finalbamdir)
