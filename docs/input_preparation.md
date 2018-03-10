@@ -64,7 +64,7 @@ bedtools genomecov -ibam chr22.bam -bg > chr22.bedgraph \
 awk '$4 > 50' chr22.bedgraph > chr22.gt50.bedgraph
 
 bedtools merge -i chr21.gt50.bedgraph  > exons_chr21.bed \
-bedtools merge -i chr22.gt50.bedgraphh > exons_chr22.bed
+bedtools merge -i chr22.gt50.bedgraph > exons_chr22.bed
 
 cat exons_chr21.bed exons_chr22.bed > exons.bed
 
