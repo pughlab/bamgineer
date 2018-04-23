@@ -500,3 +500,17 @@ def createEventBedFiles(cnv_dir, bedfn):
         dfi.to_csv("/".join([cnv_dir, fn]), sep='\t', header=None, encoding='utf-8', index=False)
 
     return
+
+
+def generatePhasedBed(hap1vcffilteredtobed, hap2vcffilteredtobed, phased_bed):
+    print (" ___ generating phased Bed ___ ")
+    df1 = pd.read_csv(hap1vcffilteredtobed, header=None, sep='\t')
+    df2 = pd.read_csv(hap2vcffilteredtobed, header=None, sep='\t')
+
+    df1[len(df1.columns)] = "hap1"
+    df2[len(df2.columns)] = "hap2"
+
+    df = df1.append(df2)
+
+    df = df.sort([0, 1], ascending=True)
+    df.to_csv(phased_bed, sep='\t', header=None, encoding='utf-8', index=False)

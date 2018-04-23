@@ -48,16 +48,7 @@ def initialize0(results_path, cancer_dir_path):
             convertvcftobed(hap1vcffiltered + ".recode.vcf", hap1vcffilteredtobed)
             convertvcftobed(hap2vcffiltered + ".recode.vcf", hap2vcffilteredtobed)
 
-            cmd1 = """sed -i 's/$/\thap1/' """ + hap1vcffilteredtobed
-            cmd2 = """sed -i 's/$/\thap2/' """ + hap2vcffilteredtobed
-            cmd3 = "cat " + hap1vcffilteredtobed + " " + hap2vcffilteredtobed + " > " + 'tmp.bed'
-            cmd4 = "sort -V -k1,1 -k2,2 tmp.bed > " + phased_bed
-
-            runCommand(cmd1)
-            runCommand(cmd2)
-            runCommand(cmd3)
-            runCommand(cmd4)
-            os.remove('tmp.bed')
+            generatePhasedBed(hap1vcffilteredtobed, hap2vcffilteredtobed, phased_bed)
 
     except:
 
@@ -586,7 +577,7 @@ def run_pipeline(results_path):
     for cnv_path in cnv_list:
         initialize_pipeline(phase_path, haplotype_path, cnv_path)
 
-    pool1 = multiprocessing.Pool(processes=12, initializer=initPool,
+    sampool1 = multiprocessing.Pool(processes=12, initializer=initPool,
                                  initargs=[logQueue, logger.getEffectiveLevel(), terminating])
     try:
 
