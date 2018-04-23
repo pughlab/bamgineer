@@ -290,7 +290,7 @@ def getProperPairs(inbamfn, outbamfn):
     runCommand(command)
 
 
-def splitBed(bedfn, postfix):
+def splitBed0(bedfn, postfix):
     path, filename = os.path.split(bedfn)
     command = "".join(["""awk '($1 ~ "chr"){print $0 >> $1 """, '"{}"'.format(postfix), """".bed"}' """, bedfn])
     os.chdir(path)
@@ -495,9 +495,21 @@ def generatePhasedBed(hap1vcffilteredtobed, hap2vcffilteredtobed, phased_bed):
 
 
 def filterColumns(inp, outp, cols):
-    print (" ___ filtering bed file columns ___ ")
+
+    print (" ___ filtering bed file columns for ___ " + os.path.basename(inp))
     df1 = pd.read_csv(inp, header=None, sep='\t')
     last_col = len(df1.columns) - 1
     cols.append(last_col)
     df2 = df1.filter(cols)
     df2.to_csv(outp, sep='\t', header=None, encoding='utf-8', index=False)
+
+def splitBed(bedfn, postfix):
+
+    path, filename = os.path.split(bedfn)
+    df = pd.read_csv(bedfn, header=None, sep='\t')
+
+    chroms = df[0].unique()
+    for chr in chroms:
+        outfilename = str(chr) + postfix + '.bed'
+        outp = '/'.join([path, outfilename])
+        df[df[0] == chr].to_csv(outp, sep='\t', header=None, encoding='utf-8', index=False)

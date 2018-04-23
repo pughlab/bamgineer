@@ -83,7 +83,7 @@ def initialize_pipeline(phase_path, haplotype_path, cnv_path):
         command = " ".join([bedtools_path, "intersect -a", phased_bed, "-b", exonsinroibed, "-wa -wb >", tmp])
         runCommand(command)
 
-        filterColumns(tmp, hetsnpbed, [i for i in range(1, 6)])
+        filterColumns(tmp, hetsnpbed, [i for i in range(0, 6)])
 
         splitBed(hetsnpbed, '_het_snp' + str(event))
         os.remove(tmp)
