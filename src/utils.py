@@ -296,28 +296,6 @@ def splitBed(bedfn, postfix):
     os.chdir(path)
     runCommand(command)
 
-
-def generatePurities(purity):
-    try:
-        if not terminating.is_set():
-            purityDir = createDirectory("/".join([finalbams_hap, str(purity)]))
-            os.chdir(purityDir)
-            subsample
-
-    except KeyboardInterrupt:
-
-        logger.error('Exception Crtl+C pressed in the child process  in generation purities')
-        terminating.set()
-        return
-
-    except:
-
-        logger.exception("message")
-        terminating.set()
-        return
-    return
-
-
 def merge_bams(bamfn1, bamfn2, mergefn):
     java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     command = " ".join([sambamba_path, "merge", mergefn, bamfn1, bamfn2, "--nthreads", str(4)])
@@ -512,5 +490,14 @@ def generatePhasedBed(hap1vcffilteredtobed, hap2vcffilteredtobed, phased_bed):
 
     df = df1.append(df2)
 
-    df = df.sort([0, 1], ascending=True)
+    df = df.sort_values([0, 1], ascending=True)
     df.to_csv(phased_bed, sep='\t', header=None, encoding='utf-8', index=False)
+
+
+def filterColumns(inp, outp, cols):
+    print (" ___ filtering bed file columns ___ ")
+    df1 = pd.read_csv(inp, header=None, sep='\t')
+    last_col = len(df1.columns) - 1
+    cols.append(last_col)
+    df2 = df1.filter(cols)
+    df2.to_csv(outp, sep='\t', header=None, encoding='utf-8', index=False)

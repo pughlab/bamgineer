@@ -77,15 +77,14 @@ def initialize_pipeline(phase_path, haplotype_path, cnv_path):
         command = " ".join([bedtools_path, "intersect -a", exons_path, "-b", cnv_path, "-wa -wb > ", tmp])
         runCommand(command)
 
-        cmd = "".join(["""awk '{print $1"\t"$2"\t"$3"\t"$NF}' """, tmp, " > ", exonsinroibed])
-        runCommand(cmd)
+        filterColumns(tmp, exonsinroibed, [0, 1, 2])
 
         splitBed(exonsinroibed, '_exons_in_roi' + str(event))
         command = " ".join([bedtools_path, "intersect -a", phased_bed, "-b", exonsinroibed, "-wa -wb >", tmp])
         runCommand(command)
 
-        cmd = "".join(["""awk '{print $1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$NF}' """, tmp, " > ", hetsnpbed])
-        runCommand(cmd)
+        filterColumns(tmp, hetsnpbed, [i for i in range(1, 6)])
+
         splitBed(hetsnpbed, '_het_snp' + str(event))
         os.remove(tmp)
     except:
