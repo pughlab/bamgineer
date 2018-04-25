@@ -52,6 +52,7 @@ def initialize0(results_path, cancer_dir_path):
 
     except:
 
+        logger.exception("Initialization error !")
         raise
 
     return
