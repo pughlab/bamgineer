@@ -477,12 +477,13 @@ def re_pair_reads(bamsortfn, copy_number):
 
                     if strand == 'pos':
                         insert_size = tlen-qlen 
-
+                   	minpos = pos + 75 + insert_size
+                    	maxpos = pos + 150 + insert_size                    
+			
                     elif strand == 'neg':
                         insert_size = abs(tlen)-qlen
-		    
-                    minpos = pos + 75 + insert_size
-                    maxpos = pos + 150 + insert_size                    
+			minpos = pos - 75 - insert_size
+			maxpos = pos - 150 - insert_size 
 		    
                     itrB = splt2.fetch("chr21", minpos, maxpos)    
 		    itrs_list = list(itrB)
