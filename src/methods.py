@@ -2,6 +2,7 @@ import csv
 import glob
 import logging
 import time
+import random
 from uuid import uuid4
 from helpers import handlers as handle
 from helpers import parameters as params
@@ -43,10 +44,10 @@ def initialize0(results_path, cancer_dir_path):
 
             phaseVCF(vcf_path, phasedvcf)
             getVCFHaplotypes(phasedvcf, hap1vcf, hap2vcf)
-            thinVCF(hap1vcf, hap1vcffiltered)
-            thinVCF(hap2vcf, hap2vcffiltered)
-            convertvcftobed(hap1vcffiltered + ".recode.vcf", hap1vcffilteredtobed)
-            convertvcftobed(hap2vcffiltered + ".recode.vcf", hap2vcffilteredtobed)
+            #thinVCF(hap1vcf, hap1vcffiltered)
+            #thinVCF(hap2vcf, hap2vcffiltered)
+            convertvcftobed(hap1vcf, hap1vcffilteredtobed)
+            convertvcftobed(hap2vcf, hap2vcffilteredtobed)
 
             generatePhasedBed(hap1vcffilteredtobed, hap2vcffilteredtobed, phased_bed)
 
@@ -75,7 +76,7 @@ def initialize_pipeline(phase_path, haplotype_path, cnv_path):
         hetsnpbed = "/".join([haplotype_path, "het_snp" + str(event) + ".bed"])
 
         tmp = "/".join([haplotype_path, str(event) + "_tmp.bed"])
-        command = " ".join([bedtools_path, "intersect -a", exons_path, "-b", cnv_path, "-wa -wb > ", tmp])
+	command = " ".join([bedtools_path, "intersect -a", exons_path, "-b", cnv_path, "-wa -wb > ", tmp])
         runCommand(command)
 
         filterColumns(tmp, exonsinroibed, [0, 1, 2])
@@ -87,7 +88,7 @@ def initialize_pipeline(phase_path, haplotype_path, cnv_path):
         filterColumns(tmp, hetsnpbed, [i for i in range(0, 6)])
 
         splitBed(hetsnpbed, '_het_snp' + str(event))
-        os.remove(tmp)
+        #os.remove(tmp)
     except:
         logger.exception("Initialization error !")
         raise
@@ -148,6 +149,284 @@ def find_roi_bam(chromosome_event):
         logger.debug("find_roi_bam complete successfully for " + chr + event)
     return
 
+def split_hap(bamsortfn, chr, event=''):
+    fn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
+    cmd = " ".join(["sort -u", bedfn, "-o", bedfn]);
+    runCommand(cmd)
+
+
+    hap1_bamfn = sub('.sorted.bam$', ".hap1.bam", bamsortfn)
+    hap2_bamfn = sub('.sorted.bam$', ".hap2.bam", bamsortfn)
+    hap1_bamsortfn = sub('.sorted.bam$', ".hap1.sorted", bamsortfn)
+    hap2_bamsortfn = sub('.sorted.bam$', ".hap2.sorted", bamsortfn)
+
+    hap12_bamfn = sub('.sorted.bam$', ".hap12.bam", bamsortfn)
+    hap12_bamsortfn = sub('.sorted.bam$', ".hap12.sorted", bamsortfn)
+
+
+    intersnpbamfn = sub('.sorted.bam$', ".intersnp.bam", bamsortfn)
+    intersnpbamsortfn = sub('.sorted.bam$', ".intersnp.sorted", bamsortfn)
+
+
+    hap1_intersnpbamfn = sub('.sorted.bam$', ".hap1_intersnp.bam", bamsortfn)
+    hap2_intersnpbamfn = sub('.sorted.bam$', ".hap2_intersnp.bam", bamsortfn) 
+    hap1_intersnpbamsortfn = sub('.sorted.bam$', ".hap1_intersnp.sorted", bamsortfn)
+    hap2_intersnpbamsortfn = sub('.sorted.bam$', ".hap2_intersnp.sorted", bamsortfn)
+
+    hap1_finalbamfn = sub('.sorted.bam$', ".hap1_final.bam", bamsortfn)
+    hap2_finalbamfn = sub('.sorted.bam$', ".hap2_final.bam", bamsortfn)
+    hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted", bamsortfn)
+    hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted", bamsortfn)
+
+
+    newbedfn = sub('.bed$', ".new.bed",bedfn)
+# try:
+
+    if not terminating.is_set():
+
+        if (os.path.isfile(bamsortfn) and os.path.isfile(bedfn)):
+
+            samfile = pysam.Samfile(bamsortfn, "rb")
+            alignmentfile = pysam.AlignmentFile(bamsortfn, "rb")
+            outbam1 = pysam.Samfile(hap1_bamfn, 'wb', template=samfile)
+            outbam2 = pysam.Samfile(hap2_bamfn, 'wb', template=samfile)
+
+            # allreads = pysam.Samfile(allreadsfn, 'wb', template=samfile)
+
+            bedfile = open(bedfn, 'r')
+            # covpath = "/".join([haplotype_path, "written_coverage_het.txt"])
+            # snpratiopath = "/".join([haplotype_path, "het_snp_ratio.txt"])
+
+            num_reads_written = 0
+            num_total_reads = 0
+	    
+            newsnps = []
+	    bedlist = []
+	    problem_snps = []
+	    newbedlist = []
+	    #readid1 = []
+	    #readid2 = []
+
+	    newbed = open(newbedfn, 'w') 
+
+            for bedline in bedfile:
+                c = bedline.strip().split()
+
+                if len(c) == 7:
+                    chr2 = c[0]
+                    chr = c[0].strip("chr")
+                    start = int(c[1])
+                    end = int(c[2])
+                    refbase = str(c[3])
+                    altbase = str(c[4])
+                    haplotype = str(c[5])
+                    copy_number = int(c[6])
+                else:
+                    continue
+	
+	    	bedlist.append(c) 
+	     
+
+	    bedlist2 = bedlist[:]
+	    
+	    for i in range(0,(len(bedlist2)-1),2):
+            	if abs((int(bedlist2[i][1]))-(int(bedlist2[i+1][1]))) <= 75:
+                	problem_snps.append(bedlist2[i])
+                	problem_snps.append(bedlist2[i+1])
+			bedlist.remove(bedlist2[i])
+			bedlist.remove(bedlist2[i+1])		
+		 
+	    newbedlist.extend(bedlist)
+
+	    for i in range(0,(len(problem_snps)-1),2):
+		readid1 = []
+		readid2 = []
+	    	readid3 = []
+
+		c = problem_snps[i]
+		c2 = problem_snps[i+1]
+
+		if len(c) == 7:
+			chr1 = c[0]
+		    	start1 = int(c[1])
+		    	end1 = int(c[2])
+		    	refbase1 = str(c[3])
+		    	altbase1 = str(c[4])
+			haplotype1 = str(c[5])
+		    	copy_number1 = int(c[6])
+
+		if len(c2) == 7:
+		    	chr2 = c2[0]
+		    	start2 = int(c2[1])
+		    	end2 = int(c2[2])
+		    	refbase2 = str(c2[3])
+		    	altbase2 = str(c2[4])
+		    	haplotype2 = str(c2[5])
+		    	copy_number2 = int(c2[6])
+
+
+        	maps1 = alignmentfile.fetch(chr1, start1, end1)
+        	maps2 = alignmentfile.fetch(chr2, start2, end2)
+
+		for read1 in maps1:
+                	index1 = read1.get_reference_positions(full_length=True).index(start1)
+                	tmpread1 = read1.query_sequence
+                	qual1 = read1.query_qualities
+                	tmpread_index1 = tmpread1[index1]
+
+                	if tmpread_index1 == altbase1:
+                        	readid1.append(read1.qname)
+
+
+		for read2 in maps2:
+                	index2 = read2.get_reference_positions(full_length=True).index(start2)
+                	tmpread2 = read2.query_sequence
+                	qual2 = read2.query_qualities
+                	tmpread_index2 = tmpread2[index2]
+
+                	if tmpread_index2 == altbase2:
+                        	readid2.append(read2.qname)
+
+
+        	for readid in readid1:
+                	if readid in readid2:
+                        	readid3.append(readid)
+
+        	if any(readid3):
+                	c2[5] = c[5]
+
+
+        	else:
+                	if c[5] == "hap1":
+                        	c2[5] = "hap2"
+
+                	elif c[5] == "hap2":
+                        	c2[5] = "hap1"
+
+		
+	    newbedlist.extend(problem_snps)
+	    
+	    newbedlist2 = sorted(newbedlist, key=lambda x: x[1])
+	    
+	    for i in range(len(newbedlist2)):
+                c = newbedlist2[i]
+	    	newbed.write(c[0] + '\t' + str(c[1]) + '\t' + str(c[2]) + '\t' +  str(c[3]) + '\t' + str(c[4]) + '\t' + str(c[5]) + '\t' + str(c[6]) + '\n')  # chr start stop ref alt
+	    newbed.close()
+	    bedfile2 = open(newbedfn, 'r')
+	    readids = []
+
+	    for bedline in bedfile2:
+                c = bedline.strip().split()
+	
+                if len(c) == 7:
+                    chr2 = c[0]
+                    chr = c[0].strip("chr")
+                    start = int(c[1])
+                    end = int(c[2])
+                    refbase = str(c[3])
+                    altbase = str(c[4])
+                    haplotype = str(c[5])
+                    copy_number = int(c[6])
+                else:
+                    continue
+
+		
+                readmappings = alignmentfile.fetch(chr2, start, end)
+
+                # sex chromosome
+                # if params.GetXY() and (chr == 'chrX' or chr == 'chrY'):
+                #     haplotype = 'hap1'
+                #     print('sex chromosome ' + str(chr))
+
+                for shortread in readmappings:
+	        	if shortread.qname not in readids:	
+				#allreads.write(shortread)
+                        	num_total_reads += 1
+				problem_with_read = False
+
+				try:
+				    index = shortread.get_reference_positions(full_length=True).index(start)
+				    tmpread = shortread.query_sequence
+				    qual = shortread.query_qualities
+				    tmpread_index = tmpread[index]
+				    readids.append(shortread.qname)
+	 
+				    if tmpread_index == altbase and haplotype == "hap1":
+					outbam1.write(shortread)
+				    elif tmpread_index == refbase and haplotype == "hap1":
+					outbam2.write(shortread)
+				    elif tmpread_index == altbase and haplotype == "hap2":
+					outbam2.write(shortread)
+				    elif tmpread_index == refbase and haplotype == "hap2":
+					outbam1.write(shortread)
+				    #mutated_hap2 = tmpread[:index] + refbase + tmpread[index + 1:]
+
+				    #if haplotype == "hap1":
+				     #   shortread.query_sequence = mutated_hap1
+
+				    #elif haplotype == "hap2":
+				     #   shortread.query_sequence = mutated_hap2
+				    else: 
+					problem_with_read = True
+	     
+				    shortread.query_qualities = qual
+
+				except Exception as e:
+				    problem_with_read = True
+				    pass
+
+				#if not problem_with_read:
+				 #   if haplotype == "hap1":
+				  #  	outbam1.write(newread)
+
+				   # elif haplotype == "hap2":
+				    #    outbam2.write(newread)
+
+            #newbed.close()
+	    outbam1.close()
+	    outbam2.close()
+
+            # sort hap1 and hap2
+            sortBam(hap1_bamfn, hap1_bamsortfn + '.bam', tmpbams_path)
+            sortBam(hap2_bamfn, hap2_bamsortfn + '.bam', tmpbams_path)
+
+	    
+	    # ***MODIFY HAP FUNCTION***
+
+	    # merge hap1 + hap2 -> hap12 
+	    merge_bams(hap1_bamsortfn + '.bam', hap2_bamsortfn + '.bam', hap12_bamfn)
+	    # sort hap12
+	    sortBam(hap12_bamfn, hap12_bamsortfn + '.bam', tmpbams_path)
+
+	    # difference between normal bam and hap12  
+	    bamDiff(bamsortfn, hap12_bamsortfn + '.bam', tmpbams_path)
+
+	    # sort intersnps
+	    sortBam("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfn)]), intersnpbamsortfn + '.bam', tmpbams_path)
+
+	    # subsample 50% of reads from inter_snps and assign to hap1
+	    subsample(intersnpbamsortfn + '.bam', hap1_intersnpbamfn, str(0.5))
+
+	    # sort hap1_intersnpbam
+	    sortBam(hap1_intersnpbamfn, hap1_intersnpbamsortfn + '.bam', tmpbams_path)
+
+	    # difference between hap1 inter_snp bam and total inter_snp bam 
+	    bamDiff(intersnpbamsortfn + '.bam', hap1_intersnpbamsortfn + '.bam', tmpbams_path)
+
+	    # sort hap2_intersnpbam
+	    sortBam("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(intersnpbamsortfn + '.bam')]), hap2_intersnpbamsortfn + '.bam', tmpbams_path)
+
+	    # merge hap1 with hap1 intersnps and hap2 with hap2 intersnps
+	    merge_bams(hap1_bamsortfn + '.bam', hap1_intersnpbamsortfn + '.bam', hap1_finalbamfn)
+	    merge_bams(hap2_bamsortfn + '.bam', hap2_intersnpbamsortfn + '.bam', hap2_finalbamfn)
+
+	    # sort final bams
+	    sortBam(hap1_finalbamfn, hap1_finalbamsortfn + '.bam', tmpbams_path)
+	    sortBam(hap2_finalbamfn, hap2_finalbamsortfn + '.bam', tmpbams_path)
+
+
+
+
 
 def re_pair_reads(bamsortfn, copy_number):
     if os.path.isfile(bamsortfn):
@@ -161,105 +440,117 @@ def re_pair_reads(bamsortfn, copy_number):
         writtencount = 0
         strands = ['pos', 'neg']
 
-        for strand in strands:
-            read1fn = sub('.bam$', '.read1_' + strand + '.bam', bamsortfn)
+    	for strand in strands:
+    	    read1fn = sub('.bam$', '.read1_' + strand + '.bam', bamsortfn)
             read2fn = sub('.bam$', '.read2_' + strand + '.bam', bamsortfn)
 
             if not os.path.isfile(read1fn) or not os.path.isfile(read2fn):
                 splitPairAndStrands(bamsortfn)
-
-            splt1 = pysam.Samfile(read1fn, 'rb')
+	    
+	    pysam.index(read1fn)
+	    pysam.index(read2fn)
+            
+	    splt1 = pysam.Samfile(read1fn, 'rb')
             splt2 = pysam.Samfile(read2fn, 'rb')
-
-            itrA = splt1.fetch(until_eof=True)
-            itrB = splt2.fetch(until_eof=True)
-
-            if (params.GetctDNA()):
-                sigma = 40
-                coff = 2
-                block_size = int(copy_number)
-            else:
-                sigma = 85
-                coff = 5
-                block_size = int(copy_number) * 4
+            
+	    itrA = splt1.fetch(until_eof=True)
+	    #itrB = splt2.fetch(until_eof=True)
+            #if (params.GetctDNA()):
+            #    sigma = 40
+            #    coff = 2
+            #    block_size = int(copy_number)
+            #else:
+            #    sigma = 85
+            #    coff = 5
+            #    block_size = int(copy_number) * 4 
 
             writtenreads = []
 
             while (True):
-
                 try:
-                    lista = []
                     listb = []
-                    readsinblock = []
-                    poslist = []
+		    readA = itrA.next()
+		    qlen = readA.qlen
+                    tlen = readA.tlen
+                    pos = readA.pos
+                    #rname = readA.reference_name
 
-                    while (True):
+                    if strand == 'pos':
+                        insert_size = tlen-qlen 
 
-                        readA = itrA.next()
-                        lista.append(readA)
-                        readsinblock.append(readA.qname)
-                        poslist.append(readA.pos)
-
-                        if (len(lista) == block_size):
-                            break
-
-                    minpos = min(poslist) - 1000
-                    maxpos = max(poslist) + 1000
-
-                    while (True):
-
-                        readB = itrB.next()
-
-                        if readB.qname in readsinblock or (readB.pos < maxpos or readB.pos > minpos):
+                    elif strand == 'neg':
+                        insert_size = abs(tlen)-qlen
+		    
+                    minpos = pos + 75 + insert_size
+                    maxpos = pos + 150 + insert_size                    
+		    
+                    itrB = splt2.fetch("chr21", minpos, maxpos)    
+		    itrs_list = list(itrB)
+#test section
+	#	    if len(itrs_list) == 0:
+	#	    	for i in itrs_list:
+	#		    readB = i
+	#		    listb.append(readB)
+	#	    elif len(itrs_list) >= 1:	
+	#	    	for i in random.sample(itrs_list,1):
+	#	    	    readB = i
+	#		    listb.append(readB)
+	
+		    if len(itrs_list) <= 5:
+                    	for i in itrs_list:
+                      	    readB = i
                             listb.append(readB)
 
-                        if len(listb) == block_size:
-                            break
-
-                    for i in range(0, block_size):
-                        readA = lista[i]
+		    elif len(itrs_list) > 5:
+                        for i in random.sample(itrs_list, 5):
+                            readB = i
+                            listb.append(readB)
+                   
+		    for i in range(len(listb)):
                         tmpA = readA
-                        for j in range(0, block_size):
+			readB = listb[i]
+			tmpB = readB
 
-                            readB = listb[j]
-                            tmpB = readB
+			tlenFR = tmpB.pos - tmpA.pos + tmpB.qlen
+			tlenRF = tmpA.pos - tmpB.pos + tmpA.qlen
+			
+			#read_length_A = tmpA.tlen
+			#read_length_B = tmpB.tlen
+			#read_length_average = (read_length_A + read_length_B)/2
 
-                            tlenFR = tmpB.pos - tmpA.pos + tmpB.qlen
-                            tlenRF = tmpA.pos - tmpB.pos + tmpA.qlen
+			if readA.qname != readB.qname:
+			    tmpqname = str(uuid4())
+			    
+			    if strand == 'pos':
+			    	tmpA.tlen = tlenFR
+				tmpB.tlen = -tlenFR
+				tmpA.pnext = tmpB.pos  
+				tmpB.pnext = tmpA.pos
+				tmpA.qname = tmpqname
+				tmpB.qname = tmpqname
+				outbam.write(tmpA)
+				outbam.write(tmpB)
+				#writtenreads.append(tmpB.qname)
 
-                            if readA.qname != readB.qname:
+			    elif strand == 'neg':
+				print ("TLENRF:",tlenRF)
+				print ("Tmpa.tlen:",tmpA.tlen)
 
-                                tmpqname = str(uuid4())
-
-                                if strand == 'pos':
-                                    if tlenFR >= abs(tmpB.tlen) - coff * sigma and tlenFR < abs(tmpB.tlen) + coff * sigma:
-                                        tmpA.tlen = tlenFR
-                                        tmpB.tlen = -tlenFR
-                                        tmpA.pnext = tmpB.pos
-                                        tmpB.pnext = tmpA.pos
-                                        tmpA.qname = tmpqname
-                                        tmpB.qname = tmpqname
-                                        outbam.write(tmpA)
-                                        outbam.write(tmpB)
-                                        writtenreads.append(tmpB.qname)
-
-                                elif strand == 'neg':
-                                    if tlenRF >= abs(tmpB.tlen) - coff * sigma and tlenRF < abs(tmpB.tlen) + coff * sigma:
-                                        tmpA.tlen = -tlenRF
-                                        tmpB.tlen = tlenRF
-                                        tmpA.pnext = tmpB.pos
-                                        tmpB.pnext = tmpA.pos
-                                        tmpA.qname = tmpqname
-                                        tmpB.qname = tmpqname
-                                        outbam.write(tmpA)
-                                        outbam.write(tmpB)
-                                        writtenreads.append(tmpB.qname)
+				tmpA.tlen = -tlenRF
+				tmpB.tlen = tlenRF
+				tmpA.pnext = tmpB.pos
+				tmpB.pnext = tmpA.pos
+				tmpA.qname = tmpqname
+				tmpB.qname = tmpqname
+				outbam.write(tmpA)
+				outbam.write(tmpB)
+				#writtenreads.append(tmpB.qname)
 
                 except StopIteration:
                     break
 
-            os.remove(read1fn)
-            os.remove(read2fn)
+            #os.remove(read1fn)
+            #os.remove(read2fn)
 
         splt1.close()
         splt2.close()
@@ -450,14 +741,19 @@ def implement_cnv(chromosome_event):
 
                 if event.startswith('amp') or event.startswith('gain'):
 
-                    bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
+                    
+		    bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
+		    hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted.bam", bamsortfn)
+		    hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted.bam", bamsortfn)
                     mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamrepairedsortfn)
                     GAIN_FINAL = "/".join([finalbams_path, str(chr).upper() + '_GAIN.bam'])
 
                     if os.path.isfile(bamsortfn):
 
-                        re_pair_reads(bamsortfn, copy_number)
-                        mutate_reads(bamrepairedsortfn, chr, event)
+                        split_hap(bamsortfn, chr, event)
+		        re_pair_reads(hap1_finalbamsortfn, copy_number)
+                        #re_pair_reads(hap2_finalbamsortfn, copy_number)
+			mutate_reads(bamrepairedsortfn, chr, event)
                         coverageratio = float(countReads(mergedsortfn)) / float(countReads(bamsortfn))
                         logger.debug(
                             "+++ coverage ratio for: " + ntpath.basename(bamsortfn) + ": " + str(coverageratio))
@@ -603,6 +899,6 @@ def run_pipeline(results_path):
     time.sleep(.1)
     mergeSortBamFiles(outbamfn, finalbams_path)
     t1 = time.time()
-    shutil.rmtree(tmpbams_path)
+    #shutil.rmtree(tmpbams_path)
     logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0) / 60.0, 1)) + ' minutes ***** ')
     logging.shutdown()

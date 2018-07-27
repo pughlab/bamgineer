@@ -14,7 +14,7 @@ import traceback
 import multiprocessing
 from multiprocessing import Pool
 from contextlib import closing
-from pathos.multiprocessing import ProcessingPool
+#from pathos.multiprocessing import ProcessingPool
 import signal
 import itertools
 import ntpath
