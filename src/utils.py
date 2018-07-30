@@ -14,7 +14,7 @@ import traceback
 import multiprocessing
 from multiprocessing import Pool
 from contextlib import closing
-from pathos.multiprocessing import ProcessingPool
+#from pathos.multiprocessing import ProcessingPool
 import signal
 import itertools
 import ntpath
@@ -26,9 +26,10 @@ from helpers import parameters as params
 import pandas as pd
 
 
+
 def phaseVCF(vcfpath, phasevcfpath):
     print (" ___ phasing vcf file ___ ")
-    if (not vcfpath.endswith('.vcf.gz')):
+    if not vcfpath.endswith('.vcf.gz'):
         gzipFile(vcfpath)
         vcfpath = vcfpath + '.gz'
 
@@ -102,7 +103,7 @@ def getVCFHaplotypes(phasedvcf, hap1, hap2):
     out_hap1 = open(hap1, 'w')
     out_hap2 = open(hap2, 'w')
 
-    if (phasedvcf.endswith('.vcf.gz')):
+    if phasedvcf.endswith('.vcf.gz'):
         vcfh = gzip.GzipFile(phasedvcf, 'rb')
 
         for line in vcfh:
@@ -131,7 +132,7 @@ def convertvcftobed(vcf, bed):
     for line in vcfh:
         c = line.strip('\n').split("\t")
 
-        if (not line.startswith('#') and len(c) >= 5 and (len(c[3]) + len(c[4]) == 2)):
+        if not line.startswith('#') and len(c) >= 5 and (len(c[3]) + len(c[4]) == 2):
             start = int(c[1]) - 1
             bedh.write(c[0] + '\t' + str(start) + '\t' + str(c[1]) + '\t' + str(c[3]) + '\t' + str(
                 c[4]) + '\n')  # chr start stop ref alt
@@ -149,9 +150,9 @@ def findExonsinCNVregion(cnvpath, exonpath, intersectfile, wa=False):
     exonfile = pybedtools.example_bedtool(exoncompletepath)
 
     f = open(intersectfile, 'w')
-    if (wa == False):
+    if wa == False:
         print >> f, exonfile.intersect(cnvfile, u=True)
-    elif (wa == True):
+    elif wa == True:
         print >> f, exonfile.intersect(cnvfile, u=True, wa=True)
 
     f.close()
@@ -187,12 +188,12 @@ def intersectBed(bed1fn, bed2fn, intersectfile, wa=False, wb=False):
     bed2 = pybedtools.example_bedtool(bed2fncompletepath)
 
     f = open(intersectfile, 'w')
-    if (wa == False):
+    if wa == False:
 
         print >> f, bed1.intersect(bed2, u=True)
-    elif (wa == True and wb == False):
+    elif wa == True and wb == False:
         print >> f, bed1.intersect(bed2, u=True, wa=True)
-    elif (wa == True and wb == True):
+    elif wa == True and wb == True:
         print >> f, bed1.intersect(bed2, u=True, wa=True, wb=True)
 
     f.close()
@@ -289,34 +290,11 @@ def getProperPairs(inbamfn, outbamfn):
     runCommand(command)
 
 
-def splitBed(bedfn, postfix):
+def splitBed0(bedfn, postfix):
     path, filename = os.path.split(bedfn)
     command = "".join(["""awk '($1 ~ "chr"){print $0 >> $1 """, '"{}"'.format(postfix), """".bed"}' """, bedfn])
     os.chdir(path)
     runCommand(command)
-
-
-def generatePurities(purity):
-    try:
-        if not terminating.is_set():
-            purityDir = createDirectory("/".join([finalbams_hap, str(purity)]))
-            os.chdir(purityDir)
-            subsample
-
-
-    except (KeyboardInterrupt):
-
-        logger.error('Exception Crtl+C pressed in the child process  in generation purities')
-        terminating.set()
-        return
-
-    except:
-
-        logger.exception("message")
-        terminating.set()
-        return
-    return
-
 
 def merge_bams(bamfn1, bamfn2, mergefn):
     java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
@@ -338,25 +316,28 @@ def mergeSortBamFiles(mergedBamfn, finalbamdir):
             if os.path.islink(path):
                 path = os.path.realpath(path)
 
-            if (not matches.__contains__(path)):
+            if not matches.__contains__(path):
                 matches.append(path)
                 command = " ".join([path, command])
                 num_files = num_files + 1
 
-    if (num_files > 1):
-        command2 = " ".join([sambamba_path, "merge", mergedBamfn, command])
+    if num_files > 1:
+        command2 = " ".join([sambamba_path, "merge", mergedBamfn, command, "--nthreads", str(4)])
         runCommand(command2)
-    elif (num_files == 1):
+    elif num_files == 1:
 
-        outbam = sub('.bam$', '.sort.bam', str(command.strip()))
-        sortBam(command, outbam, finalbamdir)
-        os.remove(str(command.strip()))
+        if str(command.strip()).endswith("GAIN.bam"):
+            path, fname = os.path.split(str(command.strip()))
+            inbam_original = '/'.join([params.GetSplitBamsPath(), sub('_gain', '', fname.lower())])
 
+            command2 = " ".join([sambamba_path, "merge", mergedBamfn, command, inbam_original, "--nthreads", str(4)])
+            runCommand(command2)
 
-def getMeanSTD(inbam):
-    """ awk '{ if ($9 > 0) { N+=1; S+=$9; S2+=$9*$9 }} END { M=S/N; print "n="N", mean="M", stdev="sqrt ((S2-M*M*N)/(N-1))}' """
-    command = " ".join([awk, inbam])
-    runCommand(command)
+        elif str(command.strip()).endswith("LOSS.bam"):
+
+            outbam = sub('.bam$', '.sort.bam', str(command.strip()))
+            sortBam(command, outbam, finalbamdir)
+            os.remove(str(command.strip()))
 
 
 def splitPairs(inbamfn):
@@ -429,7 +410,7 @@ def removeIfEmpty(bamdir, file):
     if file.endswith(".bam"):
         command = " ".join([samtools_path, "view", "/".join([bamdir, file]), "| less | head -1 | wc -l"])
         nline = subprocess.check_output(command, shell=True)
-        if (os.path.isfile("/".join([bamdir, file])) and (int(nline) == 0)):
+        if os.path.isfile("/".join([bamdir, file])) and (int(nline) == 0):
             os.remove("/".join([bamdir, file]))
 
 
@@ -441,7 +422,7 @@ def createHaplotypes(hetsnp_orig_bed, hetsnp_hap1_bed):
             c = line.strip('\n').split("\t")
             c2 = ""
 
-            while (c2 != c):
+            while c2 != c:
                 c2 = inbedh2.readline.strip('\n').split("\t")
                 outbedh.write(c2 + '\t' + 'hap1' + '\n')
 
@@ -456,7 +437,7 @@ def create_chr_event_list(cnv_list, chr_list):
     chrom_event = []
     for c in chr_list:
         for cnv_path in cnv_list:
-            e = os.path.splitext(cnv_path)[1]
+            e = os.path.splitext(ntpath.basename(cnv_path))[0]
             chev = "_".join([str(c), str(e)])
             chrom_event.append(chev)
     return chrom_event
@@ -473,27 +454,62 @@ def createEventBedFiles(cnv_dir, bedfn):
         cn = int(num)
         dfi = df.loc[df['abs_cn'] == cn]
 
-        if (cn == 0):
+        if cn == 0:
             fn = 'deepdel.bed'
-        elif (cn == 1):
+        elif cn == 1:
             fn = 'loss.bed'
-        elif (cn == 2):
+        elif cn == 2:
             fn = 'loh.bed'
-        elif (cn == 3):
+        elif cn == 3:
             fn = 'gain.bed'
-        elif (cn == 4):
+        elif cn == 4:
             fn = 'amp4.bed'
-        elif (cn == 5):
+        elif cn == 5:
             fn = 'amp5.bed'
-        elif (cn == 6):
+        elif cn == 6:
             fn = 'amp6.bed'
-        elif (cn == 7):
+        elif cn == 7:
             fn = 'amp7.bed'
-        elif (cn == 8):
+        elif cn == 8:
             fn = 'amp8.bed'
-        elif (cn > 8):
+        elif cn > 8:
             print('CNV number must be smaller than 8')
 
         dfi.to_csv("/".join([cnv_dir, fn]), sep='\t', header=None, encoding='utf-8', index=False)
 
     return
+
+
+def generatePhasedBed(hap1vcffilteredtobed, hap2vcffilteredtobed, phased_bed):
+    print (" ___ generating phased Bed ___ ")
+    df1 = pd.read_csv(hap1vcffilteredtobed, header=None, sep='\t')
+    df2 = pd.read_csv(hap2vcffilteredtobed, header=None, sep='\t')
+
+    df1[len(df1.columns)] = "hap1"
+    df2[len(df2.columns)] = "hap2"
+
+    df = df1.append(df2)
+
+    df = df.sort_values([0, 1], ascending=True)
+    df.to_csv(phased_bed, sep='\t', header=None, encoding='utf-8', index=False)
+
+
+def filterColumns(inp, outp, cols):
+
+    print (" ___ filtering bed file columns for ___ " + os.path.basename(inp))
+    df1 = pd.read_csv(inp, header=None, sep='\t')
+    last_col = len(df1.columns) - 1
+    cols.append(last_col)
+    df2 = df1.filter(cols)
+    df2.to_csv(outp, sep='\t', header=None, encoding='utf-8', index=False)
+
+def splitBed(bedfn, postfix):
+
+    path, filename = os.path.split(bedfn)
+    df = pd.read_csv(bedfn, header=None, sep='\t')
+
+    chroms = df[0].unique()
+    for chr in chroms:
+        outfilename = str(chr) + postfix + '.bed'
+        outp = '/'.join([path, outfilename])
+        df[df[0] == chr].to_csv(outp, sep='\t', header=None, encoding='utf-8', index=False)
