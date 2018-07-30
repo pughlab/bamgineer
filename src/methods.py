@@ -424,6 +424,255 @@ def split_hap(bamsortfn, chr, event=''):
 	    sortBam(hap1_finalbamfn, hap1_finalbamsortfn + '.bam', tmpbams_path)
 	    sortBam(hap2_finalbamfn, hap2_finalbamsortfn + '.bam', tmpbams_path)
 
+def rePair1(bamsortfn):
+    #counter = 0
+    if os.path.isfile(bamsortfn):
+
+    	bamrepairedfn = sub('.bam$', ".re_paired.bam", bamsortfn)
+        bamrepairedsortfn = sub('.bam$', ".re_paired.sorted.bam", bamsortfn)
+ 
+	inbam = pysam.Samfile(bamsortfn, 'rb')
+        outbam = pysam.Samfile(bamrepairedfn, 'wb', template=inbam)
+
+        writtencount = 0
+        strands = ['pos', 'neg']
+
+    	for strand in strands:
+    	    read1fn = sub('.bam$', '.read1_' + strand + '.bam', bamsortfn)
+            read2fn = sub('.bam$', '.read2_' + strand + '.bam', bamsortfn)
+
+            if not os.path.isfile(read1fn) or not os.path.isfile(read2fn):
+                splitPairAndStrands(bamsortfn)
+	    
+	    pysam.index(read1fn)
+	    pysam.index(read2fn)
+            
+	    splt1 = pysam.Samfile(read1fn, 'rb')
+            splt2 = pysam.Samfile(read2fn, 'rb')
+
+	    counter = 0	
+    	    itrA = splt1.fetch(until_eof=True) 
+	    		
+	    while (True):
+	    	try:
+			listb = []
+                	readA = itrA.next()
+
+                	counter += 1
+
+			qlen = readA.qlen
+                	tlen = readA.tlen
+                	pos = readA.pos
+                    	#rname = readA.reference_name
+
+			if strand == 'pos':
+                		insert_size = tlen-qlen
+                        	minpos = pos + 75 + insert_size
+                        	maxpos = pos + 150 + insert_size
+
+                	elif strand == 'neg':
+                        	insert_size = abs(tlen)-qlen
+                        	maxpos = pos - 75 - insert_size
+                        	minpos = pos - 150 - insert_size
+
+                	itrB = splt2.fetch("chr21", minpos, maxpos)
+                	itrs_list = list(itrB)
+
+                	if len(itrs_list) <= 5:
+                		for i in itrs_list:
+                            		readB = i
+                            		listb.append(readB)
+
+                	elif len(itrs_list) > 5:
+                        	for i in random.sample(itrs_list, 5):
+                            		readB = i
+                            		listb.append(readB)
+
+                	for i in range(len(listb)):
+                        	tmpA = readA
+                        	readB = listb[i]
+                        	tmpB = readB
+
+                        	tlenFR = tmpB.pos - tmpA.pos + tmpB.qlen
+                        	tlenRF = tmpA.pos - tmpB.pos + tmpA.qlen
+
+
+                		if readA.qname != readB.qname:
+                			tmpqname = str(uuid4())
+
+	                		if strand == 'pos':
+        	                        	tmpA.tlen = tlenFR
+                	                	tmpB.tlen = -tlenFR
+                        	        	tmpA.pnext = tmpB.pos
+                                		tmpB.pnext = tmpA.pos
+                                		tmpA.qname = tmpqname
+                                		tmpB.qname = tmpqname
+                                		
+						if counter % 2 != 0:
+							outbam.write(tmpA)
+                                			outbam.write(tmpB)
+						else:
+							pass
+                     
+			       		elif strand == 'neg':
+                                		tmpA.tlen = -tlenRF
+                                		tmpB.tlen = tlenRF
+                                		tmpA.pnext = tmpB.pos
+                                		tmpB.pnext = tmpA.pos
+                                		tmpA.qname = tmpqname
+                                		tmpB.qname = tmpqname
+                                		
+						if counter % 2 != 0:
+							outbam.write(tmpA)
+                                			outbam.write(tmpB)
+                                		#writtenreads.append(tmpB.qname)
+
+						else:
+							pass
+    	
+		except StopIteration:
+        		break
+
+        splt1.close()
+        splt2.close()
+
+        inbam.close()
+        outbam.close()
+
+        #bamrepairedsortfn = sub('sorted.re_paired', 're_paired', bamrepairedsortfn)
+        #sortBam(bamrepairedfn, bamrepairedsortfn, tmpbams_path)
+        #os.remove(bamrepairedfn)
+
+
+    return
+
+
+
+def rePair2(bamsortfn):
+    #counter = 0
+    if os.path.isfile(bamsortfn):
+
+    	bamrepairedfn = sub('.bam$', ".re_paired.bam", bamsortfn)
+        bamrepairedsortfn = sub('.bam$', ".re_paired.sorted.bam", bamsortfn)
+ 
+	inbam = pysam.Samfile(bamsortfn, 'rb')
+        outbam = pysam.Samfile(bamrepairedfn, 'wb', template=inbam)
+
+        writtencount = 0
+        strands = ['pos', 'neg']
+
+    	for strand in strands:
+    	    read1fn = sub('.bam$', '.read1_' + strand + '.bam', bamsortfn)
+            read2fn = sub('.bam$', '.read2_' + strand + '.bam', bamsortfn)
+
+            if not os.path.isfile(read1fn) or not os.path.isfile(read2fn):
+                splitPairAndStrands(bamsortfn)
+	    
+	    pysam.index(read1fn)
+	    pysam.index(read2fn)
+            
+	    splt1 = pysam.Samfile(read1fn, 'rb')
+            splt2 = pysam.Samfile(read2fn, 'rb')
+
+	    counter = 0	
+    	    itrA = splt2.fetch(until_eof=True) 
+	    		
+	    while (True):
+	    	try:
+			listb = []
+                	readA = itrA.next()
+
+                	counter += 1
+
+			qlen = readA.qlen
+                	tlen = readA.tlen
+                	pos = readA.pos
+                    	#rname = readA.reference_name
+
+			if strand == 'neg':
+                		insert_size = tlen-qlen
+                        	minpos = pos + 75 + insert_size
+                        	maxpos = pos + 150 + insert_size
+
+                	elif strand == 'pos':
+                        	insert_size = abs(tlen)-qlen
+                        	maxpos = pos - 75 - insert_size
+                        	minpos = pos - 150 - insert_size
+
+                	itrB = splt1.fetch("chr21", minpos, maxpos)
+                	itrs_list = list(itrB)
+
+                	if len(itrs_list) <= 5:
+                		for i in itrs_list:
+                            		readB = i
+                            		listb.append(readB)
+
+                	elif len(itrs_list) > 5:
+                        	for i in random.sample(itrs_list, 5):
+                            		readB = i
+                            		listb.append(readB)
+
+                	for i in range(len(listb)):
+                        	tmpA = readA
+                        	readB = listb[i]
+                        	tmpB = readB
+
+                        	tlenFR = tmpB.pos - tmpA.pos + tmpB.qlen
+                        	tlenRF = tmpA.pos - tmpB.pos + tmpA.qlen
+
+
+                		if readA.qname != readB.qname:
+                			tmpqname = str(uuid4())
+
+	                		if strand == 'neg':
+        	                        	tmpA.tlen = tlenFR
+                	                	tmpB.tlen = -tlenFR
+                        	        	tmpA.pnext = tmpB.pos
+                                		tmpB.pnext = tmpA.pos
+                                		tmpA.qname = tmpqname
+                                		tmpB.qname = tmpqname
+                                		
+						if counter % 2 == 0:
+							outbam.write(tmpA)
+                                			outbam.write(tmpB)
+						else:
+							pass
+                     
+			       		elif strand == 'pos':
+                                		tmpA.tlen = -tlenRF
+                                		tmpB.tlen = tlenRF
+                                		tmpA.pnext = tmpB.pos
+                                		tmpB.pnext = tmpA.pos
+                                		tmpA.qname = tmpqname
+                                		tmpB.qname = tmpqname
+                                		
+						if counter % 2 == 0:
+							outbam.write(tmpA)
+                                			outbam.write(tmpB)
+                                		#writtenreads.append(tmpB.qname)
+
+						else:
+							pass
+    	
+		except StopIteration:
+        		break
+
+        splt1.close()
+        splt2.close()
+
+        inbam.close()
+        outbam.close()
+
+        bamrepairedsortfn = sub('sorted.re_paired', 're_paired', bamrepairedsortfn)
+        sortBam(bamrepairedfn, bamrepairedsortfn, tmpbams_path)
+        os.remove(bamrepairedfn)
+
+
+    return
+
+
+
+
 
 
 
@@ -452,8 +701,9 @@ def re_pair_reads(bamsortfn, copy_number):
             
 	    splt1 = pysam.Samfile(read1fn, 'rb')
             splt2 = pysam.Samfile(read2fn, 'rb')
-            
-	    itrA = splt1.fetch(until_eof=True)
+	    rePair1(splt1,splt2)
+	    rePair2(splt2,splt1)            
+#	    itrA = splt2.fetch(until_eof=True)
 	    #itrB = splt2.fetch(until_eof=True)
             #if (params.GetctDNA()):
             #    sigma = 40
@@ -464,100 +714,101 @@ def re_pair_reads(bamsortfn, copy_number):
             #    coff = 5
             #    block_size = int(copy_number) * 4 
 
-            writtenreads = []
+ #           writtenreads = []
 
-            while (True):
-                try:
-                    listb = []
-		    readA = itrA.next()
-		    qlen = readA.qlen
-                    tlen = readA.tlen
-                    pos = readA.pos
+#            while (True):
+	    #for i in range(0,len(itrA),2):            	
+#		try:
+#                    listb = []
+#		    readA = itrA.next()
+#		    qlen = readA.qlen
+#                    tlen = readA.tlen
+#                    pos = readA.pos
                     #rname = readA.reference_name
 
-                    if strand == 'pos':
-                        insert_size = tlen-qlen 
-                   	minpos = pos + 75 + insert_size
-                    	maxpos = pos + 150 + insert_size                    
-			
-                    elif strand == 'neg':
-                        insert_size = abs(tlen)-qlen
-			maxpos = pos - 75 - insert_size
-			minpos = pos - 150 - insert_size 
-		    
-                    itrB = splt2.fetch("chr21", minpos, maxpos)    
-		    itrs_list = list(itrB)
+#                    if strand == 'neg':
+#                        insert_size = tlen-qlen 
+#                   	minpos = pos + 75 + insert_size
+#                   	maxpos = pos + 150 + insert_size                    
+#			
+#                    elif strand == 'pos':
+#                        insert_size = abs(tlen)-qlen
+#			maxpos = pos - 75 - insert_size
+#			minpos = pos - 150 - insert_size 
+#		    
+#                    itrB = splt1.fetch("chr21", minpos, maxpos)    
+#		    itrs_list = list(itrB)
 #test section
-	#	    if len(itrs_list) == 0:
-	#	    	for i in itrs_list:
-	#		    readB = i
-	#		    listb.append(readB)
-	#	    elif len(itrs_list) >= 1:	
-	#	    	for i in random.sample(itrs_list,1):
-	#	    	    readB = i
-	#		    listb.append(readB)
-	
-		    if len(itrs_list) <= 5:
-                    	for i in itrs_list:
-                      	    readB = i
-                            listb.append(readB)
+#		    if len(itrs_list) == 0:
+#		    	for i in itrs_list:
+#			    readB = i
+#			    listb.append(readB)
+#		    elif len(itrs_list) >= 1:	
+#		    	for i in random.sample(itrs_list,1):
+#		    	    readB = i
+#			    listb.append(readB)
+#	
+#		    if len(itrs_list) <= 5:
+#                    	for i in itrs_list:
+#                      	    readB = i
+#                            listb.append(readB)
+#
+#		    elif len(itrs_list) > 5:
+#                        for i in random.sample(itrs_list, 5):
+#                            readB = i
+#                            listb.append(readB)
+#                   
+#		    for i in range(len(listb)):
+#                        tmpA = readA
+#			readB = listb[i]
+#			tmpB = readB
 
-		    elif len(itrs_list) > 5:
-                        for i in random.sample(itrs_list, 5):
-                            readB = i
-                            listb.append(readB)
-                   
-		    for i in range(len(listb)):
-                        tmpA = readA
-			readB = listb[i]
-			tmpB = readB
-
-			tlenFR = tmpB.pos - tmpA.pos + tmpB.qlen
-			tlenRF = tmpA.pos - tmpB.pos + tmpA.qlen
+#			tlenFR = tmpB.pos - tmpA.pos + tmpB.qlen
+#			tlenRF = tmpA.pos - tmpB.pos + tmpA.qlen
 			
 			#read_length_A = tmpA.tlen
 			#read_length_B = tmpB.tlen
 			#read_length_average = (read_length_A + read_length_B)/2
 
-			if readA.qname != readB.qname:
-			    tmpqname = str(uuid4())
+#			if readA.qname != readB.qname:
+#			    tmpqname = str(uuid4())
 			    
-			    if strand == 'pos':
-			    	tmpA.tlen = tlenFR
-				tmpB.tlen = -tlenFR
-				tmpA.pnext = tmpB.pos  
-				tmpB.pnext = tmpA.pos
-				tmpA.qname = tmpqname
-				tmpB.qname = tmpqname
-				outbam.write(tmpA)
-				outbam.write(tmpB)
+#			    if strand == 'pos':
+#			    	tmpA.tlen = tlenFR
+#				tmpB.tlen = -tlenFR
+#				tmpA.pnext = tmpB.pos  
+#				tmpB.pnext = tmpA.pos
+#				tmpA.qname = tmpqname
+#				tmpB.qname = tmpqname
+#				outbam.write(tmpA)
+#				outbam.write(tmpB)
 				#writtenreads.append(tmpB.qname)
 
-			    elif strand == 'neg':
-				print ("TLENRF:",tlenRF)
-				print ("Tmpa.tlen:",tmpA.tlen)
-
-				tmpA.tlen = -tlenRF
-				tmpB.tlen = tlenRF
-				tmpA.pnext = tmpB.pos
-				tmpB.pnext = tmpA.pos
-				tmpA.qname = tmpqname
-				tmpB.qname = tmpqname
-				outbam.write(tmpA)
-				outbam.write(tmpB)
+#			    elif strand == 'neg':
+#				print ("TLENRF:",tlenRF)
+#				print ("Tmpa.tlen:",tmpA.tlen)
+#
+#				tmpA.tlen = -tlenRF
+#				tmpB.tlen = tlenRF
+##				tmpA.pnext = tmpB.pos
+#				tmpB.pnext = tmpA.pos
+#				tmpA.qname = tmpqname
+#				tmpB.qname = tmpqname
+#				outbam.write(tmpA)
+#				outbam.write(tmpB)
 				#writtenreads.append(tmpB.qname)
 
-                except StopIteration:
-                    break
+#                except StopIteration:
+#                    break
 
             #os.remove(read1fn)
             #os.remove(read2fn)
 
-        splt1.close()
-        splt2.close()
+    	splt1.close()
+    	splt2.close()
 
-        inbam.close()
-        outbam.close()
+    	inbam.close()
+    	outbam.close()
 
         bamrepairedsortfn = sub('sorted.re_paired', 're_paired', bamrepairedsortfn)
         sortBam(bamrepairedfn, bamrepairedsortfn, tmpbams_path)
@@ -752,8 +1003,10 @@ def implement_cnv(chromosome_event):
                     if os.path.isfile(bamsortfn):
 
                         split_hap(bamsortfn, chr, event)
-		        re_pair_reads(hap1_finalbamsortfn, copy_number)
+		        #re_pair_reads(hap1_finalbamsortfn, copy_number)
                         #re_pair_reads(hap2_finalbamsortfn, copy_number)
+			rePair1(hap1_finalbamsortfn)
+			rePair2(hap1_finalbamsortfn)
 			mutate_reads(bamrepairedsortfn, chr, event)
                         coverageratio = float(countReads(mergedsortfn)) / float(countReads(bamsortfn))
                         logger.debug(
