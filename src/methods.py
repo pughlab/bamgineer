@@ -444,12 +444,12 @@ def readBamStrand(bamsortfn, strand):
     return itrA, itrB, splt1, splt2
 
 def defineSearchSpace(readX, strand, direction):
-    if (strand == 'neg' & direction == 'back') | (strand == 'pos' & direction == 'forw'):
+    if (strand == 'neg' and direction == 'back') or (strand == 'pos' and direction == 'forw'):
         insert_size = readX.tlen - readX.qlen
         minpos = readX.pos + 75 + insert_size
         maxpos = readX.pos + 150 + insert_size
     
-    elif (strand == 'pos' & direction == 'back') | (strand == 'neg' & direction == 'forw'):
+    elif (strand == 'pos' and direction == 'back') or (strand == 'neg' and direction == 'forw'):
         insert_size = abs(readX.tlen) - readX.qlen
         maxpos = readX.pos - 75 - insert_size
         minpos = readX.pos - 150 - insert_size
@@ -467,10 +467,10 @@ def generateReadPairs(tmpA, tmpB, strand, direction):
     tmpB.pnext = tmpA.pos
     tmpB.qname = tmpqname
     
-    if (strand == 'neg' & direction == 'back') | (strand == 'pos' & direction == 'forw'):
+    if (strand == 'neg' and direction == 'back') or (strand == 'pos' and direction == 'forw'):
         tmpA.tlen = tlenFR
         tmpB.tlen = -tlenFR
-    elif (strand == 'pos' & direction == 'back') | (strand == 'neg' & direction == 'forw'):
+    elif (strand == 'pos' and direction == 'back') or (strand == 'neg' and direction == 'forw'):
         tmpA.tlen = -tlenRF
         tmpB.tlen = tlenRF
     
@@ -478,7 +478,7 @@ def generateReadPairs(tmpA, tmpB, strand, direction):
 
 def rePair(bamsortfn):
     # Throws an error if bamsortfn is not found
-    if os.path.isfile(bamsortfn):
+    if not os.path.isfile(bamsortfn):
         raise ValueError('Could not find file bamsortfn')
     bamrepairedfn = sub('.bam$', ".re_paired.bam", bamsortfn)
     bamrepairedsortfn = sub('.bam$', ".re_paired.sorted.bam", bamsortfn)
@@ -531,9 +531,8 @@ def rePair(bamsortfn):
                     # If the read IDs dont match, create a new read-pair by altering the description of the read and output
                     if readRef.qname != readTarget.qname:
                         tmpA, tmpB = generateReadPairs(readRef, readTarget, strand, direction)
-                    
-                    outbam.write(tmpA)
-                    outbam.write(tmpB)
+                    	outbam.write(tmpA)
+                    	outbam.write(tmpB)
             except StopIteration:
                 break
             
@@ -879,8 +878,8 @@ def implement_cnv(chromosome_event):
                         split_hap(bamsortfn, chr, event)
 		        #re_pair_reads(hap1_finalbamsortfn, copy_number)
                         #re_pair_reads(hap2_finalbamsortfn, copy_number)
-			rePair1(hap1_finalbamsortfn)
-			rePair2(hap1_finalbamsortfn)
+			rePair(hap1_finalbamsortfn)
+			#rePair2(hap1_finalbamsortfn)
 			mutate_reads(bamrepairedsortfn, chr, event)
                         coverageratio = float(countReads(mergedsortfn)) / float(countReads(bamsortfn))
                         logger.debug(
