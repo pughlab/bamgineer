@@ -539,9 +539,9 @@ def rePair1(bamsortfn):
         inbam.close()
         outbam.close()
 
-        #bamrepairedsortfn = sub('sorted.re_paired', 're_paired', bamrepairedsortfn)
-        #sortBam(bamrepairedfn, bamrepairedsortfn, tmpbams_path)
-        #os.remove(bamrepairedfn)
+        bamrepairedsortfn = sub('sorted.re_paired', 're_paired', bamrepairedsortfn)
+        sortBam(bamrepairedfn, bamrepairedsortfn, tmpbams_path)
+        os.remove(bamrepairedfn)
 
 
     return
@@ -552,11 +552,11 @@ def rePair2(bamsortfn):
     #counter = 0
     if os.path.isfile(bamsortfn):
 
-    	bamrepairedfn = sub('.bam$', ".re_paired.bam", bamsortfn)
-        bamrepairedsortfn = sub('.bam$', ".re_paired.sorted.bam", bamsortfn)
+    	bamrepaired2fn = sub('.bam$', ".re_paired2.bam", bamsortfn)
+        bamrepaired2sortfn = sub('.bam$', ".re_paired2.sorted.bam", bamsortfn)
  
 	inbam = pysam.Samfile(bamsortfn, 'rb')
-        outbam = pysam.Samfile(bamrepairedfn, 'wb', template=inbam)
+        outbam2 = pysam.Samfile(bamrepaired2fn, 'wb', template=inbam)
 
         writtencount = 0
         strands = ['pos', 'neg']
@@ -633,8 +633,8 @@ def rePair2(bamsortfn):
                                 		tmpB.qname = tmpqname
                                 		
 						if counter % 2 == 0:
-							outbam.write(tmpA)
-                                			outbam.write(tmpB)
+							outbam2.write(tmpA)
+                                			outbam2.write(tmpB)
 						else:
 							pass
                      
@@ -647,8 +647,8 @@ def rePair2(bamsortfn):
                                 		tmpB.qname = tmpqname
                                 		
 						if counter % 2 == 0:
-							outbam.write(tmpA)
-                                			outbam.write(tmpB)
+							outbam2.write(tmpA)
+                                			outbam2.write(tmpB)
                                 		#writtenreads.append(tmpB.qname)
 
 						else:
@@ -661,12 +661,11 @@ def rePair2(bamsortfn):
         splt2.close()
 
         inbam.close()
-        outbam.close()
+        outbam2.close()
 
-        bamrepairedsortfn = sub('sorted.re_paired', 're_paired', bamrepairedsortfn)
-        sortBam(bamrepairedfn, bamrepairedsortfn, tmpbams_path)
-        os.remove(bamrepairedfn)
-
+        bamrepaired2sortfn = sub('sorted.re_paired', 're_paired', bamrepaired2sortfn)
+        sortBam(bamrepaired2fn, bamrepaired2sortfn, tmpbams_path)
+        os.remove(bamrepaired2fn)
 
     return
 
