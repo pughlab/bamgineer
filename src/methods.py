@@ -476,7 +476,7 @@ def generateReadPairs(tmpA, tmpB, strand, direction):
     
     return tmpA, tmpB
 
-def rePair(bamsortfn):
+def rePair1(bamsortfn):
     # Throws an error if bamsortfn is not found
     if not os.path.isfile(bamsortfn):
         raise ValueError('Could not find file bamsortfn')
@@ -497,24 +497,76 @@ def rePair(bamsortfn):
         while (True):
             try:
                 counter += 1
-                if counter % 2 != 0:
-                    direction='forw'
+                direction='forw'
                     # ODDS: takes all odd-reads from splt1 and defines search space on splt2
-                    if counter != 1:  # Skips the first read
-                        readRef = itrA.next()
-                    readRef = itrA.next()  # Every other read
+                #if counter != 1:  # Skips the first read
+                #	readRef = itrA.next()
+                readRef = itrA.next()  # Every other read
                     # Defines the search space for the other read in the opposite splt
-                    insert_size, minpos, maxpos = defineSearchSpace(readRef, strand, direction)
-                    itrTarget = splt2.fetch("chr21", minpos, maxpos)
-                    
-                else:
-                    direction='back'
+                insert_size, minpos, maxpos = defineSearchSpace(readRef, strand, direction)
+                itrTarget = splt2.fetch("chr21", minpos, maxpos)
+                
+		listTarget = []
+                itrs_list = list(itrTarget)
+                
+                
+                if len(itrs_list) <= 5: # Takes all target reads
+                    listTarget = itrs_list
+                elif len(itrs_list) > 5: # Takes a random sample of target reads
+                    listTarget = [i for i in random.sample(itrs_list, 5)]
+                
+                # Loops through all target reads
+                for i in range(len(listTarget)):
+                    readTarget = listTarget[i]
+                    # If the read IDs dont match, create a new read-pair by altering the description of the read and output
+                    if readRef.qname != readTarget.qname:
+                        tmpA, tmpB = generateReadPairs(readRef, readTarget, strand, direction)
+                    	if counter % 2 != 0:
+				outbam.write(tmpA)
+                    		outbam.write(tmpB)
+            except StopIteration:
+                break
+            
+        splt1.close()
+        splt2.close()
+    inbam.close()
+    outbam.close()
+
+    bamrepairedsortfn = sub('sorted.re_paired', 're_paired', bamrepairedsortfn)
+    sortBam(bamrepairedfn, bamrepairedsortfn, tmpbams_path)
+    os.remove(bamrepairedfn)
+
+    return
+
+
+def rePair2(bamsortfn):
+    # Throws an error if bamsortfn is not found
+    if not os.path.isfile(bamsortfn):
+        raise ValueError('Could not find file bamsortfn')
+    bamrepaired2fn = sub('.bam$', ".re_paired2.bam", bamsortfn)
+    bamrepaired2sortfn = sub('.bam$', ".re_paired2.sorted.bam", bamsortfn)
+ 
+    inbam = pysam.Samfile(bamsortfn, 'rb')
+    outbam2 = pysam.Samfile(bamrepaired2fn, 'wb', template=inbam)
+
+    writtencount = 0
+    strands = ['pos', 'neg']
+
+    for strand in strands:
+        # Takes bamsortfn and splits it based on Read 1/2 and Strand
+        itrA, itrB, splt1, splt2 = readBamStrand(bamsortfn, strand)
+        counter = 0	
+        
+        while (True):
+            try:
+                counter += 1
+                direction='back'
                     # EVENS: takes all even-reads from splt2 and defines search space on splt1
-                    readRef = itrB.next()
-                    readRef = itrB.next()
+                readRef = itrB.next()
+                #    readRef = itrB.next()
                     # Defines the search space for the other read in the opposite splt
-                    insert_size, minpos, maxpos = defineSearchSpace(readRef, strand, direction)
-                    itrTarget = splt1.fetch("chr21", minpos, maxpos)
+                insert_size, minpos, maxpos = defineSearchSpace(readRef, strand, direction)
+                itrTarget = splt1.fetch("chr21", minpos, maxpos)
                 
                 listTarget = []
                 itrs_list = list(itrTarget)
@@ -531,21 +583,24 @@ def rePair(bamsortfn):
                     # If the read IDs dont match, create a new read-pair by altering the description of the read and output
                     if readRef.qname != readTarget.qname:
                         tmpA, tmpB = generateReadPairs(readRef, readTarget, strand, direction)
-                    	outbam.write(tmpA)
-                    	outbam.write(tmpB)
+                    	if counter % 2 == 0:
+				outbam2.write(tmpA)
+                    		outbam2.write(tmpB)
             except StopIteration:
                 break
             
         splt1.close()
         splt2.close()
     inbam.close()
-    outbam.close()
+    outbam2.close()
 
-    bamrepairedsortfn = sub('sorted.re_paired', 're_paired', bamrepairedsortfn)
-    sortBam(bamrepairedfn, bamrepairedsortfn, tmpbams_path)
-    os.remove(bamrepairedfn)
+    bamrepaired2sortfn = sub('sorted.re_paired', 're_paired', bamrepaired2sortfn)
+    sortBam(bamrepaired2fn, bamrepaired2sortfn, tmpbams_path)
+    os.remove(bamrepaired2fn)
 
     return
+
+
 
 
 
@@ -878,8 +933,8 @@ def implement_cnv(chromosome_event):
                         split_hap(bamsortfn, chr, event)
 		        #re_pair_reads(hap1_finalbamsortfn, copy_number)
                         #re_pair_reads(hap2_finalbamsortfn, copy_number)
-			rePair(hap1_finalbamsortfn)
-			#rePair2(hap1_finalbamsortfn)
+			rePair1(hap1_finalbamsortfn)
+			rePair2(hap1_finalbamsortfn)
 			mutate_reads(bamrepairedsortfn, chr, event)
                         coverageratio = float(countReads(mergedsortfn)) / float(countReads(bamsortfn))
                         logger.debug(
