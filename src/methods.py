@@ -536,7 +536,7 @@ def rePair1(bamsortfn):
     sortBam(bamrepairedfn, bamrepairedsortfn, tmpbams_path)
     os.remove(bamrepairedfn)
 
-    return
+    return bamrepairedsortfn
 
 
 def rePair2(bamsortfn):
@@ -598,12 +598,44 @@ def rePair2(bamsortfn):
     sortBam(bamrepaired2fn, bamrepaired2sortfn, tmpbams_path)
     os.remove(bamrepaired2fn)
 
-    return
+    return bamrepaired2sortfn
+
+def repairReads(bamsortfn):
+    hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted.bam", bamsortfn)
+    hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted.bam", bamsortfn)
+    bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", hap1_finalbamsortfn) 
+    bamrepaired2sortfn = sub('.sorted.bam$', ".re_paired2.sorted.bam", hap1_finalbamsortfn)
+    bamrepairedfinalfn = sub('.sorted.bam$', ".re_paired_final.bam", hap1_finalbamsortfn)
+    bamrepairedfinalsortfn = sub('.sorted.bam$', ".re_paired_final.sorted.bam", hap1_finalbamsortfn)
+    bamrepairedfinalmarkedfn = sub('.sorted.bam$', ".re_paired_final.marked.bam", hap1_finalbamsortfn)
+    bamrepairedfinalsortmarkedfn = sub('.sorted.bam$', ".re_paired_final.marked.sorted.bam", hap1_finalbamsortfn)
+
+#repairing hap1:
+    rePair1(hap1_finalbamsortfn)
+    rePair2(hap1_finalbamsortfn)
+#repairing hap2:
+    #rePair1(hap2_finalbamsortfn)
+    #rePair2(hap2_finalbamsortfn)
+    merge_bams(bamrepairedsortfn, bamrepaired2sortfn, bamrepairedfinalfn)
+    sortBam(bamrepairedfinalfn, bamrepairedfinalsortfn, tmpbams_path)
+    removeDup(bamrepairedfinalsortfn, tmpbams_path)
+    sortBam(bamrepairedfinalmarkedfn, bamrepairedfinalsortmarkedfn, tmpbams_path)
+   
+ 
+    return bamrepairedfinalsortmarkedfn
+#    mergeAndRemoveDup()
 
 
+#def mergeAndRemoveDup(bamsortfn):
+#    bamrepaired1sortfn = sub('.sorted.bam$', ".re_paired1.sorted.bam", bamsortfn) 
+#    bamrepaired2sortfn = sub('.sorted.bam$', ".re_paired2.sorted.bam", bamsortfn)
+#    bamrepairedfinalfn = sub('.sorted.bam$', ".re_paired_final.bam", bamsortfn)
+#    bamrepairedfinalsortfn = sub('.sorted.bam$', ".re_paired_final.sorted.bam", bamsortfn)
+        
+#    merge_bams(bamrepaired1sortfn, bamrepaired2sortfn, bamrepairedfinalfn)
+#    sortBam(bamrepairedfinalfn, bamrepairedfinalsortfn, tmpbams_path)
 
-
-
+#    removeDup(bamrepairedfinalsortfn, tmpbams_path)
 
 def re_pair_reads(bamsortfn, copy_number):
     if os.path.isfile(bamsortfn):
@@ -933,9 +965,10 @@ def implement_cnv(chromosome_event):
                         split_hap(bamsortfn, chr, event)
 		        #re_pair_reads(hap1_finalbamsortfn, copy_number)
                         #re_pair_reads(hap2_finalbamsortfn, copy_number)
-			rePair1(hap1_finalbamsortfn)
-			rePair2(hap1_finalbamsortfn)
-			mutate_reads(bamrepairedsortfn, chr, event)
+			#rePair1(hap1_finalbamsortfn)
+			#rePair2(hap1_finalbamsortfn)
+			repairReads(bamsortfn)
+			#mutate_reads(bamrepairedsortfn, chr, event)
                         coverageratio = float(countReads(mergedsortfn)) / float(countReads(bamsortfn))
                         logger.debug(
                             "+++ coverage ratio for: " + ntpath.basename(bamsortfn) + ": " + str(coverageratio))

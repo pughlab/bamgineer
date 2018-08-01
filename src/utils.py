@@ -33,7 +33,8 @@ def phaseVCF(vcfpath, phasevcfpath):
         gzipFile(vcfpath)
         vcfpath = vcfpath + '.gz'
 
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+
     path, vcffn = os.path.split(vcfpath)
     path2, vcffn2 = os.path.split(phasevcfpath)
     phasevcffn = sub('.vcf.gz$', '_phased', vcffn)
@@ -63,29 +64,38 @@ def gzipFile(filename):
 
 
 def thinVCF(invcf, outvcf):
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     command = " ".join([vcftools_path, "--vcf", invcf, "--thin 50 --out", outvcf, "--recode"])
     runCommand(command)
 
 
 def extractPairedReadfromROI(inbamfn, bedfn, outbamfn, flag="either"):
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     command = " ".join(
         [bedtools_path, "pairtobed -abam", inbamfn, "-b", bedfn, "-type", flag, ">", outbamfn, "2> bedtool.log"])
     runCommand(command)
 
 
 def extractBAMfromROI_All(inbamfn, bedfn, outbamfn):
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     command = " ".join([samtool_path, "view -b -L", bedfn, inbamfn, ">", outbamfn])
     runCommand(command)
 
 
 def dedupBam(inbamfn, outbamfn):
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     command = " ".join([samtool_path, "rmdup", inbamfn, outbamfn])
     runCommand(command)
 
+def removeDup(bamrepairedfinalsortfn, tmpbams_path=''):
+    print (" ___ removing repaired duplicates ___ ")
+
+    bamrepairedfinalmarkedfn = sub('.re_paired_final.sorted.bam$', ".re_paired_final.marked.bam", bamrepairedfinalsortfn)
+    markedmetricsfn = sub('.re_paired_final.sorted.bam$', ".marked_metrics.txt", bamrepairedfinalsortfn) 
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    command = " ".join([java_path, "-Xmx4g -jar", picard_path, "MarkDuplicates", "I=" + bamrepairedfinalsortfn, "O=" + bamrepairedfinalmarkedfn, "M=" + markedmetricsfn, "REMOVE_DUPLICATES=true"])
+    runCommand(command)
+    return bamrepairedfinalmarkedfn
 
 def runCommand(cmd):
     try:
@@ -248,20 +258,20 @@ def renamereads(inbamfn, outbamfn):
 
 
 def subsample(bamfn1, bamfn2, samplingrate=0.5):
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     command = " ".join([samtools_path, "view -s", samplingrate, "-b", bamfn1, ">", bamfn2])
     runCommand(command)
 
 
 def splitBamByChr(inbamfn, path, chr):
     if (chr is not None):
-        java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+        java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
         command = " ".join([samtools_path, "view -bh", inbamfn, str(chr), ">", "/".join([path, str(chr) + ".bam"])])
         runCommand(command)
 
 
 def sortByName(inbamfn, outbamfn):
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
 
     if (inbamfn is not None):
         command = " ".join([sambamba_path, "sort -n", inbamfn, "-o", outbamfn])
@@ -270,7 +280,7 @@ def sortByName(inbamfn, outbamfn):
 
 
 def sortIndexBam(inbamfn, outbamfn):
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     command = " ".join([sambamba_path, "sort", inbamfn, "-o", outbamfn])
     command2 = " ".join([sambamba_path, "index", outbamfn])
 
@@ -279,13 +289,13 @@ def sortIndexBam(inbamfn, outbamfn):
 
 
 def sortBam(inbamfn, outbamfn, tmpbams_path=''):
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     command = " ".join([sambamba_path, "sort", inbamfn, "-o", outbamfn, '--tmpdir=', tmpbams_path])
     runCommand(command)
 
 
 def getProperPairs(inbamfn, outbamfn):
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     command = " ".join([samtools_path, "view -u -h -f 0x0003", inbamfn, ">", outbamfn])
     runCommand(command)
 
@@ -297,13 +307,13 @@ def splitBed0(bedfn, postfix):
     runCommand(command)
 
 def merge_bams(bamfn1, bamfn2, mergefn):
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     command = " ".join([sambamba_path, "merge", mergefn, bamfn1, bamfn2, "--nthreads", str(4)])
     runCommand(command)
 
 
 def mergeSortBamFiles(mergedBamfn, finalbamdir):
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     command = ""
     os.chdir(finalbamdir)
     matches = []
@@ -341,7 +351,7 @@ def mergeSortBamFiles(mergedBamfn, finalbamdir):
 
 
 def splitPairs(inbamfn):
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     pair1fn = sub('.bam$', '_read1.bam', inbamfn)
     pair2fn = sub('.bam$', '_read2.bam', inbamfn)
     command1 = " ".join([samtools_path, "view -u -h -f 0x0043", inbamfn, ">", pair1fn])
@@ -351,7 +361,7 @@ def splitPairs(inbamfn):
 
 
 def getStrands(inbamfn):
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     outbamfn_forward = sub('.bam$', '_forward.bam', inbamfn)
     outbamfn_reverse = sub('.bam$', '_reverse.bam', inbamfn)
     command1 = " ".join([samtools_path, "view -F 0x10", inbamfn, ">", outbamfn_forward])
@@ -361,7 +371,7 @@ def getStrands(inbamfn):
 
 
 def countReads(inbamfn):
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     cmd = " ".join([samtools_path, "view", inbamfn, "|wc -l"])
     out, err = subprocess.Popen(cmd,
                                 stdout=subprocess.PIPE,
@@ -371,14 +381,14 @@ def countReads(inbamfn):
 
 
 def find_unpaired_reads(inbamfn):
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     unpairedfn = sub('.bam$', '.unpairedfn.bam', inbamfn)
     command1 = " ".join([samtools_path, "view -u -h -f  0x0004", inbamfn, ">", unpairedfn])
     runCommand(command1)
 
 
 def splitPairAndStrands(inbamfn):
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     read1_strand1sortfn = sub('.bam$', '.read1_pos.bam', inbamfn)
     read1_strand2sortfn = sub('.bam$', '.read1_neg.bam', inbamfn)
     read2_strand1sortfn = sub('.bam$', '.read2_pos.bam', inbamfn)
@@ -399,14 +409,14 @@ def splitPairAndStrands(inbamfn):
 
 def extract_proper_paired_reads(inbamfn, properfn):
     # properfn = sub('.bam$', '_proper.bam', inbamfn)
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     command = " ".join([samtools_path, "view -f 0x03 -bSq 30", inbamfn, ">", properfn])
     runCommand(command)
     os.remove(inbamfn)
 
 
 def removeIfEmpty(bamdir, file):
-    java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     if file.endswith(".bam"):
         command = " ".join([samtools_path, "view", "/".join([bamdir, file]), "| less | head -1 | wc -l"])
         nline = subprocess.check_output(command, shell=True)

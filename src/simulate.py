@@ -29,11 +29,12 @@ def main(args):
     # set software paths
     java_path = bamhelp.GetJavaPath()
     beagle_path = bamhelp.GetBeaglePath()
+    picard_path = bamhelp.GetPicardPath()
     samtools_path = bamhelp.GetSamtoolsPath()
     bedtools_path = bamhelp.GetBedtoolsPath()
     vcftools_path = bamhelp.GetVCFtoolsPath()
     sambamba_path = bamhelp.GetSambambaPath()
-    params.SetSoftwarePath(java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path)
+    params.SetSoftwarePath(java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path)
 
     if args.phase:
         run_pipeline(results_path)
