@@ -185,6 +185,18 @@ def modify_hap(bamsortfn, hap1_bamsortfn, hap2_bamsortfn):
     # sort hap2_intersnpbam
     sortBam("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(intersnpbamsortfn + '.bam')]), hap2_intersnpbamsortfn + '.bam', tmpbams_path)
     
+    os.remove(hap12_bamfn)
+    os.remove(hap12_bamfn + '.bai')
+    os.remove(hap12_bamsortfn + '.bam')
+    os.remove(hap12_bamsortfn + '.bam.bai')
+    os.remove(intersnpbamsortfn + '.bam')
+    os.remove(intersnpbamsortfn + '.bam.bai')
+    os.remove(hap1_intersnpbamfn)
+    os.remove("/".join([tmpbams_path, 'diff_only1_' +  os.path.basename(intersnpbamsortfn + '.bam')]))
+    os.remove("/".join([tmpbams_path, 'diff_only1_' +  os.path.basename(bamsortfn)]))
+    #os.remove(intersnpbamsortfn + '.bam')
+    #os.remove('diff_only1_' + intersnpbamsortfn + '.bam.bai')
+
     return hap1_intersnpbamsortfn, hap2_intersnpbamsortfn
 
 def merge_haps(bamsortfn, hap1_bamsortfn, hap2_bamsortfn, hap1_intersnpbamsortfn, hap2_intersnpbamsortfn):
@@ -201,7 +213,14 @@ def merge_haps(bamsortfn, hap1_bamsortfn, hap2_bamsortfn, hap1_intersnpbamsortfn
     # sort final bams
     sortBam(hap1_finalbamfn, hap1_finalbamsortfn + '.bam', tmpbams_path)
     sortBam(hap2_finalbamfn, hap2_finalbamsortfn + '.bam', tmpbams_path)
-
+    
+    #os.remove(hap1_intersnpbamsortfn + '.bam')
+    #os.remove(hap2_intersnpbamsortfn + '.bam')
+    os.remove(hap1_finalbamfn)
+    os.remove(hap2_finalbamfn)
+    os.remove(hap1_finalbamfn + '.bai')
+    os.remove(hap2_finalbamfn + '.bai')
+ 
     return hap1_finalbamsortfn, hap2_finalbamsortfn
 
 
@@ -453,6 +472,20 @@ def split_hap(bamsortfn, chr, event=''):
 	    hap1_finalbamsortfn, hap2_finalbamsortfn = merge_haps(bamsortfn, hap1_bamsortfn, hap2_bamsortfn, hap1_intersnpbamsortfn, hap2_intersnpbamsortfn)
 
 
+	    
+   	    os.remove(hap1_intersnpbamsortfn + '.bam')
+   	    os.remove(hap2_intersnpbamsortfn + '.bam')
+   	    os.remove(hap1_intersnpbamsortfn + '.bam.bai')
+   	    os.remove(hap2_intersnpbamsortfn + '.bam.bai')
+   	    os.remove(hap1_bamfn)
+   	    os.remove(hap2_bamfn)
+   	    os.remove(hap1_bamsortfn + '.bam')
+   	    os.remove(hap2_bamsortfn + '.bam')
+   	    os.remove(hap1_bamsortfn + '.bam.bai')
+   	    os.remove(hap2_bamsortfn + '.bam.bai')
+
+
+ 
     return hap1_finalbamsortfn, hap2_finalbamsortfn
 	    
 	    # ***MODIFY HAP FUNCTION***
@@ -505,7 +538,7 @@ def readBamStrand(bamsortfn, strand):
     itrA = splt1.fetch(until_eof=True)
     itrB = splt2.fetch(until_eof=True)
     
-    return itrA, itrB, splt1, splt2
+    return read1fn, read2fn, itrA, itrB, splt1, splt2
 
 def defineSearchSpace(readX, strand, direction):
     if (strand == 'neg' and direction == 'back') or (strand == 'pos' and direction == 'forw'):
@@ -555,7 +588,7 @@ def rePair1(bamsortfn):
 
     for strand in strands:
         # Takes bamsortfn and splits it based on Read 1/2 and Strand
-        itrA, itrB, splt1, splt2 = readBamStrand(bamsortfn, strand)
+        read1fn, read2fn, itrA, itrB, splt1, splt2 = readBamStrand(bamsortfn, strand)
         counter = 0	
         
         while (True):
@@ -593,13 +626,16 @@ def rePair1(bamsortfn):
             
         splt1.close()
         splt2.close()
+    	os.remove(read1fn)
+   	os.remove(read2fn)
+    	os.remove(read1fn + '.bai')
+    	os.remove(read2fn + '.bai')
     inbam.close()
     outbam.close()
 
     bamrepairedsortfn = sub('sorted.re_paired', 're_paired', bamrepairedsortfn)
     sortBam(bamrepairedfn, bamrepairedsortfn, tmpbams_path)
     os.remove(bamrepairedfn)
-
     return bamrepairedsortfn
 
 
@@ -618,7 +654,7 @@ def rePair2(bamsortfn):
 
     for strand in strands:
         # Takes bamsortfn and splits it based on Read 1/2 and Strand
-        itrA, itrB, splt1, splt2 = readBamStrand(bamsortfn, strand)
+        read1fn, read2fn, itrA, itrB, splt1, splt2 = readBamStrand(bamsortfn, strand)
         counter = 0	
         
         while (True):
@@ -655,6 +691,10 @@ def rePair2(bamsortfn):
             
         splt1.close()
         splt2.close()
+        os.remove(read1fn)
+    	os.remove(read2fn)
+    	os.remove(read1fn + '.bai')
+    	os.remove(read2fn + '.bai')
     inbam.close()
     outbam2.close()
 
@@ -666,8 +706,6 @@ def rePair2(bamsortfn):
 
 def merge_pairs(bamsortfn):
     
-    #bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn) 
-    #bamrepaired2sortfn = sub('.sorted.bam$', ".re_paired2.sorted.bam", bamsortfn)
     bamrepairedfinalfn = sub('.sorted.bam$', ".re_paired_final.bam", bamsortfn)
     bamrepairedfinalsortfn = sub('.sorted.bam$', ".re_paired_final.sorted.bam", bamsortfn)
     bamrepairedfinalmarkedfn = sub('.sorted.bam$', ".re_paired_final.marked.bam", bamsortfn)
@@ -688,10 +726,11 @@ def merge_pairs(bamsortfn):
     os.remove(bamrepairedfinalsortfn)
     os.remove(bamrepairedfinalmarkedfn)
     
-
     os.remove(bamrepairedsortfn + '.bai')
     os.remove(bamrepaired2sortfn + '.bai')
+    os.remove(bamrepairedfinalfn + '.bai')
     os.remove(bamrepairedfinalsortfn + '.bai')
+    
     
     return bamrepairedfinalsortmarkedfn
 
@@ -705,6 +744,10 @@ def repairReads(bamsortfn):
     print(" ___ re-pairing hap2 bam reads ___") 
     hap2_bamrepairedfinalsortmarkedfn = merge_pairs(hap2_finalbamsortfn)
     
+    os.remove(hap1_finalbamsortfn)
+    os.remove(hap2_finalbamsortfn) 
+    os.remove(hap1_finalbamsortfn + '.bai')
+    os.remove(hap2_finalbamsortfn + '.bai')
     return hap1_bamrepairedfinalsortmarkedfn, hap2_bamrepairedfinalsortmarkedfn
 
 #    mergeAndRemoveDup()
