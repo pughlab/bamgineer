@@ -149,16 +149,7 @@ def find_roi_bam(chromosome_event):
         logger.debug("find_roi_bam complete successfully for " + chr + event)
     return
 
-def split_hap(bamsortfn, chr, event=''):
-    fn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
-    cmd = " ".join(["sort -u", bedfn, "-o", bedfn]);
-    runCommand(cmd)
-
-
-    hap1_bamfn = sub('.sorted.bam$', ".hap1.bam", bamsortfn)
-    hap2_bamfn = sub('.sorted.bam$', ".hap2.bam", bamsortfn)
-    hap1_bamsortfn = sub('.sorted.bam$', ".hap1.sorted", bamsortfn)
-    hap2_bamsortfn = sub('.sorted.bam$', ".hap2.sorted", bamsortfn)
+def modify_hap(bamsortfn, hap1_bamsortfn, hap2_bamsortfn):
 
     hap12_bamfn = sub('.sorted.bam$', ".hap12.bam", bamsortfn)
     hap12_bamsortfn = sub('.sorted.bam$', ".hap12.sorted", bamsortfn)
@@ -171,12 +162,77 @@ def split_hap(bamsortfn, chr, event=''):
     hap1_intersnpbamfn = sub('.sorted.bam$', ".hap1_intersnp.bam", bamsortfn)
     hap2_intersnpbamfn = sub('.sorted.bam$', ".hap2_intersnp.bam", bamsortfn) 
     hap1_intersnpbamsortfn = sub('.sorted.bam$', ".hap1_intersnp.sorted", bamsortfn)
-    hap2_intersnpbamsortfn = sub('.sorted.bam$', ".hap2_intersnp.sorted", bamsortfn)
+    hap2_intersnpbamsortfn = sub('.sorted.bam$', ".hap2_intersnp.sorted", bamsortfn)	    
+
+	
+    # merge hap1 + hap2 -> hap12 
+    merge_bams(hap1_bamsortfn + '.bam', hap2_bamsortfn + '.bam', hap12_bamfn)
+    # sort hap12
+    sortBam(hap12_bamfn, hap12_bamsortfn + '.bam', tmpbams_path)
+	
+    # difference between normal bam and hap12  
+    bamDiff(bamsortfn, hap12_bamsortfn + '.bam', tmpbams_path)
+    # sort intersnps
+    sortBam("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfn)]), intersnpbamsortfn + '.bam', tmpbams_path)
+
+    # subsample 50% of reads from inter_snps and assign to hap1
+    subsample(intersnpbamsortfn + '.bam', hap1_intersnpbamfn, str(0.5))
+    # sort hap1_intersnpbam
+    sortBam(hap1_intersnpbamfn, hap1_intersnpbamsortfn + '.bam', tmpbams_path)
+ 
+    # difference between hap1 inter_snp bam and total inter_snp bam 
+    bamDiff(intersnpbamsortfn + '.bam', hap1_intersnpbamsortfn + '.bam', tmpbams_path)
+    # sort hap2_intersnpbam
+    sortBam("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(intersnpbamsortfn + '.bam')]), hap2_intersnpbamsortfn + '.bam', tmpbams_path)
+    
+    return hap1_intersnpbamsortfn, hap2_intersnpbamsortfn
+
+def merge_haps(bamsortfn, hap1_bamsortfn, hap2_bamsortfn, hap1_intersnpbamsortfn, hap2_intersnpbamsortfn):
 
     hap1_finalbamfn = sub('.sorted.bam$', ".hap1_final.bam", bamsortfn)
     hap2_finalbamfn = sub('.sorted.bam$', ".hap2_final.bam", bamsortfn)
     hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted", bamsortfn)
     hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted", bamsortfn)
+    
+    # merge hap1 with hap1 intersnps and hap2 with hap2 intersnps
+    merge_bams(hap1_bamsortfn + '.bam', hap1_intersnpbamsortfn + '.bam', hap1_finalbamfn)
+    merge_bams(hap2_bamsortfn + '.bam', hap2_intersnpbamsortfn + '.bam', hap2_finalbamfn)
+
+    # sort final bams
+    sortBam(hap1_finalbamfn, hap1_finalbamsortfn + '.bam', tmpbams_path)
+    sortBam(hap2_finalbamfn, hap2_finalbamsortfn + '.bam', tmpbams_path)
+
+    return hap1_finalbamsortfn, hap2_finalbamsortfn
+
+
+def split_hap(bamsortfn, chr, event=''):
+    fn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
+    cmd = " ".join(["sort -u", bedfn, "-o", bedfn]);
+    runCommand(cmd)
+
+
+    hap1_bamfn = sub('.sorted.bam$', ".hap1.bam", bamsortfn)
+    hap2_bamfn = sub('.sorted.bam$', ".hap2.bam", bamsortfn)
+    hap1_bamsortfn = sub('.sorted.bam$', ".hap1.sorted", bamsortfn)
+    hap2_bamsortfn = sub('.sorted.bam$', ".hap2.sorted", bamsortfn)
+
+#    hap12_bamfn = sub('.sorted.bam$', ".hap12.bam", bamsortfn)
+#    hap12_bamsortfn = sub('.sorted.bam$', ".hap12.sorted", bamsortfn)
+
+
+#    intersnpbamfn = sub('.sorted.bam$', ".intersnp.bam", bamsortfn)
+#    intersnpbamsortfn = sub('.sorted.bam$', ".intersnp.sorted", bamsortfn)
+
+
+#    hap1_intersnpbamfn = sub('.sorted.bam$', ".hap1_intersnp.bam", bamsortfn)
+#    hap2_intersnpbamfn = sub('.sorted.bam$', ".hap2_intersnp.bam", bamsortfn) 
+#    hap1_intersnpbamsortfn = sub('.sorted.bam$', ".hap1_intersnp.sorted", bamsortfn)
+#    hap2_intersnpbamsortfn = sub('.sorted.bam$', ".hap2_intersnp.sorted", bamsortfn)
+
+#    hap1_finalbamfn = sub('.sorted.bam$', ".hap1_final.bam", bamsortfn)
+#    hap2_finalbamfn = sub('.sorted.bam$', ".hap2_final.bam", bamsortfn)
+#    hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted", bamsortfn)
+#    hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted", bamsortfn)
 
 
     newbedfn = sub('.bed$', ".new.bed",bedfn)
@@ -384,45 +440,51 @@ def split_hap(bamsortfn, chr, event=''):
 
             #newbed.close()
 	    outbam1.close()
-	    outbam2.close()
+	    outbam2.close() 
 
             # sort hap1 and hap2
             sortBam(hap1_bamfn, hap1_bamsortfn + '.bam', tmpbams_path)
             sortBam(hap2_bamfn, hap2_bamsortfn + '.bam', tmpbams_path)
+    	    
+	    # see modify_hap and merge_haps functions for details	    
+            hap1_intersnpbamsortfn, hap2_intersnpbamsortfn = modify_hap(bamsortfn, hap1_bamsortfn, hap2_bamsortfn)
+	    hap1_finalbamsortfn, hap2_finalbamsortfn = merge_haps(bamsortfn, hap1_bamsortfn, hap2_bamsortfn, hap1_intersnpbamsortfn, hap2_intersnpbamsortfn)
 
+
+    return hap1_finalbamsortfn, hap2_finalbamsortfn
 	    
 	    # ***MODIFY HAP FUNCTION***
 
 	    # merge hap1 + hap2 -> hap12 
-	    merge_bams(hap1_bamsortfn + '.bam', hap2_bamsortfn + '.bam', hap12_bamfn)
+	    #merge_bams(hap1_bamsortfn + '.bam', hap2_bamsortfn + '.bam', hap12_bamfn)
 	    # sort hap12
-	    sortBam(hap12_bamfn, hap12_bamsortfn + '.bam', tmpbams_path)
+	    #sortBam(hap12_bamfn, hap12_bamsortfn + '.bam', tmpbams_path)
 
 	    # difference between normal bam and hap12  
-	    bamDiff(bamsortfn, hap12_bamsortfn + '.bam', tmpbams_path)
+	    #bamDiff(bamsortfn, hap12_bamsortfn + '.bam', tmpbams_path)
 
 	    # sort intersnps
-	    sortBam("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfn)]), intersnpbamsortfn + '.bam', tmpbams_path)
+	    #sortBam("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(bamsortfn)]), intersnpbamsortfn + '.bam', tmpbams_path)
 
 	    # subsample 50% of reads from inter_snps and assign to hap1
-	    subsample(intersnpbamsortfn + '.bam', hap1_intersnpbamfn, str(0.5))
+	    #subsample(intersnpbamsortfn + '.bam', hap1_intersnpbamfn, str(0.5))
 
 	    # sort hap1_intersnpbam
-	    sortBam(hap1_intersnpbamfn, hap1_intersnpbamsortfn + '.bam', tmpbams_path)
+	    #sortBam(hap1_intersnpbamfn, hap1_intersnpbamsortfn + '.bam', tmpbams_path)
 
 	    # difference between hap1 inter_snp bam and total inter_snp bam 
-	    bamDiff(intersnpbamsortfn + '.bam', hap1_intersnpbamsortfn + '.bam', tmpbams_path)
+	    #bamDiff(intersnpbamsortfn + '.bam', hap1_intersnpbamsortfn + '.bam', tmpbams_path)
 
 	    # sort hap2_intersnpbam
-	    sortBam("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(intersnpbamsortfn + '.bam')]), hap2_intersnpbamsortfn + '.bam', tmpbams_path)
+	    #sortBam("/".join([tmpbams_path, 'diff_only1_' + os.path.basename(intersnpbamsortfn + '.bam')]), hap2_intersnpbamsortfn + '.bam', tmpbams_path)
 
 	    # merge hap1 with hap1 intersnps and hap2 with hap2 intersnps
-	    merge_bams(hap1_bamsortfn + '.bam', hap1_intersnpbamsortfn + '.bam', hap1_finalbamfn)
-	    merge_bams(hap2_bamsortfn + '.bam', hap2_intersnpbamsortfn + '.bam', hap2_finalbamfn)
+	    #merge_bams(hap1_bamsortfn + '.bam', hap1_intersnpbamsortfn + '.bam', hap1_finalbamfn)
+	    #merge_bams(hap2_bamsortfn + '.bam', hap2_intersnpbamsortfn + '.bam', hap2_finalbamfn)
 
 	    # sort final bams
-	    sortBam(hap1_finalbamfn, hap1_finalbamsortfn + '.bam', tmpbams_path)
-	    sortBam(hap2_finalbamfn, hap2_finalbamsortfn + '.bam', tmpbams_path)
+	    #sortBam(hap1_finalbamfn, hap1_finalbamsortfn + '.bam', tmpbams_path)
+	    #sortBam(hap2_finalbamfn, hap2_finalbamsortfn + '.bam', tmpbams_path)
 
 
 def readBamStrand(bamsortfn, strand):
