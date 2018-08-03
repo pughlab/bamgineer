@@ -305,7 +305,7 @@ def split_hap(bamsortfn, chr, event=''):
 	     
 
 	    bedlist2 = bedlist[:]
-	    
+	    # x range?
 	    for i in range(0,(len(bedlist2)-1),2):
             	if abs((int(bedlist2[i][1]))-(int(bedlist2[i+1][1]))) <= 75:
                 	problem_snps.append(bedlist2[i])
@@ -1082,8 +1082,10 @@ def implement_cnv(chromosome_event):
 
                     
 		    bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
-		    hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted.bam", bamsortfn)
-		    hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted.bam", bamsortfn)
+           	    hap1_bamrepairedfinalsortmarkedfn = sub('.sorted.bam$', ".hap1_final.re_paired_final.marked.sorted.bam", bamsortfn)
+    		    hap2_bamrepairedfinalsortmarkedfn = sub('.sorted.bam$', ".hap2_final.re_paired_final.marked.sorted.bam", bamsortfn)
+		    #hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted.bam", bamsortfn)
+		    #hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted.bam", bamsortfn)
                     mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamrepairedsortfn)
                     GAIN_FINAL = "/".join([finalbams_path, str(chr).upper() + '_GAIN.bam'])
 
@@ -1096,11 +1098,12 @@ def implement_cnv(chromosome_event):
 			#rePair2(hap1_finalbamsortfn)
 			repairReads(bamsortfn)
 			#mutate_reads(bamrepairedsortfn, chr, event)
-                        coverageratio = float(countReads(mergedsortfn)) / float(countReads(bamsortfn))
+                        coverageratio = (float(countReads(hap1_bamrepairedfinalsortmarkedfn))+ float(countReads(hap2_bamrepairedfinalsortmarkedfn))) / float(countReads(bamsortfn))
                         logger.debug(
                             "+++ coverage ratio for: " + ntpath.basename(bamsortfn) + ": " + str(coverageratio))
 
-                        if coverageratio < copy_number - 2:
+                        coverageratio=0
+			if coverageratio < copy_number - 2:
                             logger.error('not enough reads for ' + ntpath.basename(bamsortfn))
                             return
                         else:
