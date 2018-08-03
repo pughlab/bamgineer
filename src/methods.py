@@ -206,6 +206,8 @@ def merge_haps(bamsortfn, hap1_bamsortfn, hap2_bamsortfn, hap1_intersnpbamsortfn
 
 
 def split_hap(bamsortfn, chr, event=''):
+    print(" ___ splitting original bam into hap1 and hap2 ___")
+
     fn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
     cmd = " ".join(["sort -u", bedfn, "-o", bedfn]);
     runCommand(cmd)
@@ -662,41 +664,46 @@ def rePair2(bamsortfn):
 
     return bamrepaired2sortfn
 
+def merge_pairs(bamsortfn):
+    
+    #bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn) 
+    #bamrepaired2sortfn = sub('.sorted.bam$', ".re_paired2.sorted.bam", bamsortfn)
+    bamrepairedfinalfn = sub('.sorted.bam$', ".re_paired_final.bam", bamsortfn)
+    bamrepairedfinalsortfn = sub('.sorted.bam$', ".re_paired_final.sorted.bam", bamsortfn)
+    bamrepairedfinalmarkedfn = sub('.sorted.bam$', ".re_paired_final.marked.bam", bamsortfn)
+    bamrepairedfinalsortmarkedfn = sub('.sorted.bam$', ".re_paired_final.marked.sorted.bam", bamsortfn)
+
+    bamrepairedsortfn = rePair1(bamsortfn)
+    bamrepaired2sortfn = rePair2(bamsortfn)
+
+    merge_bams(bamrepairedsortfn, bamrepaired2sortfn, bamrepairedfinalfn)
+    sortBam(bamrepairedfinalfn, bamrepairedfinalsortfn, tmpbams_path)
+
+    removeDup(bamrepairedfinalsortfn, tmpbams_path)
+    sortBam(bamrepairedfinalmarkedfn, bamrepairedfinalsortmarkedfn, tmpbams_path)
+
+    os.remove(bamrepairedsortfn)
+    os.remove(bamrepaired2sortfn)
+    os.remove(bamrepairedfinalfn)
+    os.remove(bamrepairedfinalsortfn)
+    os.remove(bamrepairedfinalmarkedfn)
+    
+
+    os.remove(bamrepairedsortfn + '.bai')
+    os.remove(bamrepaired2sortfn + '.bai')
+    os.remove(bamrepairedfinalsortfn + '.bai')
+    
+    return bamrepairedfinalsortmarkedfn
+
 def repairReads(bamsortfn):
     hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted.bam", bamsortfn)
     hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted.bam", bamsortfn)
     
-    hap1_bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", hap1_finalbamsortfn) 
-    hap1_bamrepaired2sortfn = sub('.sorted.bam$', ".re_paired2.sorted.bam", hap1_finalbamsortfn)
-    hap1_bamrepairedfinalfn = sub('.sorted.bam$', ".re_paired_final.bam", hap1_finalbamsortfn)
-    hap1_bamrepairedfinalsortfn = sub('.sorted.bam$', ".re_paired_final.sorted.bam", hap1_finalbamsortfn)
-    hap1_bamrepairedfinalmarkedfn = sub('.sorted.bam$', ".re_paired_final.marked.bam", hap1_finalbamsortfn)
-    hap1_bamrepairedfinalsortmarkedfn = sub('.sorted.bam$', ".re_paired_final.marked.sorted.bam", hap1_finalbamsortfn)
+    print(" ___ re-pairing hap1 bam reads ___") 
+    hap1_bamrepairedfinalsortmarkedfn = merge_pairs(hap1_finalbamsortfn)
     
-    hap2_bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", hap2_finalbamsortfn) 
-    hap2_bamrepaired2sortfn = sub('.sorted.bam$', ".re_paired2.sorted.bam", hap2_finalbamsortfn)
-    hap2_bamrepairedfinalfn = sub('.sorted.bam$', ".re_paired_final.bam", hap2_finalbamsortfn)
-    hap2_bamrepairedfinalsortfn = sub('.sorted.bam$', ".re_paired_final.sorted.bam", hap2_finalbamsortfn)
-    hap2_bamrepairedfinalmarkedfn = sub('.sorted.bam$', ".re_paired_final.marked.bam", hap2_finalbamsortfn)
-    hap2_bamrepairedfinalsortmarkedfn = sub('.sorted.bam$', ".re_paired_final.marked.sorted.bam", hap2_finalbamsortfn)
-# repairing hap1:
-    rePair1(hap1_finalbamsortfn)
-    rePair2(hap1_finalbamsortfn)
-# repairing hap2:
-    rePair1(hap2_finalbamsortfn)
-    rePair2(hap2_finalbamsortfn)
-
-# merging and removing dupes for hap1:    
-    merge_bams(hap1_bamrepairedsortfn, hap1_bamrepaired2sortfn, hap1_bamrepairedfinalfn)
-    sortBam(hap1_bamrepairedfinalfn, hap1_bamrepairedfinalsortfn, tmpbams_path)
-    removeDup(hap1_bamrepairedfinalsortfn, tmpbams_path)
-    sortBam(hap1_bamrepairedfinalmarkedfn, hap1_bamrepairedfinalsortmarkedfn, tmpbams_path)
-    
-# merging and removing dupes for hap2:    
-    merge_bams(hap2_bamrepairedsortfn, hap2_bamrepaired2sortfn, hap2_bamrepairedfinalfn)
-    sortBam(hap2_bamrepairedfinalfn, hap2_bamrepairedfinalsortfn, tmpbams_path)
-    removeDup(hap2_bamrepairedfinalsortfn, tmpbams_path)
-    sortBam(hap2_bamrepairedfinalmarkedfn, hap2_bamrepairedfinalsortmarkedfn, tmpbams_path)
+    print(" ___ re-pairing hap2 bam reads ___") 
+    hap2_bamrepairedfinalsortmarkedfn = merge_pairs(hap2_finalbamsortfn)
     
     return hap1_bamrepairedfinalsortmarkedfn, hap2_bamrepairedfinalsortmarkedfn
 
