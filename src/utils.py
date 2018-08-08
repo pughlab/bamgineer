@@ -459,7 +459,7 @@ def createEventBedFiles(cnv_dir, bedfn):
     df = pd.read_csv(bedfn, header=None, sep='\t')
     cnv_number_list = list(set(df[df.columns[-1]].tolist()))
 
-    df.columns = ['chr', 'start', 'end', 'abs_cn']
+    df.columns = ['chr', 'start', 'end', 'hap_type', 'abs_cn']
     for num in cnv_number_list:
         cn = int(num)
         dfi = df.loc[df['abs_cn'] == cn]

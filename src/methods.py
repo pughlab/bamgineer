@@ -79,13 +79,13 @@ def initialize_pipeline(phase_path, haplotype_path, cnv_path):
 	command = " ".join([bedtools_path, "intersect -a", exons_path, "-b", cnv_path, "-wa -wb > ", tmp])
         runCommand(command)
 
-        filterColumns(tmp, exonsinroibed, [0, 1, 2])
+        filterColumns(tmp, exonsinroibed, [0, 1, 2, 6])
 
         splitBed(exonsinroibed, '_exons_in_roi' + str(event))
         command = " ".join([bedtools_path, "intersect -a", phased_bed, "-b", exonsinroibed, "-wa -wb >", tmp])
         runCommand(command)
 
-        filterColumns(tmp, hetsnpbed, [i for i in range(0, 6)])
+        filterColumns(tmp, hetsnpbed, [0,1,2,3,4,5,9])#[i for i in range(0, 8)])
 
         splitBed(hetsnpbed, '_het_snp' + str(event))
         #os.remove(tmp)
@@ -96,7 +96,7 @@ def initialize_pipeline(phase_path, haplotype_path, cnv_path):
     return
 
 
-def init_file_names(chr, tmpbams_path, haplotypedir, event=''):
+def init_file_names(chr, tmpbams_path, haplotypedir, event):
     flist = []
 
     roibam = "/".join([tmpbams_path, chr + "_roi" + event + ".bam"])
@@ -224,13 +224,12 @@ def merge_haps(bamsortfn, hap1_bamsortfn, hap2_bamsortfn, hap1_intersnpbamsortfn
     return hap1_finalbamsortfn, hap2_finalbamsortfn
 
 
-def split_hap(bamsortfn, chr, event=''):
+def split_hap(bamsortfn, bedfn, chr, event):
     print(" ___ splitting original bam into hap1 and hap2 ___")
 
-    fn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
+    #fn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
     cmd = " ".join(["sort -u", bedfn, "-o", bedfn]);
     runCommand(cmd)
-
 
     hap1_bamfn = sub('.sorted.bam$', ".hap1.bam", bamsortfn)
     hap2_bamfn = sub('.sorted.bam$', ".hap2.bam", bamsortfn)
@@ -289,7 +288,7 @@ def split_hap(bamsortfn, chr, event=''):
             for bedline in bedfile:
                 c = bedline.strip().split()
 
-                if len(c) == 7:
+                if len(c) == 8:
                     chr2 = c[0]
                     chr = c[0].strip("chr")
                     start = int(c[1])
@@ -297,7 +296,7 @@ def split_hap(bamsortfn, chr, event=''):
                     refbase = str(c[3])
                     altbase = str(c[4])
                     haplotype = str(c[5])
-                    copy_number = int(c[6])
+                    copy_number = int(c[7])
                 else:
                     continue
 	
@@ -323,23 +322,23 @@ def split_hap(bamsortfn, chr, event=''):
 		c = problem_snps[i]
 		c2 = problem_snps[i+1]
 
-		if len(c) == 7:
+		if len(c) == 8:
 			chr1 = c[0]
 		    	start1 = int(c[1])
 		    	end1 = int(c[2])
 		    	refbase1 = str(c[3])
 		    	altbase1 = str(c[4])
 			haplotype1 = str(c[5])
-		    	copy_number1 = int(c[6])
+		    	copy_number1 = int(c[7])
 
-		if len(c2) == 7:
+		if len(c2) == 8:
 		    	chr2 = c2[0]
 		    	start2 = int(c2[1])
 		    	end2 = int(c2[2])
 		    	refbase2 = str(c2[3])
 		    	altbase2 = str(c2[4])
 		    	haplotype2 = str(c2[5])
-		    	copy_number2 = int(c2[6])
+		    	copy_number2 = int(c2[7])
 
 
         	maps1 = alignmentfile.fetch(chr1, start1, end1)
@@ -395,7 +394,7 @@ def split_hap(bamsortfn, chr, event=''):
 	    for bedline in bedfile2:
                 c = bedline.strip().split()
 	
-                if len(c) == 7:
+                if len(c) == 8:
                     chr2 = c[0]
                     chr = c[0].strip("chr")
                     start = int(c[1])
@@ -403,7 +402,7 @@ def split_hap(bamsortfn, chr, event=''):
                     refbase = str(c[3])
                     altbase = str(c[4])
                     haplotype = str(c[5])
-                    copy_number = int(c[6])
+                    copy_number = int(c[7])
                 else:
                     continue
 
@@ -1047,17 +1046,16 @@ def calculate_sample_rate(inbam, outbam, cnchange, purity):
 
 def implement_cnv(chromosome_event):
     chr, event = chromosome_event.split("_")
-
     logger.debug("___ Bamgineer main engine started ___")
     success = True
     try:
         if not terminating.is_set():
             bamfn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
             bamsortfn = sub('.bam$', '.sorted.bam', bamfn)
-
             if os.path.isfile(bedfn):
                 fn = list(csv.reader(open(bedfn, 'rb'), delimiter='\t'))
-                copy_number = int(fn[0][6])
+                copy_number = int(fn[0][7])
+		hap_type = str(fn[0][6])
 
                 if not params.GetXY() or (chr != 'chrX' and chr != 'chrY'):
 
@@ -1087,11 +1085,13 @@ def implement_cnv(chromosome_event):
 		    #hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted.bam", bamsortfn)
 		    #hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted.bam", bamsortfn)
                     mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamrepairedsortfn)
-                    GAIN_FINAL = "/".join([finalbams_path, str(chr).upper() + '_GAIN.bam'])
+                    GAIN_FINAL1 = "/".join([tmpbams_path, str(chr).upper()+ str(event).upper()+ '_GAIN1.bam'])
+                    GAIN_FINAL2 = "/".join([tmpbams_path, str(chr).upper()+ str(event).upper()+ '_GAIN2.bam'])
+                    GAIN_FINAL = "/".join([finalbams_path, str(chr).upper()+ str(event).upper()+ '_GAIN.bam'])
 
                     if os.path.isfile(bamsortfn):
 
-                        split_hap(bamsortfn, chr, event)
+                        split_hap(bamsortfn, bedfn, chr, event)
 		        #re_pair_reads(hap1_finalbamsortfn, copy_number)
                         #re_pair_reads(hap2_finalbamsortfn, copy_number)
 			#rePair1(hap1_finalbamsortfn)
@@ -1102,14 +1102,21 @@ def implement_cnv(chromosome_event):
                         logger.debug(
                             "+++ coverage ratio for: " + ntpath.basename(bamsortfn) + ": " + str(coverageratio))
 
-                        coverageratio=0
-			if coverageratio < copy_number - 2:
-                            logger.error('not enough reads for ' + ntpath.basename(bamsortfn))
+                        #coverageratio=0
+			alleleA = hap_type.count('A')
+			alleleB = hap_type.count('B')
+			samplerate1 = float(alleleA/coverageratio)
+			samplerate2 = float(alleleB/coverageratio)
+			if coverageratio < copy_number/2:
+                            logger.error('not enough reads or repairing search space is too small for ' + ntpath.basename(bamsortfn))
                             return
+			elif alleleA + alleleB != copy_number:
+			    logger.error('allelic ratio adds up incorrectly (correct: AAB is CN=3)')
+			    return 
                         else:
-                            samplerate = float(copy_number - 2) / coverageratio
-                            subsample(mergedsortfn, GAIN_FINAL, str(samplerate))
-
+                            subsample(hap1_bamrepairedfinalsortmarkedfn, GAIN_FINAL1, str(samplerate1))
+                            subsample(hap2_bamrepairedfinalsortmarkedfn, GAIN_FINAL2, str(samplerate2))
+			    merge_bams(GAIN_FINAL1, GAIN_FINAL2, GAIN_FINAL) 
                 elif event == 'loss':
 
                     inbam_deletion = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
