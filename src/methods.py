@@ -1249,7 +1249,7 @@ def run_pipeline(results_path):
     finally:
         pool1.join()
     time.sleep(.1)
-    mergeSortBamFiles(outbamfn, finalbams_path)
+    #mergeSortBamFiles(outbamfn, finalbams_path)
     t1 = time.time()
     #shutil.rmtree(tmpbams_path)
     logger.debug(' ***** pipeline finished in ' + str(round((t1 - t0) / 60.0, 1)) + ' minutes ***** ')

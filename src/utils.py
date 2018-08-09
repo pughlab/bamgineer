@@ -457,31 +457,34 @@ def createEventBedFiles(cnv_dir, bedfn):
     cnv_number_list = []
     event_list = []
     df = pd.read_csv(bedfn, header=None, sep='\t')
-    cnv_number_list = list(set(df[df.columns[-1]].tolist()))
+    #cnv_number_list = list(set(df[df.columns[-1]].tolist()))
 
     df.columns = ['chr', 'start', 'end', 'hap_type', 'abs_cn']
+    cnv_number_list = list(zip(df.abs_cn, df.hap_type))
+    print cnv_number_list
     for num in cnv_number_list:
-        cn = int(num)
-        dfi = df.loc[df['abs_cn'] == cn]
+        cn = int(num[0])
+	hap = str(num[1])
+        dfi = df.loc[(df['abs_cn'] == cn) & (df['hap_type'] == hap)]
 
         if cn == 0:
             fn = 'deepdel.bed'
-        elif cn == 1:
-            fn = 'loss.bed'
-        elif cn == 2:
-            fn = 'loh.bed'
-        elif cn == 3:
-            fn = 'gain.bed'
-        elif cn == 4:
-            fn = 'amp4.bed'
-        elif cn == 5:
-            fn = 'amp5.bed'
-        elif cn == 6:
-            fn = 'amp6.bed'
-        elif cn == 7:
-            fn = 'amp7.bed'
-        elif cn == 8:
-            fn = 'amp8.bed'
+        elif cn == 1 and len(hap) == cn:
+            fn = 'loss'+hap+'.bed'
+        elif cn == 2 and len(hap) == cn:
+            fn = 'loh'+hap+'.bed'
+        elif cn == 3 and len(hap) == cn:
+            fn = 'gain'+hap+'.bed'
+        elif cn == 4 and len(hap) == cn:
+            fn = 'amp4'+hap+'.bed'
+        elif cn == 5 and len(hap) == cn:
+            fn = 'amp5'+hap+'.bed'
+        elif cn == 6 and len(hap) == cn:
+            fn = 'amp6'+hap+'.bed'
+        elif cn == 7 and len(hap) == cn:
+            fn = 'amp7'+hap+'.bed'
+        elif cn == 8 and len(hap) == cn:
+            fn = 'amp8'+hap+'.bed'
         elif cn > 8:
             print('CNV number must be smaller than 8')
 
