@@ -1057,25 +1057,25 @@ def implement_cnv(chromosome_event):
                 copy_number = int(fn[0][7])
 		hap_type = str(fn[0][6])
 
-                if not params.GetXY() or (chr != 'chrX' and chr != 'chrY'):
+                #if not params.GetXY() or (chr != 'chrX' and chr != 'chrY'):
 
-                    if copy_number == 2:
-                        event = 'loh'
-                    elif copy_number == 3:
-                        event = 'gain'
-                    elif copy_number > 3:
-                        event = 'amp'
-
-                else:
-
-                    logger.debug("*** handling single sex chromosome for: " + ntpath.basename(bamsortfn))
-                    if copy_number == 1:
-                        event = 'loh'
-                    elif copy_number == 2:
-                        event = 'gain'
-                    elif copy_number > 2:
-                        event = 'amp'
-
+                 #   if copy_number == 2:
+                 #       event = 'loh'
+                 #   elif copy_number == 3:
+                 #       event = 'gain'
+                 #   elif copy_number > 3:
+                 #       event = 'amp'
+#
+ #               else:
+		
+                #logger.debug("*** handling single sex chromosome for: " + ntpath.basename(bamsortfn))
+  #                  if copy_number == 1:
+   #                     event = 'loh'
+    #                elif copy_number == 2:
+     #                   event = 'gain'
+      #              elif copy_number > 2:
+       #                 event = 'amp'
+#
                 if event.startswith('amp') or event.startswith('gain'):
 
                     
