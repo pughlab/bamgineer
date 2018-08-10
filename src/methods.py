@@ -75,17 +75,22 @@ def initialize_pipeline(phase_path, haplotype_path, cnv_path):
         hetbed = "/".join([haplotype_path, "het" + str(event) + ".bed"])
         hetsnpbed = "/".join([haplotype_path, "het_snp" + str(event) + ".bed"])
 
-        tmp = "/".join([haplotype_path, str(event) + "_tmp.bed"])
-	command = " ".join([bedtools_path, "intersect -a", exons_path, "-b", cnv_path, "-wa -wb > ", tmp])
+        tmp1 = "/".join([haplotype_path, str(event) + "_tmp1.bed"])
+        tmp2 = "/".join([haplotype_path, str(event) + "_tmp2.bed"])
+	#command = " ".join([bedtools_path, "intersect -a", exons_path, "-b", cnv_path, "-wa -wb > ", tmp])
+	
+	# COMMANDS:
+	command = " ".join([bedtools_path, "intersect -a", cnv_path, "-b", exons_path, " > ", exonsinroibed])
         runCommand(command)
 
-        filterColumns(tmp, exonsinroibed, [0, 1, 2, 6])
+        #filterColumns(tmp1, exonsinroibed, [0, 1, 2, 6])
 
         splitBed(exonsinroibed, '_exons_in_roi' + str(event))
-        command = " ".join([bedtools_path, "intersect -a", phased_bed, "-b", exonsinroibed, "-wa -wb >", tmp])
+        command = " ".join([bedtools_path, "intersect -a", phased_bed, "-b", exonsinroibed, "-wa -wb >", tmp2])
+        #command = " ".join([bedtools_path, "intersect -a", phased_bed, "-b", exonsinroibed, "-wa > ", hetsnpbed])
         runCommand(command)
 
-        filterColumns(tmp, hetsnpbed, [0,1,2,3,4,5,9])#[i for i in range(0, 8)])
+        filterColumns(tmp2, hetsnpbed, [0,1,2,3,4,5,9])#[i for i in range(0, 8)])
 
         splitBed(hetsnpbed, '_het_snp' + str(event))
         #os.remove(tmp)
