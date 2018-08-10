@@ -461,7 +461,7 @@ def createEventBedFiles(cnv_dir, bedfn):
 
     df.columns = ['chr', 'start', 'end', 'hap_type', 'abs_cn']
     cnv_number_list = list(zip(df.abs_cn, df.hap_type))
-    print cnv_number_list
+    #print cnv_number_list
     for num in cnv_number_list:
         cn = int(num[0])
 	hap = str(num[1])
@@ -487,7 +487,7 @@ def createEventBedFiles(cnv_dir, bedfn):
             fn = 'amp8'+hap+'.bed'
         elif cn > 8:
             print('CNV number must be smaller than 8')
-
+	#else statement for len != cn
         dfi.to_csv("/".join([cnv_dir, fn]), sep='\t', header=None, encoding='utf-8', index=False)
 
     return
