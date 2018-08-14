@@ -87,13 +87,23 @@ def dedupBam(inbamfn, outbamfn):
     command = " ".join([samtool_path, "rmdup", inbamfn, outbamfn])
     runCommand(command)
 
-def removeDup(bamrepairedfinalsortfn, tmpbams_path=''):
+def removeDupSambamba(bamrepairedfinalsortfn, tmpbams_path=''):
+    print (" ___ removing repaired duplicates ___ ")
+
+    bamrepairedfinalmarkedfn = sub('.re_paired_final.sorted.bam$', ".re_paired_final.marked.bam", bamrepairedfinalsortfn)
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    command = " ".join([sambamba_path, "markdup","--remove-duplicates", "--nthreads", str(4), "--show-progress", bamrepairedfinalsortfn, bamrepairedfinalmarkedfn])
+    runCommand(command)
+    return bamrepairedfinalmarkedfn
+
+def removeDupPicard(bamrepairedfinalsortfn, tmpbams_path=''):
     print (" ___ removing repaired duplicates ___ ")
 
     bamrepairedfinalmarkedfn = sub('.re_paired_final.sorted.bam$', ".re_paired_final.marked.bam", bamrepairedfinalsortfn)
     markedmetricsfn = sub('.re_paired_final.sorted.bam$', ".marked_metrics.txt", bamrepairedfinalsortfn) 
     java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
-    command = " ".join([java_path, "-Xmx4g -jar", picard_path, "MarkDuplicates", "I=" + bamrepairedfinalsortfn, "O=" + bamrepairedfinalmarkedfn, "M=" + markedmetricsfn, "REMOVE_DUPLICATES=true"])
+    command = " ".join([java_path, "-Xmx8g -jar", picard_path, "MarkDuplicates", "I=" + bamrepairedfinalsortfn, "O=" + bamrepairedfinalmarkedfn, "M=" + markedmetricsfn, "REMOVE_DUPLICATES=true", "ASSUME_SORTED=true"])
+    print("*****PICARD COMMAND****"+command)
     runCommand(command)
     return bamrepairedfinalmarkedfn
 

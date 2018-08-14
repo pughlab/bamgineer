@@ -130,6 +130,7 @@ def find_roi_bam(chromosome_event):
 
                 cmd = " ".join(["sort -u", exonsinroibed, "-o", exonsinroibed]);
                 runCommand(cmd)
+		print ("*****___EXTRACTING BAMS!!!!____****")
                 extractPairedReadfromROI(sortbyname, exonsinroibed, roi)
                 removeIfEmpty(tmpbams_path, ntpath.basename(roi))
                 pysam.sort(roi, roisort)
@@ -229,10 +230,10 @@ def merge_haps(bamsortfn, hap1_bamsortfn, hap2_bamsortfn, hap1_intersnpbamsortfn
     return hap1_finalbamsortfn, hap2_finalbamsortfn
 
 
-def split_hap(bamsortfn, bedfn, chr, event):
+def split_hap(bamsortfn, chr, event):
     print(" ___ splitting original bam into hap1 and hap2 ___")
 
-    #fn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
+    fn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
     cmd = " ".join(["sort -u", bedfn, "-o", bedfn]);
     runCommand(cmd)
 
@@ -350,8 +351,11 @@ def split_hap(bamsortfn, bedfn, chr, event):
         	maps2 = alignmentfile.fetch(chr2, start2, end2)
 
 		for read1 in maps1:
-                	index1 = read1.get_reference_positions(full_length=True).index(start1)
-                	tmpread1 = read1.query_sequence
+                	index1 = read1.get_reference_positions(full_length=True).index(end1)
+                	indexx1 = read1.get_reference_positions(full_length=True)#.index(end1)
+                	print ("******READ1_REF_POSITIONS*****")
+			print(indexx1)
+			tmpread1 = read1.query_sequence
                 	qual1 = read1.query_qualities
                 	tmpread_index1 = tmpread1[index1]
 
@@ -360,7 +364,10 @@ def split_hap(bamsortfn, bedfn, chr, event):
 
 
 		for read2 in maps2:
-                	index2 = read2.get_reference_positions(full_length=True).index(start2)
+                	index2 = read2.get_reference_positions(full_length=True).index(end2)
+                	indexx2 = read2.get_reference_positions(full_length=True)#.index(end1)
+                	print ("******READ2_REF_POSITIONS*****")
+			print(indexx2)
                 	tmpread2 = read2.query_sequence
                 	qual2 = read2.query_qualities
                 	tmpread_index2 = tmpread2[index2]
@@ -721,19 +728,19 @@ def merge_pairs(bamsortfn):
     merge_bams(bamrepairedsortfn, bamrepaired2sortfn, bamrepairedfinalfn)
     sortBam(bamrepairedfinalfn, bamrepairedfinalsortfn, tmpbams_path)
 
-    removeDup(bamrepairedfinalsortfn, tmpbams_path)
+    removeDupSambamba(bamrepairedfinalsortfn, tmpbams_path)
     sortBam(bamrepairedfinalmarkedfn, bamrepairedfinalsortmarkedfn, tmpbams_path)
 
     os.remove(bamrepairedsortfn)
     os.remove(bamrepaired2sortfn)
     os.remove(bamrepairedfinalfn)
-    os.remove(bamrepairedfinalsortfn)
+    #os.remove(bamrepairedfinalsortfn)
     os.remove(bamrepairedfinalmarkedfn)
     
     os.remove(bamrepairedsortfn + '.bai')
     os.remove(bamrepaired2sortfn + '.bai')
     os.remove(bamrepairedfinalfn + '.bai')
-    os.remove(bamrepairedfinalsortfn + '.bai')
+    #os.remove(bamrepairedfinalsortfn + '.bai')
     
     
     return bamrepairedfinalsortmarkedfn
@@ -1096,7 +1103,7 @@ def implement_cnv(chromosome_event):
 
                     if os.path.isfile(bamsortfn):
 
-                        split_hap(bamsortfn, bedfn, chr, event)
+                        split_hap(bamsortfn, chr, event)
 		        #re_pair_reads(hap1_finalbamsortfn, copy_number)
                         #re_pair_reads(hap2_finalbamsortfn, copy_number)
 			#rePair1(hap1_finalbamsortfn)
