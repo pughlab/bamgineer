@@ -230,7 +230,7 @@ def merge_haps(bamsortfn, hap1_bamsortfn, hap2_bamsortfn, hap1_intersnpbamsortfn
     return hap1_finalbamsortfn, hap2_finalbamsortfn
 
 
-def split_hap(bamsortfn, chr, event):
+def split_hap_with_filter(bamsortfn, chr, event):
     print(" ___ splitting original bam into hap1 and hap2 ___")
 
     fn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
@@ -352,9 +352,6 @@ def split_hap(bamsortfn, chr, event):
 
 		for read1 in maps1:
                 	index1 = read1.get_reference_positions(full_length=True).index(end1)
-                	indexx1 = read1.get_reference_positions(full_length=True)#.index(end1)
-                	print ("******READ1_REF_POSITIONS*****")
-			print(indexx1)
 			tmpread1 = read1.query_sequence
                 	qual1 = read1.query_qualities
                 	tmpread_index1 = tmpread1[index1]
@@ -365,9 +362,6 @@ def split_hap(bamsortfn, chr, event):
 
 		for read2 in maps2:
                 	index2 = read2.get_reference_positions(full_length=True).index(end2)
-                	indexx2 = read2.get_reference_positions(full_length=True)#.index(end1)
-                	print ("******READ2_REF_POSITIONS*****")
-			print(indexx2)
                 	tmpread2 = read2.query_sequence
                 	qual2 = read2.query_qualities
                 	tmpread_index2 = tmpread2[index2]
@@ -532,6 +526,140 @@ def split_hap(bamsortfn, chr, event):
 	    #sortBam(hap1_finalbamfn, hap1_finalbamsortfn + '.bam', tmpbams_path)
 	    #sortBam(hap2_finalbamfn, hap2_finalbamsortfn + '.bam', tmpbams_path)
 
+def split_hap(bamsortfn, chr, event):
+    print(" ___ splitting original bam into hap1 and hap2 ___")
+
+    fn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
+    cmd = " ".join(["sort -u", bedfn, "-o", bedfn]);
+    runCommand(cmd)
+
+    hap1_bamfn = sub('.sorted.bam$', ".hap1.bam", bamsortfn)
+    hap2_bamfn = sub('.sorted.bam$', ".hap2.bam", bamsortfn)
+    hap1_bamsortfn = sub('.sorted.bam$', ".hap1.sorted", bamsortfn)
+    hap2_bamsortfn = sub('.sorted.bam$', ".hap2.sorted", bamsortfn)
+
+
+    if not terminating.is_set():
+
+        if (os.path.isfile(bamsortfn) and os.path.isfile(bedfn)):
+
+            samfile = pysam.Samfile(bamsortfn, "rb")
+            alignmentfile = pysam.AlignmentFile(bamsortfn, "rb")
+            outbam1 = pysam.Samfile(hap1_bamfn, 'wb', template=samfile)
+            outbam2 = pysam.Samfile(hap2_bamfn, 'wb', template=samfile)
+
+            # allreads = pysam.Samfile(allreadsfn, 'wb', template=samfile)
+
+            #bedfile = open(bedfn, 'r')
+            # covpath = "/".join([haplotype_path, "written_coverage_het.txt"])
+            # snpratiopath = "/".join([haplotype_path, "het_snp_ratio.txt"])
+
+            num_reads_written = 0
+            num_total_reads = 0
+	    
+            #newsnps = []
+	    #bedlist = []
+	    #problem_snps = []
+	    #newbedlist = []
+	    #readid1 = []
+	    #readid2 = []
+
+	    bedfile2 = open(bedfn, 'r')
+	    readids = []
+
+	    for bedline in bedfile2:
+                c = bedline.strip().split()
+	
+                if len(c) == 8:
+                    chr2 = c[0]
+                    chr = c[0].strip("chr")
+                    start = int(c[1])
+                    end = int(c[2])
+                    refbase = str(c[3])
+                    altbase = str(c[4])
+                    haplotype = str(c[5])
+                    copy_number = int(c[7])
+                else:
+                    continue
+
+		
+                readmappings = alignmentfile.fetch(chr2, start, end)
+
+                # sex chromosome
+                # if params.GetXY() and (chr == 'chrX' or chr == 'chrY'):
+                #     haplotype = 'hap1'
+                #     print('sex chromosome ' + str(chr))
+
+                for shortread in readmappings:
+	        	if shortread.qname not in readids:	
+				#allreads.write(shortread)
+                        	num_total_reads += 1
+				problem_with_read = False
+
+				try:
+				    index = shortread.get_reference_positions(full_length=True).index(start)
+				    tmpread = shortread.query_sequence
+				    qual = shortread.query_qualities
+				    tmpread_index = tmpread[index]
+				    readids.append(shortread.qname)
+	 
+				    if tmpread_index == altbase and haplotype == "hap1":
+					outbam1.write(shortread)
+				    elif tmpread_index == refbase and haplotype == "hap1":
+					outbam2.write(shortread)
+				    elif tmpread_index == altbase and haplotype == "hap2":
+					outbam2.write(shortread)
+				    elif tmpread_index == refbase and haplotype == "hap2":
+					outbam1.write(shortread)
+				    #mutated_hap2 = tmpread[:index] + refbase + tmpread[index + 1:]
+
+				    #if haplotype == "hap1":
+				     #   shortread.query_sequence = mutated_hap1
+
+				    #elif haplotype == "hap2":
+				     #   shortread.query_sequence = mutated_hap2
+				    else: 
+					problem_with_read = True
+	     
+				    shortread.query_qualities = qual
+
+				except Exception as e:
+				    problem_with_read = True
+				    pass
+
+				#if not problem_with_read:
+				 #   if haplotype == "hap1":
+				  #  	outbam1.write(newread)
+
+				   # elif haplotype == "hap2":
+				    #    outbam2.write(newread)
+
+            #newbed.close()
+	    outbam1.close()
+	    outbam2.close() 
+
+            # sort hap1 and hap2
+            sortBam(hap1_bamfn, hap1_bamsortfn + '.bam', tmpbams_path)
+            sortBam(hap2_bamfn, hap2_bamsortfn + '.bam', tmpbams_path)
+    	    
+	    # see modify_hap and merge_haps functions for details	    
+            hap1_intersnpbamsortfn, hap2_intersnpbamsortfn = modify_hap(bamsortfn, hap1_bamsortfn, hap2_bamsortfn)
+	    hap1_finalbamsortfn, hap2_finalbamsortfn = merge_haps(bamsortfn, hap1_bamsortfn, hap2_bamsortfn, hap1_intersnpbamsortfn, hap2_intersnpbamsortfn)
+
+	    
+   	    os.remove(hap1_intersnpbamsortfn + '.bam')
+   	    os.remove(hap2_intersnpbamsortfn + '.bam')
+   	    os.remove(hap1_intersnpbamsortfn + '.bam.bai')
+   	    os.remove(hap2_intersnpbamsortfn + '.bam.bai')
+   	    os.remove(hap1_bamfn)
+   	    os.remove(hap2_bamfn)
+   	    os.remove(hap1_bamsortfn + '.bam')
+   	    os.remove(hap2_bamsortfn + '.bam')
+   	    os.remove(hap1_bamsortfn + '.bam.bai')
+   	    os.remove(hap2_bamsortfn + '.bam.bai')
+ 
+    return hap1_finalbamsortfn, hap2_finalbamsortfn
+	    
 
 def readBamStrand(bamsortfn, strand):
     read1fn = sub('.bam$', '.read1_' + strand + '.bam', bamsortfn)
@@ -561,7 +689,8 @@ def defineSearchSpace(readX, strand, direction):
         insert_size = abs(readX.tlen) - readX.qlen
         maxpos = readX.pos - 75 - insert_size
         minpos = readX.pos - 150 - insert_size
-    
+    print ("**FETCH**") 
+    print (strand, direction, insert_size, minpos, maxpos) 
     return insert_size, minpos, maxpos
 
 def generateReadPairs(tmpA, tmpB, strand, direction):
@@ -589,10 +718,12 @@ def rePair1(bamsortfn):
     if not os.path.isfile(bamsortfn):
         raise ValueError('Could not find file bamsortfn')
     bamrepairedfn = sub('.bam$', ".re_paired.bam", bamsortfn)
+    errorbamrepairedfn = sub('.bam$', ".ERROR.re_paired.bam", bamsortfn)
     bamrepairedsortfn = sub('.bam$', ".re_paired.sorted.bam", bamsortfn)
  
     inbam = pysam.Samfile(bamsortfn, 'rb')
     outbam = pysam.Samfile(bamrepairedfn, 'wb', template=inbam)
+    errorbam = pysam.Samfile(errorbamrepairedfn, 'wb', template=inbam)
 
     writtencount = 0
     strands = ['pos', 'neg']
@@ -612,26 +743,29 @@ def rePair1(bamsortfn):
                 readRef = itrA.next()  # Every other read
                     # Defines the search space for the other read in the opposite splt
                 insert_size, minpos, maxpos = defineSearchSpace(readRef, strand, direction)
-                itrTarget = splt2.fetch("chr21", minpos, maxpos)
+                if (insert_size > 0 and insert_size < 1000):
+		    itrTarget = splt2.fetch("chr21", minpos, maxpos)
                 
-		listTarget = []
-                itrs_list = list(itrTarget)
+		    listTarget = []
+                    itrs_list = list(itrTarget)
                 
                 
-                if len(itrs_list) <= 5: # Takes all target reads
-                    listTarget = itrs_list
-                elif len(itrs_list) > 5: # Takes a random sample of target reads
-                    listTarget = [i for i in random.sample(itrs_list, 5)]
+                    if len(itrs_list) <= 5: # Takes all target reads
+                    	listTarget = itrs_list
+                    elif len(itrs_list) > 5: # Takes a random sample of target reads
+                    	listTarget = [i for i in random.sample(itrs_list, 5)]
                 
                 # Loops through all target reads
-                for i in range(len(listTarget)):
-                    readTarget = listTarget[i]
+                    for i in range(len(listTarget)):
+                    	readTarget = listTarget[i]
                     # If the read IDs dont match, create a new read-pair by altering the description of the read and output
-                    if readRef.qname != readTarget.qname:
-                        tmpA, tmpB = generateReadPairs(readRef, readTarget, strand, direction)
-                    	if counter % 2 != 0:
+                        if readRef.qname != readTarget.qname:
+                            tmpA, tmpB = generateReadPairs(readRef, readTarget, strand, direction)
+                    	    if counter % 2 != 0:
 				outbam.write(tmpA)
                     		outbam.write(tmpB)
+		elif (insert_size < 0 or insert_size > 1000): 
+		    errorbam.write(readRef)
             except StopIteration:
                 break
             
@@ -643,6 +777,7 @@ def rePair1(bamsortfn):
     	os.remove(read2fn + '.bai')
     inbam.close()
     outbam.close()
+    errorbam.close()
 
     bamrepairedsortfn = sub('sorted.re_paired', 're_paired', bamrepairedsortfn)
     sortBam(bamrepairedfn, bamrepairedsortfn, tmpbams_path)
@@ -655,10 +790,12 @@ def rePair2(bamsortfn):
     if not os.path.isfile(bamsortfn):
         raise ValueError('Could not find file bamsortfn')
     bamrepaired2fn = sub('.bam$', ".re_paired2.bam", bamsortfn)
+    errorbamrepaired2fn = sub('.bam$', ".ERROR.re_paired2.bam", bamsortfn)
     bamrepaired2sortfn = sub('.bam$', ".re_paired2.sorted.bam", bamsortfn)
  
     inbam = pysam.Samfile(bamsortfn, 'rb')
     outbam2 = pysam.Samfile(bamrepaired2fn, 'wb', template=inbam)
+    errorbam2 = pysam.Samfile(errorbamrepaired2fn, 'wb', template=inbam)
 
     writtencount = 0
     strands = ['pos', 'neg']
@@ -677,26 +814,29 @@ def rePair2(bamsortfn):
                 #    readRef = itrB.next()
                     # Defines the search space for the other read in the opposite splt
                 insert_size, minpos, maxpos = defineSearchSpace(readRef, strand, direction)
-                itrTarget = splt1.fetch("chr21", minpos, maxpos)
+                if (insert_size > 0 and insert_size < 1000):
+		    itrTarget = splt1.fetch("chr21", minpos, maxpos)
                 
-                listTarget = []
-                itrs_list = list(itrTarget)
+                    listTarget = []
+                    itrs_list = list(itrTarget)
                 
                 
-                if len(itrs_list) <= 5: # Takes all target reads
-                    listTarget = itrs_list
-                elif len(itrs_list) > 5: # Takes a random sample of target reads
-                    listTarget = [i for i in random.sample(itrs_list, 5)]
+                    if len(itrs_list) <= 5: # Takes all target reads
+                    	listTarget = itrs_list
+                    elif len(itrs_list) > 5: # Takes a random sample of target reads
+                    	listTarget = [i for i in random.sample(itrs_list, 5)]
                 
                 # Loops through all target reads
-                for i in range(len(listTarget)):
-                    readTarget = listTarget[i]
+                    for i in range(len(listTarget)):
+                    	readTarget = listTarget[i]
                     # If the read IDs dont match, create a new read-pair by altering the description of the read and output
-                    if readRef.qname != readTarget.qname:
-                        tmpA, tmpB = generateReadPairs(readRef, readTarget, strand, direction)
-                    	if counter % 2 == 0:
-				outbam2.write(tmpA)
+                        if readRef.qname != readTarget.qname:
+                            tmpA, tmpB = generateReadPairs(readRef, readTarget, strand, direction)
+                    	    if counter % 2 == 0:
+			    	outbam2.write(tmpA)
                     		outbam2.write(tmpB)
+		elif (insert_size < 0 or insert_size > 1000): 
+		    errorbam2.write(readRef)
             except StopIteration:
                 break
             
@@ -708,6 +848,7 @@ def rePair2(bamsortfn):
     	os.remove(read2fn + '.bai')
     inbam.close()
     outbam2.close()
+    errorbam2.close()
 
     bamrepaired2sortfn = sub('sorted.re_paired', 're_paired', bamrepaired2sortfn)
     sortBam(bamrepaired2fn, bamrepaired2sortfn, tmpbams_path)
@@ -1055,6 +1196,13 @@ def split_bam_by_chr(chr):
 def calculate_sample_rate(inbam, outbam, cnchange, purity):
     logger.debug("___ adjusting sample rate ___")
 
+
+def find_non_roi(chromosome_event):
+    chr, event = chromosome_event.split("_")
+    roi, sortbyname, sortbyCoord, hetsnp = init_file_names(chr, tmpbams_path, haplotype_path, event)
+    command = " ".join([bedtools_path, "intersect -a", cnv_path, "-b", exons_path, " > ", exonsinroibed])
+    runCommand(command)
+ 
 
 def implement_cnv(chromosome_event):
     chr, event = chromosome_event.split("_")
