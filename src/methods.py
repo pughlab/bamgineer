@@ -131,8 +131,9 @@ def find_roi_bam(chromosome_event):
                 cmd = " ".join(["sort -u", exonsinroibed, "-o", exonsinroibed]);
                 runCommand(cmd)
 		print ("*****___EXTRACTING BAMS!!!!____****")
-                extractPairedReadfromROI(sortbyname, exonsinroibed, roi)
-                removeIfEmpty(tmpbams_path, ntpath.basename(roi))
+                #extractPairedReadfromROI(sortbyname, exonsinroibed, roi)
+                extractPairedBAMfromROI(sortbyCoord, exonsinroibed, roi)
+		removeIfEmpty(tmpbams_path, ntpath.basename(roi))
                 pysam.sort(roi, roisort)
                 pysam.index(roisort + '.bam')
                 os.remove(roi)
@@ -689,8 +690,8 @@ def defineSearchSpace(readX, strand, direction):
         insert_size = abs(readX.tlen) - readX.qlen
         maxpos = readX.pos - 75 - insert_size
         minpos = readX.pos - 150 - insert_size
-    print ("**FETCH**") 
-    print (strand, direction, insert_size, minpos, maxpos) 
+    #print ("**FETCH**") 
+    #print (strand, direction, insert_size, minpos, maxpos) 
     return insert_size, minpos, maxpos
 
 def generateReadPairs(tmpA, tmpB, strand, direction):
@@ -1197,12 +1198,26 @@ def calculate_sample_rate(inbam, outbam, cnchange, purity):
     logger.debug("___ adjusting sample rate ___")
 
 
-def find_non_roi(chromosome_event):
+def find_non_roi(chromosome_event, some_dir):
     chr, event = chromosome_event.split("_")
     roi, sortbyname, sortbyCoord, hetsnp = init_file_names(chr, tmpbams_path, haplotype_path, event)
-    command = " ".join([bedtools_path, "intersect -a", cnv_path, "-b", exons_path, " > ", exonsinroibed])
+    
+    exons_path = bamhelp.GetExons()
+    exonsnonroibed = "/".join([haplotype_path, "exons_non_roi" + str(event) + ".bed"])
+    subtractbamfn = sub('.sorted.bam$', ".subtract.bam", bamsortfn)
+    subtractbamsortfn = sub('.sorted.bam$', ".subtract.sorted.bam", bamsortfn)
+    chrbedfn = "/".join([SOME_path, str(chr) + '_coord.bed'])
+    cnvbedfn = "/".join([SOME_path, str(chr) + '.bed'])
+    subtractbedfn = "/".join([SOME_path, str(chr) + '_subtract.bed'])
+
+    # goes to simulate.py? cnvbedfn = params.GetCNV()
+    # goes to simulate.py? splitBedByChr(cnvbedfn, some_dir) 
+    # change to pandas: awk '{print $0 >> $1".bed"}' example.bed
+    command = " ".join([bedtools_path, "subtract -a", chrbedfn, "-b", cnvbedfn, ">", subtractbedfn])
     runCommand(command)
- 
+    extractPairedBAMfromROI(bamsortfn, subtractbedfn, subtractbamfn) 
+    sortBam(subtractbamfn, subtractbamsortfn, tmpbams_path)
+    return subtractbamsortfn
 
 def implement_cnv(chromosome_event):
     chr, event = chromosome_event.split("_")
@@ -1276,7 +1291,7 @@ def implement_cnv(chromosome_event):
                         else:
                             subsample(hap1_bamrepairedfinalsortmarkedfn, GAIN_FINAL1, str(samplerate1))
                             subsample(hap2_bamrepairedfinalsortmarkedfn, GAIN_FINAL2, str(samplerate2))
-			    merge_bams(GAIN_FINAL1, GAIN_FINAL2, GAIN_FINAL) 
+			    merge_bams(GAIN_FINAL1, GAIN_FINAL2, GAIN_FINAL)
                 elif event == 'loss':
 
                     inbam_deletion = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
@@ -1299,7 +1314,7 @@ def implement_cnv(chromosome_event):
                             sortbyCoord)):  # if it exists from previous runs
 
                         os.symlink(sortbyCoord, inbam_deletion)
-
+	    	
             else:
                 logger.debug(bedfn + ' does not exist!')
                 success = False
