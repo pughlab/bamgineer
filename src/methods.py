@@ -61,10 +61,12 @@ def initialize0(results_path, cancer_dir_path):
 
 def initialize_pipeline(phase_path, haplotype_path, cnv_path):
     exons_path = bamhelp.GetExons()
+    cnv_bed = params.GetCNV()
 
     event, extension = os.path.splitext(os.path.basename(cnv_path))
 
     phased_bed = "/".join([phase_path, "PHASED.BED"])
+    nonroibedfn = "/".join([haplotype_path, "non_roi.bed"])
     bedtools_path = bamhelp.GetBedtoolsPath()
 
     try:
@@ -94,12 +96,41 @@ def initialize_pipeline(phase_path, haplotype_path, cnv_path):
 
         splitBed(hetsnpbed, '_het_snp' + str(event))
         #os.remove(tmp)
+	
+	# NON_ROI_BAM FILES:
+	
+	if not os.path.isfile(nonroibedfn):
+    	    command = " ".join([bedtools_path, "subtract -a", exons_path, "-b", cnv_bed, ">", nonroibedfn])
+    	    runCommand(command)
+  	
+    	    splitBedByChr(nonroibedfn, haplotype_path) 
+	 
     except:
         logger.exception("Initialization error !")
         raise
     logger.debug("--- initialization complete ---")
     return
 
+#def find_non_roi(chromosome_event, some_dir):
+ #   chr, event = chromosome_event.split("_")
+ #   roi, sortbyname, sortbyCoord, hetsnp = init_file_names(chr, tmpbams_path, haplotype_path, event)
+    
+    #exons_path = bamhelp.GetExons()
+  #  exonsnonroibed = "/".join([haplotype_path, "exons_non_roi" + str(event) + ".bed"])
+   # subtractbamfn = sub('.sorted.bam$', ".subtract.bam", bamsortfn)
+    #subtractbamsortfn = sub('.sorted.bam$', ".subtract.sorted.bam", bamsortfn)
+    #chrbedfn = "/".join([SOME_path, str(chr) + '_coord.bed'])
+    #cnvbedfn = "/".join([SOME_path, str(chr) + '.bed'])
+    #subtractbedfn = "/".join([SOME_path, str(chr) + '_subtract.bed'])
+
+    # goes to simulate.py? cnvbedfn = params.GetCNV()
+    # goes to simulate.py? splitBedByChr(cnvbedfn, some_dir) 
+    # change to pandas: awk '{print $0 >> $1".bed"}' example.bed
+    #command = " ".join([bedtools_path, "subtract -a", chrbedfn, "-b", cnvbedfn, ">", subtractbedfn])
+    #runCommand(command)
+    #extractPairedBAMfromROI(bamsortfn, subtractbedfn, subtractbamfn) 
+    #sortBam(subtractbamfn, subtractbamsortfn, tmpbams_path)
+    #return subtractbamsortfn
 
 def init_file_names(chr, tmpbams_path, haplotypedir, event):
     flist = []
@@ -122,7 +153,12 @@ def find_roi_bam(chromosome_event):
     chr, event = chromosome_event.split("_")
     roi, sortbyname, sortbyCoord, hetsnp = init_file_names(chr, tmpbams_path, haplotype_path, event)
     exonsinroibed = "/".join([haplotype_path, chr + "_exons_in_roi" + event + ".bed"])
+    
+    #nonroi = "/".join([tmpbams_path, chr + "_non_roi.bam"])
+    #exonsnonroibed = "/".join([haplotype_path, chr + "_non_roi.bed"])
+
     success = False
+    #success2 = False
     try:
         if not terminating.is_set():
             roisort = sub('.bam$', '.sorted', roi)
@@ -131,8 +167,10 @@ def find_roi_bam(chromosome_event):
                 cmd = " ".join(["sort -u", exonsinroibed, "-o", exonsinroibed]);
                 runCommand(cmd)
 		print ("*****___EXTRACTING BAMS!!!!____****")
-                #extractPairedReadfromROI(sortbyname, exonsinroibed, roi)
-                extractPairedBAMfromROI(sortbyCoord, exonsinroibed, roi)
+                extractPairedReadfromROI(sortbyname, exonsinroibed, roi)
+                # too slow:
+		#extractPairedBAMfromROI(sortbyCoord, exonsinroibed, roi)
+                #extractPairedBAMfromROI(sortbyname, exonsinroibed, roi)
 		removeIfEmpty(tmpbams_path, ntpath.basename(roi))
                 pysam.sort(roi, roisort)
                 pysam.index(roisort + '.bam')
@@ -142,19 +180,82 @@ def find_roi_bam(chromosome_event):
             else:
                 logger.debug(exonsinroibed + ' does not exist!')
                 return
+	
+
     except (KeyboardInterrupt):
         logger.error('Exception Crtl+C pressed in the child process  in find_roi_bam for chr ' + chr + event)
         terminating.set()
         success = False
+    #    success2 = False
         return
     except Exception as e:
         logger.exception("Exception in find_roi_bam %s", e)
         terminating.set()
         success = False
+    #    success2 = False
         return
     if (success):
         logger.debug("find_roi_bam complete successfully for " + chr + event)
+    #if (success2): 
+     #   logger.debug("find_non_roi_bam complete successfully for " + chr)
     return
+
+def find_non_roi_bam(chr_list):
+    #chr, event = chromosome_event.split("_")
+    #roi, sortbyname, sortbyCoord, hetsnp = init_file_names(chr, tmpbams_path, haplotype_path, event)
+    chr = chr_list
+    splitbams = params.GetSplitBamsPath()
+    
+    sortbyname = "/".join([splitbams, chr + '.byname.bam'])
+    nonroi = "/".join([tmpbams_path, chr + "_non_roi.bam"])
+    exonsnonroibed = "/".join([haplotype_path, chr + "_non_roi.bed"])
+
+    success2 = False
+    try:
+        if not terminating.is_set():
+            nonroisort = sub('.bam$', '.sorted', nonroi)
+            if os.path.isfile(nonroisort):
+		success = True
+		#return
+
+	    else:
+		if os.path.isfile(exonsnonroibed):
+
+                    cmd = " ".join(["sort -u", exonsnonroibed, "-o", exonsnonroibed]);
+                    runCommand(cmd)
+		    print ("*****___EXTRACTING NON-ROI BAMS!!!!____****")
+                    extractPairedReadfromROI(sortbyname, exonsnonroibed, nonroi)
+                    # too slow:
+		    #extractPairedBAMfromROI(sortbyCoord, exonsinroibed, roi)
+                    #extractPairedBAMfromROI(sortbyname, exonsinroibed, roi)
+		    removeIfEmpty(tmpbams_path, ntpath.basename(nonroi))
+                    pysam.sort(nonroi, nonroisort)
+                    pysam.index(nonroisort + '.bam')
+                    os.remove(nonroi)
+                    success = True
+
+                else:
+                    logger.debug(exonsnonroibed + ' does not exist!')
+                    return
+
+    except (KeyboardInterrupt):
+        logger.error('Exception Crtl+C pressed in the child process  in find_roi_bam for chr ' + chr)
+        terminating.set()
+        success = False
+    #    success2 = False
+        return
+    except Exception as e:
+        logger.exception("Exception in find_non_roi_bam %s", e)
+        terminating.set()
+        success = False
+    #    success2 = False
+        return
+    if (success):
+        logger.debug("find_non_roi_bam complete successfully for " + chr)
+    #if (success2): 
+     #   logger.debug("find_non_roi_bam complete successfully for " + chr)
+    return
+
 
 def modify_hap(bamsortfn, hap1_bamsortfn, hap2_bamsortfn):
 
@@ -566,7 +667,8 @@ def split_hap(bamsortfn, chr, event):
 	    #readid2 = []
 
 	    bedfile2 = open(bedfn, 'r')
-	    readids = []
+	    #readids = []
+	    readids = set()
 
 	    for bedline in bedfile2:
                 c = bedline.strip().split()
@@ -602,7 +704,8 @@ def split_hap(bamsortfn, chr, event):
 				    tmpread = shortread.query_sequence
 				    qual = shortread.query_qualities
 				    tmpread_index = tmpread[index]
-				    readids.append(shortread.qname)
+				    readids.add(shortread.qname)
+				    #readids.append(shortread.qname)
 	 
 				    if tmpread_index == altbase and haplotype == "hap1":
 					outbam1.write(shortread)
@@ -1198,31 +1301,12 @@ def calculate_sample_rate(inbam, outbam, cnchange, purity):
     logger.debug("___ adjusting sample rate ___")
 
 
-def find_non_roi(chromosome_event, some_dir):
-    chr, event = chromosome_event.split("_")
-    roi, sortbyname, sortbyCoord, hetsnp = init_file_names(chr, tmpbams_path, haplotype_path, event)
-    
-    exons_path = bamhelp.GetExons()
-    exonsnonroibed = "/".join([haplotype_path, "exons_non_roi" + str(event) + ".bed"])
-    subtractbamfn = sub('.sorted.bam$', ".subtract.bam", bamsortfn)
-    subtractbamsortfn = sub('.sorted.bam$', ".subtract.sorted.bam", bamsortfn)
-    chrbedfn = "/".join([SOME_path, str(chr) + '_coord.bed'])
-    cnvbedfn = "/".join([SOME_path, str(chr) + '.bed'])
-    subtractbedfn = "/".join([SOME_path, str(chr) + '_subtract.bed'])
-
-    # goes to simulate.py? cnvbedfn = params.GetCNV()
-    # goes to simulate.py? splitBedByChr(cnvbedfn, some_dir) 
-    # change to pandas: awk '{print $0 >> $1".bed"}' example.bed
-    command = " ".join([bedtools_path, "subtract -a", chrbedfn, "-b", cnvbedfn, ">", subtractbedfn])
-    runCommand(command)
-    extractPairedBAMfromROI(bamsortfn, subtractbedfn, subtractbamfn) 
-    sortBam(subtractbamfn, subtractbamsortfn, tmpbams_path)
-    return subtractbamsortfn
 
 def implement_cnv(chromosome_event):
     chr, event = chromosome_event.split("_")
     logger.debug("___ Bamgineer main engine started ___")
     success = True
+
     try:
         if not terminating.is_set():
             bamfn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
@@ -1333,6 +1417,8 @@ def implement_cnv(chromosome_event):
         logger.debug("implement_cnv complete successfully for " + chr + event)
     return
 
+#def finalMerge(outbamfn, finalbams_path):
+
 
 def removeReadsOverlappingHetRegion(inbamfn, bedfn, outbamfn, path):
     print "___ removing reads overlapping heterozygous region ___"
@@ -1414,6 +1500,7 @@ def run_pipeline(results_path):
 
         result1 = pool1.map_async(find_roi_bam, chromosome_event).get(9999999)
         result2 = pool1.map_async(implement_cnv, chromosome_event).get(9999999)
+        result3 = pool1.map_async(find_non_roi_bam, chr_list).get(9999999)
         pool1.close()
     except KeyboardInterrupt:
         logger.debug('You cancelled the program!')
@@ -1423,6 +1510,16 @@ def run_pipeline(results_path):
         pool1.terminate()
     finally:
         pool1.join()
+   #FINAL MERGE 
+    #for chromo in chr_list:
+	#chr = chromo
+    #chr, event = chromosome_event.split("_")
+    	#nonroisort = "/".join([tmpbams_path, chr + "_non_roi.sorted.bam"])
+        #GAIN_FINAL = "/".join([finalbams_path, str(chr).upper()+ str(event).upper()+ '_GAIN.bam'])
+        #LOSS_FINAL = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
+	#merge_bams(GAIN_FINAL, nonroisort,
+
+    #finalMerge(chromosome_event)
     time.sleep(.1)
     #mergeSortBamFiles(outbamfn, finalbams_path)
     t1 = time.time()

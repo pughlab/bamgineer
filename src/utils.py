@@ -78,7 +78,7 @@ def extractPairedReadfromROI(inbamfn, bedfn, outbamfn, flag="either"):
 
 def extractPairedBAMfromROI(inbamfn, bedfn, outbamfn):
     java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
-    command = " ".join([samtool_path, "view -b -f 0x0001 -L", bedfn, inbamfn, ">", outbamfn])
+    command = " ".join([samtools_path, "view -b -f 0x0001 -L", bedfn, inbamfn, ">", outbamfn])
     runCommand(command)
 
 
@@ -501,17 +501,17 @@ def createEventBedFiles(cnv_dir, bedfn):
 
     return
 
-def splitBedByChr(cnvbedfn, some_dir):
+def splitBedByChr(cnvbedfn, hap_dir):
     chr_bedlist = []
     #event_list = []
     df = pd.read_csv(cnvbedfn, header=None, sep='\t')
     chr_bedlist = list(set(df[df.columns[0]].tolist()))
-    df.columns = ['chr', 'start', 'end', 'hap_type', 'abs_cn']
+    df.columns = ['chr', 'start', 'end'] #, 'hap_type', 'abs_cn']
     for chromosome in chr_bedlist:
         dfi = df.loc[(df['chr'] == chromosome)]
-	fn = chromosome+'.bed'
+	fn = chromosome+'_non_roi.bed'
 	#else statement for len != cn
-        dfi.to_csv("/".join([some_dir, fn]), sep='\t', header=None, encoding='utf-8', index=False)
+        dfi.to_csv("/".join([hap_dir, fn]), sep='\t', header=None, encoding='utf-8', index=False)
 
     return
 
