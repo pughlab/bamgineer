@@ -207,6 +207,7 @@ def find_non_roi_bam(chr_list):
     splitbams = params.GetSplitBamsPath()
     
     sortbyname = "/".join([splitbams, chr + '.byname.bam'])
+    sortbyCoord = "/".join([splitbams, chr + '.bam'])
     nonroi = "/".join([finalbams_path, chr + "_non_roi.bam"])
     exonsnonroibed = "/".join([haplotype_path, chr + "_non_roi.bed"])
 
