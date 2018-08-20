@@ -224,7 +224,8 @@ def find_non_roi_bam(chr_list):
                     cmd = " ".join(["sort -u", exonsnonroibed, "-o", exonsnonroibed]);
                     runCommand(cmd)
 		    print ("*****___EXTRACTING NON-ROI BAMS!!!!____****")
-                    extractPairedReadfromROI(sortbyname, exonsnonroibed, nonroi)
+                    extractAllReadsfromROI(sortbyCoord, exonsnonroibed, nonroi)
+		    #extractPairedReadfromROI(sortbyname, exonsnonroibed, nonroi)
                     # too slow:
 		    #extractPairedBAMfromROI(sortbyCoord, exonsinroibed, roi)
                     #extractPairedBAMfromROI(sortbyname, exonsinroibed, roi)

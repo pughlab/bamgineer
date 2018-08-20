@@ -75,6 +75,11 @@ def extractPairedReadfromROI(inbamfn, bedfn, outbamfn, flag="either"):
         [bedtools_path, "pairtobed -abam", inbamfn, "-b", bedfn, "-type", flag, ">", outbamfn, "2> bedtool.log"])
     runCommand(command)
 
+def extractAllReadsfromROI(inbamfn, bedfn, outbamfn):
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    command = " ".join(
+        [bedtools_path, "intersect -abam", inbamfn, "-b", bedfn, ">", outbamfn, "2> bedtool.log"])
+    runCommand(command)
 
 def extractPairedBAMfromROI(inbamfn, bedfn, outbamfn):
     java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
