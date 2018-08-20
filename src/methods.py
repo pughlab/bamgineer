@@ -207,10 +207,10 @@ def find_non_roi_bam(chr_list):
     splitbams = params.GetSplitBamsPath()
     
     sortbyname = "/".join([splitbams, chr + '.byname.bam'])
-    nonroi = "/".join([tmpbams_path, chr + "_non_roi.bam"])
+    nonroi = "/".join([finalbams_path, chr + "_non_roi.bam"])
     exonsnonroibed = "/".join([haplotype_path, chr + "_non_roi.bed"])
 
-    success2 = False
+    success = False
     try:
         if not terminating.is_set():
             nonroisort = sub('.bam$', '.sorted', nonroi)
@@ -228,7 +228,7 @@ def find_non_roi_bam(chr_list):
                     # too slow:
 		    #extractPairedBAMfromROI(sortbyCoord, exonsinroibed, roi)
                     #extractPairedBAMfromROI(sortbyname, exonsinroibed, roi)
-		    removeIfEmpty(tmpbams_path, ntpath.basename(nonroi))
+		    removeIfEmpty(finalbams_path, ntpath.basename(nonroi))
                     pysam.sort(nonroi, nonroisort)
                     pysam.index(nonroisort + '.bam')
                     os.remove(nonroi)
@@ -1521,6 +1521,7 @@ def run_pipeline(results_path):
 
     #finalMerge(chromosome_event)
     time.sleep(.1)
+    merge_final(outbamfn, finalbams_path)
     #mergeSortBamFiles(outbamfn, finalbams_path)
     t1 = time.time()
     #shutil.rmtree(tmpbams_path)

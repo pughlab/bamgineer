@@ -320,6 +320,11 @@ def merge_bams(bamfn1, bamfn2, mergefn):
     command = " ".join([sambamba_path, "merge", mergefn, bamfn1, bamfn2, "--nthreads", str(4)])
     runCommand(command)
 
+def merge_final(mergefn, finalbamdir):
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    os.chdir(finalbamdir)
+    command = " ".join([sambamba_path, "merge", mergefn, "*.bam", "--nthreads", str(4)])
+    runCommand(command)
 
 def mergeSortBamFiles(mergedBamfn, finalbamdir):
     java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
