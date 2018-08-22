@@ -525,6 +525,10 @@ def splitBedByChr(cnvbedfn, hap_dir):
 
     return
 
+def removeIfEmptyBed(cnvbedfn):
+    if os.path.getsize(cnvbedfn) == 0:
+    	os.remove(cnvbedfn)	
+
 def generatePhasedBed(hap1vcffilteredtobed, hap2vcffilteredtobed, phased_bed):
     print (" ___ generating phased Bed ___ ")
     df1 = pd.read_csv(hap1vcffilteredtobed, header=None, sep='\t')

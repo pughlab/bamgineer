@@ -102,9 +102,10 @@ def initialize_pipeline(phase_path, haplotype_path, cnv_path):
 	if not os.path.isfile(nonroibedfn):
     	    command = " ".join([bedtools_path, "subtract -a", exons_path, "-b", cnv_bed, ">", nonroibedfn])
     	    runCommand(command)
-  	
-    	    splitBedByChr(nonroibedfn, haplotype_path) 
-	 
+  	    removeIfEmptyBed(nonroibedfn)
+    	    if os.path.isfile(nonroibedfn):
+		splitBedByChr(nonroibedfn, haplotype_path) 
+	     
     except:
         logger.exception("Initialization error !")
         raise
