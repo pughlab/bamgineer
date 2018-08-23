@@ -635,8 +635,6 @@ def split_hap(bamsortfn, chr, event):
     print(" ___ splitting original bam into hap1 and hap2 ___")
 
     fn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
-    cmd = " ".join(["sort -u", bedfn, "-o", bedfn]);
-    runCommand(cmd)
 
     hap1_bamfn = sub('.sorted.bam$', ".hap1.bam", bamsortfn)
     hap2_bamfn = sub('.sorted.bam$', ".hap2.bam", bamsortfn)
@@ -651,6 +649,8 @@ def split_hap(bamsortfn, chr, event):
             raise ValueError('Could not find file bamsortfn')
 
         if (os.path.isfile(bedfn)):
+            cmd = " ".join(["sort -u", bedfn, "-o", bedfn]);
+            runCommand(cmd)
 
             samfile = pysam.Samfile(bamsortfn, "rb")
             alignmentfile = pysam.AlignmentFile(bamsortfn, "rb")
@@ -1002,13 +1002,14 @@ def merge_pairs(bamsortfn):
     os.remove(bamrepairedsortfn)
     os.remove(bamrepaired2sortfn)
     os.remove(bamrepairedfinalfn)
-    #os.remove(bamrepairedfinalsortfn)
+    os.remove(bamrepairedfinalsortfn)
     os.remove(bamrepairedfinalmarkedfn)
     
     os.remove(bamrepairedsortfn + '.bai')
     os.remove(bamrepaired2sortfn + '.bai')
     os.remove(bamrepairedfinalfn + '.bai')
-    #os.remove(bamrepairedfinalsortfn + '.bai')
+    os.remove(bamrepairedfinalsortfn + '.bai')
+    os.remove(bamrepairedfinalmarkedfn + '.bai')
     
     
     return bamrepairedfinalsortmarkedfn

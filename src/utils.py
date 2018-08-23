@@ -478,35 +478,38 @@ def createEventBedFiles(cnv_dir, bedfn):
     df = pd.read_csv(bedfn, header=None, sep='\t')
     #cnv_number_list = list(set(df[df.columns[-1]].tolist()))
 
-    df.columns = ['chr', 'start', 'end', 'hap_type', 'abs_cn']
-    cnv_number_list = list(zip(df.abs_cn, df.hap_type))
+    df.columns = ['chr', 'start_pos', 'end_pos', 'hap_type', 'abs_cn']
+    cnv_number_list = list(zip(df.abs_cn, df.hap_type, df.start_pos))
     #print cnv_number_list
     for num in cnv_number_list:
         cn = int(num[0])
 	hap = str(num[1])
-        dfi = df.loc[(df['abs_cn'] == cn) & (df['hap_type'] == hap)]
+	start = int(num[2])
+        dfi = df.loc[(df['abs_cn'] == cn) & (df['hap_type'] == hap) & (df['start_pos'] == start)]
 
         if cn == 0:
             fn = 'deepdel.bed'
         elif cn == 1 and len(hap) == cn:
-            fn = 'loss'+hap+'.bed'
+            fn = 'loss'+hap+str(start)+'.bed'
         elif cn == 2 and len(hap) == cn:
-            fn = 'loh'+hap+'.bed'
+            fn = 'loh'+hap+str(start)+'.bed'
         elif cn == 3 and len(hap) == cn:
-            fn = 'gain'+hap+'.bed'
+            fn = 'gain'+hap+str(start)+'.bed'
         elif cn == 4 and len(hap) == cn:
-            fn = 'amp4'+hap+'.bed'
+            fn = 'amp4'+hap+str(start)+'.bed'
         elif cn == 5 and len(hap) == cn:
-            fn = 'amp5'+hap+'.bed'
+            fn = 'amp5'+hap+str(start)+'.bed'
         elif cn == 6 and len(hap) == cn:
-            fn = 'amp6'+hap+'.bed'
+            fn = 'amp6'+hap+str(start)+'.bed'
         elif cn == 7 and len(hap) == cn:
-            fn = 'amp7'+hap+'.bed'
+            fn = 'amp7'+hap+str(start)+'.bed'
         elif cn == 8 and len(hap) == cn:
-            fn = 'amp8'+hap+'.bed'
+            fn = 'amp8'+hap+str(start)+'.bed'
         elif cn > 8:
             print('CNV number must be smaller than 8')
-	#else statement for len != cn
+	elif len != cn:
+	    print('Allelic ratio must match CNV# (i.e. AAB = CNV of 3)')
+
         dfi.to_csv("/".join([cnv_dir, fn]), sep='\t', header=None, encoding='utf-8', index=False)
 
     return
