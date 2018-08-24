@@ -92,6 +92,14 @@ def dedupBam(inbamfn, outbamfn):
     command = " ".join([samtool_path, "rmdup", inbamfn, outbamfn])
     runCommand(command)
 
+#def insertSizeMetrics(inbamfn, metricsfn, histfn):
+#    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+#    command = " ".join([java_path, "-Xmx8g -jar", picard_path, "CollectInsertSizeMetrics", "I=" + inbamfn, "O=" + metricsfn, "H=" + histfn,"M=0.5"])
+#    print("*****Collecting Insert Size Metrics****")
+#    runCommand(command)
+
+   # return metricsfn
+
 def removeDupSambamba(bamrepairedfinalsortfn, tmpbams_path=''):
     print (" ___ removing repaired duplicates ___ ")
 

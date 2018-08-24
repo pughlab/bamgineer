@@ -155,7 +155,7 @@ def find_roi_bam(chromosome_event):
     chr, event = chromosome_event.split("_")
     roi, sortbyname, sortbyCoord, hetsnp = init_file_names(chr, tmpbams_path, haplotype_path, event)
     exonsinroibed = "/".join([haplotype_path, chr + "_exons_in_roi" + event + ".bed"])
-    
+ 
     #nonroi = "/".join([tmpbams_path, chr + "_non_roi.bam"])
     #exonsnonroibed = "/".join([haplotype_path, chr + "_non_roi.bed"])
 
@@ -1024,10 +1024,10 @@ def repairReads(bamsortfn):
     print(" ___ re-pairing hap2 bam reads ___") 
     hap2_bamrepairedfinalsortmarkedfn = merge_pairs(hap2_finalbamsortfn)
     
-    os.remove(hap1_finalbamsortfn)
-    os.remove(hap2_finalbamsortfn) 
-    os.remove(hap1_finalbamsortfn + '.bai')
-    os.remove(hap2_finalbamsortfn + '.bai')
+    #os.remove(hap1_finalbamsortfn)
+    #os.remove(hap2_finalbamsortfn) 
+    #os.remove(hap1_finalbamsortfn + '.bai')
+    #os.remove(hap2_finalbamsortfn + '.bai')
 
     return hap1_bamrepairedfinalsortmarkedfn, hap2_bamrepairedfinalsortmarkedfn
 
@@ -1373,9 +1373,13 @@ def implement_cnv(chromosome_event):
 #
                 if event.startswith('amp') or event.startswith('gain'):
                     
+                    hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted.bam", bamsortfn)
+                    hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted.bam", bamsortfn)
                     bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
                     hap1_bamrepairedfinalsortmarkedfn = sub('.sorted.bam$', ".hap1_final.re_paired_final.marked.sorted.bam", bamsortfn)
                     hap2_bamrepairedfinalsortmarkedfn = sub('.sorted.bam$', ".hap2_final.re_paired_final.marked.sorted.bam", bamsortfn)
+                    hap1_final = sub('.sorted.bam$', ".hap1_final.bam", bamsortfn)
+                    hap2_final = sub('.sorted.bam$', ".hap2_final.bam", bamsortfn)
                     #hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted.bam", bamsortfn)
                     #hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted.bam", bamsortfn)
                     mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamrepairedsortfn)
@@ -1391,8 +1395,12 @@ def implement_cnv(chromosome_event):
                         #rePair1(hap1_finalbamsortfn)
                         #rePair2(hap1_finalbamsortfn)
                         repairReads(bamsortfn)
+                        merge_bams(hap1_finalbamsortfn, hap1_bamrepairedfinalsortmarkedfn, hap1_final)
+                        merge_bams(hap2_finalbamsortfn, hap2_bamrepairedfinalsortmarkedfn, hap2_final)
                         #mutate_reads(bamrepairedsortfn, chr, event)
-                        coverageratio = (float(countReads(hap1_bamrepairedfinalsortmarkedfn))+ float(countReads(hap2_bamrepairedfinalsortmarkedfn))) / float(countReads(bamsortfn))
+                        
+                        #coverageratio = (float(countReads(hap1_bamrepairedfinalsortmarkedfn))+ float(countReads(hap2_bamrepairedfinalsortmarkedfn))) / float(countReads(bamsortfn))
+                        coverageratio = (float(countReads(hap1_final))+ float(countReads(hap2_final))) / float(countReads(bamsortfn))
                         logger.debug("+++ coverage ratio for: " + ntpath.basename(bamsortfn) + ": " + str(coverageratio))
 
                         alleleA = hap_type.count('A')
@@ -1407,7 +1415,11 @@ def implement_cnv(chromosome_event):
                         elif alleleA + alleleB != copy_number:
                             logger.error('allelic ratio adds up incorrectly (correct: AAB is CN=3)')
                             return 
-
+			
+			elif alleleA > coverageratio or alleleB > coverageratio:
+                            logger.error('requested individual allelic ratio is greater than available repaired reads')
+			    return
+	
                         else:
                             subsample(hap1_bamrepairedfinalsortmarkedfn, GAIN_FINAL1, str(samplerate1))
                             subsample(hap2_bamrepairedfinalsortmarkedfn, GAIN_FINAL2, str(samplerate2))
