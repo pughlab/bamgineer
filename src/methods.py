@@ -1410,20 +1410,24 @@ def implement_cnv(chromosome_event):
 
                         if coverageratio < copy_number/2:
                             logger.error('not enough reads or repairing search space is too small for ' + ntpath.basename(bamsortfn))
+                            success = False
                             return
 
                         elif alleleA + alleleB != copy_number:
                             logger.error('allelic ratio adds up incorrectly (correct: AAB is CN=3)')
-                            return 
+                            success = False
+                            return
 			
 			elif alleleA > coverageratio or alleleB > coverageratio:
                             logger.error('requested individual allelic ratio is greater than available repaired reads')
-			    return
+			    success = False
+                            return
 	
                         else:
                             subsample(hap1_bamrepairedfinalsortmarkedfn, GAIN_FINAL1, str(samplerate1))
                             subsample(hap2_bamrepairedfinalsortmarkedfn, GAIN_FINAL2, str(samplerate2))
                             merge_bams(GAIN_FINAL1, GAIN_FINAL2, GAIN_FINAL)
+                            success = True
 
                 elif event == 'loss':
 
