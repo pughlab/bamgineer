@@ -1373,7 +1373,7 @@ def implement_cnv(chromosome_event):
       #              elif copy_number > 2:
        #                 event = 'amp'
 #
-                if event.startswith('amp') or event.startswith('gain') or event.startswith('loh'):
+                if event.startswith('amp') or event.startswith('gain'):
                     
                     bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
                     hap1_bamrepairedfinalsortmarkedfn = sub('.sorted.bam$', ".hap1_final.re_paired_final.marked.sorted.bam", bamsortfn)
@@ -1422,20 +1422,10 @@ def implement_cnv(chromosome_event):
                             logger.error('requested individual allelic ratio is greater than available repaired reads')
 			    success = False
                             return
-
-                        elif event.startswith('loh') and alleleB == 0:
-                            subsample(hap1_final, GAIN_FINAL1, str(samplerate1))
-                            sortBam(GAIN_FINAL1, GAIN_FINAL, tmpbams_path)
-                            success = True
-                        
-                        elif event.startswith('loh') and alleleA == 0:
-                            subsample(hap2_final, GAIN_FINAL2, str(samplerate2))
-                            sortBam(GAIN_FINAL2, GAIN_FINAL, tmpbams_path)
-                            success = True
-
+	
                         else:
-                            subsample(hap1_final, GAIN_FINAL1, str(samplerate1))
-                            subsample(hap2_final, GAIN_FINAL2, str(samplerate2))
+                            subsample(hap1_bamrepairedfinalsortmarkedfn, GAIN_FINAL1, str(samplerate1))
+                            subsample(hap2_bamrepairedfinalsortmarkedfn, GAIN_FINAL2, str(samplerate2))
                             merge_bams(GAIN_FINAL1, GAIN_FINAL2, GAIN_FINAL)
                             success = True
 
