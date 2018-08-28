@@ -1336,6 +1336,8 @@ def implement_cnv(chromosome_event):
             bamfn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
             exonsinroibed = "/".join([haplotype_path, chr + "_exons_in_roi" + event + ".bed"])
             bamsortfn = sub('.bam$', '.sorted.bam', bamfn)
+            hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted.bam", bamsortfn)
+            hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted.bam", bamsortfn)
 
             if ((not os.path.isfile(bedfn)) and (os.path.isfile(exonsinroibed))):
                 bedfn = exonsinroibed
@@ -1373,8 +1375,6 @@ def implement_cnv(chromosome_event):
 #
                 if event.startswith('amp') or event.startswith('gain'):
                     
-                    hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted.bam", bamsortfn)
-                    hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted.bam", bamsortfn)
                     bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
                     hap1_bamrepairedfinalsortmarkedfn = sub('.sorted.bam$', ".hap1_final.re_paired_final.marked.sorted.bam", bamsortfn)
                     hap2_bamrepairedfinalsortmarkedfn = sub('.sorted.bam$', ".hap2_final.re_paired_final.marked.sorted.bam", bamsortfn)
@@ -1382,7 +1382,7 @@ def implement_cnv(chromosome_event):
                     hap2_final = sub('.sorted.bam$', ".hap2_final.bam", bamsortfn)
                     #hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted.bam", bamsortfn)
                     #hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted.bam", bamsortfn)
-                    mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamrepairedsortfn)
+                    #mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamrepairedsortfn)
                     GAIN_FINAL1 = "/".join([tmpbams_path, str(chr).upper()+ str(event).upper()+ '_GAIN1.bam'])
                     GAIN_FINAL2 = "/".join([tmpbams_path, str(chr).upper()+ str(event).upper()+ '_GAIN2.bam'])
                     GAIN_FINAL = "/".join([finalbams_path, str(chr).upper()+ str(event).upper()+ '_GAIN.bam'])
@@ -1429,27 +1429,48 @@ def implement_cnv(chromosome_event):
                             merge_bams(GAIN_FINAL1, GAIN_FINAL2, GAIN_FINAL)
                             success = True
 
-                elif event == 'loss':
+                elif event.startswith('loss'):
 
                     inbam_deletion = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
 
                     if os.path.isfile(bamsortfn):
 
-                        mutate_reads(bamsortfn, chr, 'loss')
-                        mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamsortfn)
-                        mergedsortsampledfn = sub('.sorted.bam$', ".mutated_merged.sampled.sorted.bam", bamsortfn)
+                        #mutate_reads(bamsortfn, chr, 'loss')
+                        split_hap(bamsortfn, chr, event)
+                        #mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamsortfn)
+                        #mergedsortsampledfn = sub('.sorted.bam$', ".mutated_merged.sampled.sorted.bam", bamsortfn)
 
-                        ratio_kept = float(countReads(mergedsortfn)) / float(countReads(bamsortfn))
-                        samplerate = round(0.5 / ratio_kept, 2)
-                        LOSS_FINAL = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
-                        logger.debug("ratios kept for:" + ntpath.basename(bamsortfn) + ": " + str(ratio_kept))
-                        subsample(mergedsortfn, mergedsortsampledfn, str(samplerate))
-                        bamDiff(sortbyCoord, mergedsortsampledfn, tmpbams_path)
-                        os.rename("/".join([tmpbams_path, 'diff_only1_' + chr + '.bam']), LOSS_FINAL)
+                        #ratio_kept = float(countReads(mergedsortfn)) / float(countReads(bamsortfn))
+                        #samplerate = round(0.5 / ratio_kept, 2)
+                        LOSS_FINAL = "/".join([finalbams_path, str(chr).upper()+ str(event).upper()+ '_LOSS.bam'])
+                        #LOSS_FINAL = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
+                        
+                        alleleA = hap_type.count('A')
+                        alleleB = hap_type.count('B')
 
-                    elif (not os.path.isfile(inbam_deletion) and os.path.isfile(sortbyCoord)):  
+                        if alleleA == 1 and alleleB == 0:
+                            sortBam(hap1_finalbamsortfn, LOSS_FINAL, tmpbams_path)
+                            success = True
+                            #hap1_finalbamsortfn 
+                        elif alleleB == 1 and alleleA == 0:
+                            sortBam(hap2_finalbamsortfn, LOSS_FINAL, tmpbams_path)
+                            success = True
+                            #hap2_finalbamsortfn 
+                        else:
+                            logger.error('allelic ratio adds up incorrectly (correct: A is CNV=1)')
+			    success = False
+                            return
+                            
+                      
+                    
+                        #logger.debug("ratios kept for:" + ntpath.basename(bamsortfn) + ": " + str(ratio_kept))
+                        #subsample(mergedsortfn, mergedsortsampledfn, str(samplerate))
+                        #bamDiff(sortbyCoord, mergedsortsampledfn, tmpbams_path)
+                        #os.rename("/".join([tmpbams_path, 'diff_only1_' + chr + '.bam']), LOSS_FINAL)
+
+                    #elif (not os.path.isfile(inbam_deletion) and os.path.isfile(sortbyCoord)):  
                     # if it exists from previous runs
-                        os.symlink(sortbyCoord, inbam_deletion)
+                    #    os.symlink(sortbyCoord, inbam_deletion)
             
             else:
                 logger.debug(bedfn + ' does not exist!')
