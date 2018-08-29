@@ -1399,14 +1399,15 @@ def implement_cnv(chromosome_event):
                         merge_bams(hap2_finalbamsortfn, hap2_bamrepairedfinalsortmarkedfn, hap2_final)
                         #mutate_reads(bamrepairedsortfn, chr, event)
                         
-                        #coverageratio = (float(countReads(hap1_bamrepairedfinalsortmarkedfn))+ float(countReads(hap2_bamrepairedfinalsortmarkedfn))) / float(countReads(bamsortfn))
-                        coverageratio = (float(countReads(hap1_final))+ float(countReads(hap2_final))) / float(countReads(bamsortfn))
+                        coverageratio = (float(countReads(hap1_bamrepairedfinalsortmarkedfn))+ float(countReads(hap2_bamrepairedfinalsortmarkedfn))) / float(countReads(bamsortfn))
+                        coverageratio2 = (float(countReads(hap1_finalbamsortfn))+ float(countReads(hap2_finalbamsortfn))) / float(countReads(bamsortfn))
+                        #coverageratio = (float(countReads(hap1_final))+ float(countReads(hap2_final))) / float(countReads(bamsortfn))
                         logger.debug("+++ coverage ratio for: " + ntpath.basename(bamsortfn) + ": " + str(coverageratio))
 
                         alleleA = hap_type.count('A')
                         alleleB = hap_type.count('B')
-                        samplerate1 = float(alleleA/coverageratio)
-                        samplerate2 = float(alleleB/coverageratio)
+                        samplerate1 = float((alleleA/coverageratio)+(alleleA/coverageratio2))
+                        samplerate2 = float((alleleB/coverageratio)+(alleleB/coverageratio2))
 
                         if coverageratio < copy_number/2:
                             logger.error('not enough reads or repairing search space is too small for ' + ntpath.basename(bamsortfn))
@@ -1418,7 +1419,7 @@ def implement_cnv(chromosome_event):
                             success = False
                             return
 			
-			elif alleleA > coverageratio or alleleB > coverageratio:
+			elif alleleA > coverageratio+coverageratio2 or alleleB > coverageratio+coverageratio2:
                             logger.error('requested individual allelic ratio is greater than available repaired reads')
 			    success = False
                             return
