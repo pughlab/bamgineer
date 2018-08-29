@@ -1390,24 +1390,18 @@ def implement_cnv(chromosome_event):
                     if os.path.isfile(bamsortfn):
 
                         split_hap(bamsortfn, chr, event)
-                        #re_pair_reads(hap1_finalbamsortfn, copy_number)
-                        #re_pair_reads(hap2_finalbamsortfn, copy_number)
-                        #rePair1(hap1_finalbamsortfn)
-                        #rePair2(hap1_finalbamsortfn)
                         repairReads(bamsortfn)
                         merge_bams(hap1_finalbamsortfn, hap1_bamrepairedfinalsortmarkedfn, hap1_final)
                         merge_bams(hap2_finalbamsortfn, hap2_bamrepairedfinalsortmarkedfn, hap2_final)
-                        #mutate_reads(bamrepairedsortfn, chr, event)
                         
-                        coverageratio = (float(countReads(hap1_bamrepairedfinalsortmarkedfn))+ float(countReads(hap2_bamrepairedfinalsortmarkedfn))) / float(countReads(bamsortfn))
-                        coverageratio2 = (float(countReads(hap1_finalbamsortfn))+ float(countReads(hap2_finalbamsortfn))) / float(countReads(bamsortfn))
-                        #coverageratio = (float(countReads(hap1_final))+ float(countReads(hap2_final))) / float(countReads(bamsortfn))
+                        #coverageratio = (float(countReads(hap1_bamrepairedfinalsortmarkedfn))+ float(countReads(hap2_bamrepairedfinalsortmarkedfn))) / float(countReads(bamsortfn))
+                        coverageratio = (float(countReads(hap1_final))+ float(countReads(hap2_final))) / float(countReads(bamsortfn))
                         logger.debug("+++ coverage ratio for: " + ntpath.basename(bamsortfn) + ": " + str(coverageratio))
 
                         alleleA = hap_type.count('A')
                         alleleB = hap_type.count('B')
-                        samplerate1 = float((alleleA/coverageratio)+(alleleA/coverageratio2))
-                        samplerate2 = float((alleleB/coverageratio)+(alleleB/coverageratio2))
+                        samplerate1 = float((alleleA/coverageratio)+1) # 1 is random seed
+                        samplerate2 = float((alleleB/coverageratio)+1) # 1 is random seed
 
                         if coverageratio < copy_number/2:
                             logger.error('not enough reads or repairing search space is too small for ' + ntpath.basename(bamsortfn))
@@ -1419,17 +1413,21 @@ def implement_cnv(chromosome_event):
                             success = False
                             return
 			
-			elif alleleA > coverageratio+coverageratio2 or alleleB > coverageratio+coverageratio2:
+			elif alleleA > coverageratio or alleleB > coverageratio:
                             logger.error('requested individual allelic ratio is greater than available repaired reads')
 			    success = False
                             return
 
                         elif event.startswith('loh') and alleleB == 0:
+                            coverageratio = float(countReads(hap1_final)) / float(countReads(bamsortfn))
+                            samplerate1 = float((alleleA/coverageratio)+1) # 1 is random seed
                             subsample(hap1_final, GAIN_FINAL1, str(samplerate1))
                             sortBam(GAIN_FINAL1, GAIN_FINAL, tmpbams_path)
                             success = True
                         
                         elif event.startswith('loh') and alleleA == 0:
+                            coverageratio = float(countReads(hap2_final)) / float(countReads(bamsortfn))
+                            samplerate2 = float((alleleB/coverageratio)+1) # 1 is random seed
                             subsample(hap2_final, GAIN_FINAL2, str(samplerate2))
                             sortBam(GAIN_FINAL2, GAIN_FINAL, tmpbams_path)
                             success = True
