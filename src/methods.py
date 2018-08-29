@@ -1418,15 +1418,23 @@ def implement_cnv(chromosome_event):
 			    success = False
                             return
 
-                        elif event.startswith('loh') and alleleB == 0:
-                            coverageratio = float(countReads(hap1_final)) / float(countReads(bamsortfn))
+                        elif alleleB == 0:
+			    if alleleA > coverageratio:
+                                logger.error('requested individual allelic ratio is greater than available repaired reads')
+			        success = False
+                                return
+                            coverageratio = float(countReads(hap1_final)) / float(countReads(hap1_finalbamsortfn))
                             samplerate1 = float((alleleA/coverageratio)+1) # 1 is random seed
                             subsample(hap1_final, GAIN_FINAL1, str(samplerate1))
                             sortBam(GAIN_FINAL1, GAIN_FINAL, tmpbams_path)
                             success = True
                         
-                        elif event.startswith('loh') and alleleA == 0:
-                            coverageratio = float(countReads(hap2_final)) / float(countReads(bamsortfn))
+                        elif alleleA == 0:
+			    if alleleB > coverageratio:
+                                logger.error('requested individual allelic ratio is greater than available repaired reads')
+			        success = False
+                                return
+                            coverageratio = float(countReads(hap2_final)) / float(countReads(hap2_finalbamsortfn))
                             samplerate2 = float((alleleB/coverageratio)+1) # 1 is random seed
                             subsample(hap2_final, GAIN_FINAL2, str(samplerate2))
                             sortBam(GAIN_FINAL2, GAIN_FINAL, tmpbams_path)
