@@ -101,11 +101,9 @@ def dedupBam(inbamfn, outbamfn):
    # return metricsfn
 
 def removeDupSambamba(bamrepairedfinalsortfn, tmpbams_path=''):
-    print (" ___ removing repaired duplicates ___ ")
-
-    bamrepairedfinalmarkedfn = sub('.re_paired_final.sorted.bam$', ".re_paired_final.marked.bam", bamrepairedfinalsortfn)
+    bamrepairedfinalmarkedfn = sub('.sorted.bam$', ".marked.bam", bamrepairedfinalsortfn)
     java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
-    command = " ".join([sambamba_path, "markdup","--remove-duplicates", "--nthreads", str(4), "--show-progress", bamrepairedfinalsortfn, bamrepairedfinalmarkedfn])
+    command = " ".join([sambamba_path, "markdup","--remove-duplicates", "--nthreads", str(4), bamrepairedfinalsortfn, bamrepairedfinalmarkedfn])
     runCommand(command)
     return bamrepairedfinalmarkedfn
 

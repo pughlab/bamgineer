@@ -995,7 +995,8 @@ def merge_pairs(bamsortfn):
 
     merge_bams(bamrepairedsortfn, bamrepaired2sortfn, bamrepairedfinalfn)
     sortBam(bamrepairedfinalfn, bamrepairedfinalsortfn, tmpbams_path)
-
+    
+    print("___ removing repaired duplicates ___")
     removeDupSambamba(bamrepairedfinalsortfn, tmpbams_path)
     sortBam(bamrepairedfinalmarkedfn, bamrepairedfinalsortmarkedfn, tmpbams_path)
 
@@ -1378,8 +1379,10 @@ def implement_cnv(chromosome_event):
                     bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
                     hap1_bamrepairedfinalsortmarkedfn = sub('.sorted.bam$', ".hap1_final.re_paired_final.marked.sorted.bam", bamsortfn)
                     hap2_bamrepairedfinalsortmarkedfn = sub('.sorted.bam$', ".hap2_final.re_paired_final.marked.sorted.bam", bamsortfn)
-                    hap1_final = sub('.sorted.bam$', ".hap1_final.bam", bamsortfn)
-                    hap2_final = sub('.sorted.bam$', ".hap2_final.bam", bamsortfn)
+                    hap1_final = sub('.sorted.bam$', ".hap1.sorted.bam", bamsortfn)
+                    hap2_final = sub('.sorted.bam$', ".hap2.sorted.bam", bamsortfn)
+                    hap1_finalmarked = sub('.sorted.bam$', ".hap1.marked.bam", bamsortfn)
+                    hap2_finalmarked = sub('.sorted.bam$', ".hap2.marked.bam", bamsortfn)
                     #hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted.bam", bamsortfn)
                     #hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted.bam", bamsortfn)
                     #mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamrepairedsortfn)
@@ -1394,8 +1397,13 @@ def implement_cnv(chromosome_event):
                         merge_bams(hap1_finalbamsortfn, hap1_bamrepairedfinalsortmarkedfn, hap1_final)
                         merge_bams(hap2_finalbamsortfn, hap2_bamrepairedfinalsortmarkedfn, hap2_final)
                         
+                        print("___ removing merged normal duplicates ___")
+                        removeDupSambamba(hap1_final, tmpbams_path)
+                        print("___ removing merged normal duplicates ___")
+                        removeDupSambamba(hap2_final, tmpbams_path)
+                        
                         #coverageratio = (float(countReads(hap1_bamrepairedfinalsortmarkedfn))+ float(countReads(hap2_bamrepairedfinalsortmarkedfn))) / float(countReads(bamsortfn))
-                        coverageratio = (float(countReads(hap1_final))+ float(countReads(hap2_final))) / float(countReads(bamsortfn))
+                        coverageratio = (float(countReads(hap1_finalmarked))+ float(countReads(hap2_finalmarked))) / float(countReads(bamsortfn))
                         logger.debug("+++ coverage ratio for: " + ntpath.basename(bamsortfn) + ": " + str(coverageratio))
 
                         alleleA = hap_type.count('A')
@@ -1441,8 +1449,8 @@ def implement_cnv(chromosome_event):
                             success = True
 
                         else:
-                            subsample(hap1_final, GAIN_FINAL1, str(samplerate1))
-                            subsample(hap2_final, GAIN_FINAL2, str(samplerate2))
+                            subsample(hap1_finalmarked, GAIN_FINAL1, str(samplerate1))
+                            subsample(hap2_finalmarked, GAIN_FINAL2, str(samplerate2))
                             merge_bams(GAIN_FINAL1, GAIN_FINAL2, GAIN_FINAL)
                             success = True
 
