@@ -432,6 +432,19 @@ def splitPairAndStrands(inbamfn):
     runCommand(command4)
 
 
+def splitStrands(inbamfn):
+    java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    read_strand1sortfn = sub('.bam$', '.read_pos.bam', inbamfn)
+    read_strand2sortfn = sub('.bam$', '.read_neg.bam', inbamfn)
+
+    mapped_all = sub('sorted.bam$', 'mapped_all.bam', inbamfn)
+
+    command1 = " ".join([samtools_path, "view -u -h -f 33", inbamfn, ">", read_strand1sortfn])
+    command2 = " ".join([samtools_path, "view -u -h -f 17", inbamfn, ">", read_strand2sortfn])
+
+    runCommand(command1)
+    runCommand(command2)
+
 def extract_proper_paired_reads(inbamfn, properfn):
     # properfn = sub('.bam$', '_proper.bam', inbamfn)
     java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()

@@ -44,11 +44,12 @@ def initialize0(results_path, cancer_dir_path):
 
             phaseVCF(vcf_path, phasedvcf)
             getVCFHaplotypes(phasedvcf, hap1vcf, hap2vcf)
-            #thinVCF(hap1vcf, hap1vcffiltered)
-            #thinVCF(hap2vcf, hap2vcffiltered)
-            convertvcftobed(hap1vcf, hap1vcffilteredtobed)
-            convertvcftobed(hap2vcf, hap2vcffilteredtobed)
-
+            thinVCF(hap1vcf, hap1vcffiltered)
+            thinVCF(hap2vcf, hap2vcffiltered)
+            #convertvcftobed(hap1vcf, hap1vcffilteredtobed)
+            #convertvcftobed(hap2vcf, hap2vcffilteredtobed)
+            convertvcftobed(hap1vcffiltered + ".recode.vcf", hap1vcffilteredtobed)
+            convertvcftobed(hap2vcffiltered + ".recode.vcf", hap2vcffilteredtobed)
             generatePhasedBed(hap1vcffilteredtobed, hap2vcffilteredtobed, phased_bed)
 
     except:
@@ -701,7 +702,8 @@ def split_hap(bamsortfn, chr, event):
                 #     print('sex chromosome ' + str(chr))
 
                 for shortread in readmappings:
-                    if shortread.qname not in readids:  
+                    if(1): # temporary if statement replacing read id check 
+                    #if shortread.qname not in readids:  
                         #allreads.write(shortread)
                         num_total_reads += 1
                         problem_with_read = False
@@ -762,8 +764,8 @@ def split_hap(bamsortfn, chr, event):
             os.remove(hap2_intersnpbamsortfn + '.bam')
             os.remove(hap1_intersnpbamsortfn + '.bam.bai')
             os.remove(hap2_intersnpbamsortfn + '.bam.bai')
-            os.remove(hap1_bamfn)
-            os.remove(hap2_bamfn)
+            #os.remove(hap1_bamfn)
+            #os.remove(hap2_bamfn)
             os.remove(hap1_bamsortfn + '.bam')
             os.remove(hap2_bamsortfn + '.bam')
             os.remove(hap1_bamsortfn + '.bam.bai')
