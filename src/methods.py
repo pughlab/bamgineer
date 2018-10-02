@@ -44,12 +44,12 @@ def initialize0(results_path, cancer_dir_path):
 
             phaseVCF(vcf_path, phasedvcf)
             getVCFHaplotypes(phasedvcf, hap1vcf, hap2vcf)
-            thinVCF(hap1vcf, hap1vcffiltered)
-            thinVCF(hap2vcf, hap2vcffiltered)
-            #convertvcftobed(hap1vcf, hap1vcffilteredtobed)
-            #convertvcftobed(hap2vcf, hap2vcffilteredtobed)
-            convertvcftobed(hap1vcffiltered + ".recode.vcf", hap1vcffilteredtobed)
-            convertvcftobed(hap2vcffiltered + ".recode.vcf", hap2vcffilteredtobed)
+            #thinVCF(hap1vcf, hap1vcffiltered)
+            #thinVCF(hap2vcf, hap2vcffiltered)
+            convertvcftobed(hap1vcf, hap1vcffilteredtobed)
+            convertvcftobed(hap2vcf, hap2vcffilteredtobed)
+            #convertvcftobed(hap1vcffiltered + ".recode.vcf", hap1vcffilteredtobed)
+            #convertvcftobed(hap2vcffiltered + ".recode.vcf", hap2vcffilteredtobed)
             generatePhasedBed(hap1vcffilteredtobed, hap2vcffilteredtobed, phased_bed)
 
     except:
@@ -676,7 +676,8 @@ def split_hap(bamsortfn, chr, event):
 
             bedfile2 = open(bedfn, 'r')
             #readids = []
-            readids = set()
+            readids1 = set()
+            readids2 = set()
 
             for bedline in bedfile2:
                 c = bedline.strip().split()
@@ -702,8 +703,9 @@ def split_hap(bamsortfn, chr, event):
                 #     print('sex chromosome ' + str(chr))
 
                 for shortread in readmappings:
-                    if(1): # temporary if statement replacing read id check 
-                    #if shortread.qname not in readids:  
+                    #if(1): # temporary if statement replacing read id check 
+                    shortreadid = shortread.qname 
+                    if shortread.is_read1 and shortreadid not in readids1 or shortread.is_read2 and shortreadid not in readids2:  
                         #allreads.write(shortread)
                         num_total_reads += 1
                         problem_with_read = False
@@ -713,7 +715,13 @@ def split_hap(bamsortfn, chr, event):
                             tmpread = shortread.query_sequence
                             qual = shortread.query_qualities
                             tmpread_index = tmpread[index]
-                            readids.add(shortread.qname)
+                            #if shortreadid not in readids1 and in readids2: 
+                            #    readids1.add(shortreadid)
+
+                            if shortread.is_read1 and shortreadid not in readids1:
+                                readids1.add(shortreadid)
+                            elif shortread.is_read2 and shortreadid not in readids2:
+                                readids2.add(shortreadid)
                             #readids.append(shortread.qname)
              
                             if tmpread_index == altbase and haplotype == "hap1":
@@ -739,6 +747,7 @@ def split_hap(bamsortfn, chr, event):
                         except Exception as e:
                             problem_with_read = True
                             pass
+                         
 
                     #if not problem_with_read:
                      #   if haplotype == "hap1":
