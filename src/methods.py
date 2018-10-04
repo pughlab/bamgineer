@@ -23,6 +23,10 @@ def initPool(queue, level, terminating_):
 
 
 def initialize0(results_path, cancer_dir_path):
+    """
+    Initialize paths for files provided by user.
+    Phasing is also performed if requested by user.
+    """
     try:
         vcf_path = bamhelp.GetVCF()
         exons_path = bamhelp.GetExons()
@@ -61,6 +65,9 @@ def initialize0(results_path, cancer_dir_path):
 
 
 def initialize_pipeline(phase_path, haplotype_path, cnv_path):
+    """
+    Intersect CNV region with exons and then intersect with phased VCF bed.
+    """
     exons_path = bamhelp.GetExons()
     cnv_bed = params.GetCNV()
 
@@ -136,6 +143,10 @@ def initialize_pipeline(phase_path, haplotype_path, cnv_path):
     #return subtractbamsortfn
 
 def init_file_names(chr, tmpbams_path, haplotypedir, event):
+    """
+    Initialize file names for: 
+    ROI bam, chromosome sorted by name, chromosome sorted by coordinate, and heterozygous SNPs bed.
+    """
     flist = []
 
     roibam = "/".join([tmpbams_path, chr + "_roi" + event + ".bam"])
@@ -153,6 +164,9 @@ def init_file_names(chr, tmpbams_path, haplotypedir, event):
 
 
 def find_roi_bam(chromosome_event):
+    """
+    Extract paired reads from original bam using the user specificed ROI (cnv.bed). 
+    """
     chr, event = chromosome_event.split("_")
     roi, sortbyname, sortbyCoord, hetsnp = init_file_names(chr, tmpbams_path, haplotype_path, event)
     exonsinroibed = "/".join([haplotype_path, chr + "_exons_in_roi" + event + ".bed"])
@@ -204,6 +218,9 @@ def find_roi_bam(chromosome_event):
     return
 
 def find_non_roi_bam(chr_list):
+    """
+    Extract paired reads from original bam using generated non-ROI bed. 
+    """
     #chr, event = chromosome_event.split("_")
     #roi, sortbyname, sortbyCoord, hetsnp = init_file_names(chr, tmpbams_path, haplotype_path, event)
     chr = chr_list
@@ -262,7 +279,12 @@ def find_non_roi_bam(chr_list):
 
 
 def modify_hap(bamsortfn, hap1_bamsortfn, hap2_bamsortfn):
-
+    """
+    Subfunction for split_hap function.
+    Merges  hap1 SNP reads and hap2 SNP reads.
+    Finds other SNPs (homozygous) not found in hap1 and hap2. 
+    Splits the homozygous SNP reads 50/50.
+    """
     hap12_bamfn = sub('.sorted.bam$', ".hap12.bam", bamsortfn)
     hap12_bamsortfn = sub('.sorted.bam$', ".hap12.sorted", bamsortfn)
 
@@ -312,6 +334,10 @@ def modify_hap(bamsortfn, hap1_bamsortfn, hap2_bamsortfn):
     return hap1_intersnpbamsortfn, hap2_intersnpbamsortfn
 
 def merge_haps(bamsortfn, hap1_bamsortfn, hap2_bamsortfn, hap1_intersnpbamsortfn, hap2_intersnpbamsortfn):
+    """
+    Subfunction for split_hap function.
+    Merges hap1 and hap2 to each 50% split of homozygous SNP reads.
+    """
 
     hap1_finalbamfn = sub('.sorted.bam$', ".hap1_final.bam", bamsortfn)
     hap2_finalbamfn = sub('.sorted.bam$', ".hap2_final.bam", bamsortfn)
@@ -633,6 +659,13 @@ def merge_haps(bamsortfn, hap1_bamsortfn, hap2_bamsortfn, hap1_intersnpbamsortfn
         #sortBam(hap2_finalbamfn, hap2_finalbamsortfn + '.bam', tmpbams_path)
 
 def split_hap(bamsortfn, chr, event):
+    """
+    Phased VCF bed file read in specifying haplotype and ref/var bases at SNP position.
+    Fetch reads overlapping every het. SNP position found in phased bed.
+    Write reads to hap1 and hap2 bams based on base at SNP position on read: 
+    Variant base at SNP position sent to specified haplotype and read with reference base at SNP position sent to other haplotype.
+    Only write reads if read id does not exist in read 1 set or read 2 set.
+    """
     print(" ___ splitting original bam into hap1 and hap2 ___")
 
     fn, sortbyname, sortbyCoord, bedfn = init_file_names(chr, tmpbams_path, haplotype_path, event)
@@ -794,6 +827,11 @@ def split_hap(bamsortfn, chr, event):
     return hap1_finalbamsortfn, hap2_finalbamsortfn
 
 def readBamStrand(bamsortfn, strand):
+    """
+    Subfunction for rePair1/rePair2 functions.
+    Splits ROI bam into read1 and read2 as well as forward(pos) and reverse(neg) strands.
+    Fetches all reads in each file (read1_pos, read1_neg, read2_pos, read2_neg).
+    """
     read1fn = sub('.bam$', '.read1_' + strand + '.bam', bamsortfn)
     read2fn = sub('.bam$', '.read2_' + strand + '.bam', bamsortfn)
 
@@ -812,6 +850,11 @@ def readBamStrand(bamsortfn, strand):
     return read1fn, read2fn, itrA, itrB, splt1, splt2
 
 def defineSearchSpace(readX, strand, direction):
+    """
+    Subfunction for rePair1/rePair2 functions.
+    Defines search space to look for potential read pairs. 
+    Dependent on strand specificity as well as direction of repairing.
+    """
     if (strand == 'neg' and direction == 'back') or (strand == 'pos' and direction == 'forw'):
         insert_size = readX.tlen - readX.qlen
         minpos = readX.pos + 75 + insert_size
@@ -826,6 +869,12 @@ def defineSearchSpace(readX, strand, direction):
     return insert_size, minpos, maxpos
 
 def generateReadPairs(tmpA, tmpB, strand, direction):
+    """
+    Subfunction for rePair1/rePair2 functions.
+    Generates new pairs using existing reads.
+    New read ID is a universally unique identifier (uuid). 
+    Dependent on strand specificity as well as direction of repairing.
+    """
     tlenFR = tmpB.pos - tmpA.pos + tmpB.qlen
     tlenRF = tmpA.pos - tmpB.pos + tmpA.qlen
     
@@ -846,6 +895,10 @@ def generateReadPairs(tmpA, tmpB, strand, direction):
     return tmpA, tmpB
 
 def rePair1(bamsortfn):
+    """
+    Subfunction for repairReads function.
+    Create new pairs from read1 -> read2.
+    """
     # Throws an error if bamsortfn is not found
     if not os.path.isfile(bamsortfn):
         raise ValueError('Could not find file bamsortfn')
@@ -922,6 +975,10 @@ def rePair1(bamsortfn):
 
 
 def rePair2(bamsortfn):
+    """
+    Subfunction for repairReads function.
+    Create new pairs from read2 -> read1.
+    """
     # Throws an error if bamsortfn is not found
     if not os.path.isfile(bamsortfn):
         raise ValueError('Could not find file bamsortfn')
@@ -995,6 +1052,12 @@ def rePair2(bamsortfn):
     return bamrepaired2sortfn
 
 def merge_pairs(bamsortfn):
+    """
+    Subfunction for repairReads function.
+    Perform previous repairing subfunctions with hap1 or hap2 bam from split_hap function.
+    Merge repaired reads from rePair1 and rePair2.
+    Mark and remove duplicates of the same pairs generated by rePair1 and rePair2.    
+    """
     
     bamrepairedfinalfn = sub('.sorted.bam$', ".re_paired_final.bam", bamsortfn)
     bamrepairedfinalsortfn = sub('.sorted.bam$', ".re_paired_final.sorted.bam", bamsortfn)
@@ -1027,6 +1090,10 @@ def merge_pairs(bamsortfn):
     return bamrepairedfinalsortmarkedfn
 
 def repairReads(bamsortfn):
+    """
+    Uses split_hap output to generate hap1 and hap2 repaired bams.
+    """
+
     hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted.bam", bamsortfn)
     hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted.bam", bamsortfn)
     
@@ -1335,10 +1402,15 @@ def split_bam_by_chr(chr):
     return
 
 
-def calculate_sample_rate(inbam, outbam, cnchange, purity):
-    logger.debug("___ adjusting sample rate ___")
+#def calculate_sample_rate(inbam, outbam, cnchange, purity):
+#    logger.debug("___ adjusting sample rate ___")
 
 def implement_cnv(chromosome_event):
+    """
+    Performs all previous subfunctions.
+    Calculates coverage ratio based on repaired read count compared to ROI read count. 
+    Downsamples to the requested allelic ratio specificed by user in cnv.bed.
+    """
     chr, event = chromosome_event.split("_")
     logger.debug("___ Bamgineer main engine started ___")
     success = True
@@ -1570,6 +1642,10 @@ def removeReadsOverlappingHetRegion(inbamfn, bedfn, outbamfn, path):
 
 
 def run_pipeline(results_path):
+    """
+    Pools parallel processes using multiprocessing.
+    Final merge of non-roi bams and bamgineered bams.
+    """
     print(results_path)
     global haplotype_path, cancer_dir_path, tmpbams_path, finalbams_path, log_path, logfile, terminating, logger, logQueue, res_path
     res_path = results_path
