@@ -169,7 +169,7 @@ def find_roi_bam(chromosome_event):
 
                 cmd = " ".join(["sort -u", exonsinroibed, "-o", exonsinroibed]);
                 runCommand(cmd)
-                print ("*****___EXTRACTING BAMS!!!!____****")
+                print(" ___ extracting roi bams  ___")
                 extractPairedReadfromROI(sortbyname, exonsinroibed, roi)
                 # too slow:
                 #extractPairedBAMfromROI(sortbyCoord, exonsinroibed, roi)
@@ -227,7 +227,7 @@ def find_non_roi_bam(chr_list):
 
                     cmd = " ".join(["sort -u", exonsnonroibed, "-o", exonsnonroibed]);
                     runCommand(cmd)
-                    print ("*****___EXTRACTING NON-ROI BAMS!!!!____****")
+                    print(" ___ extracting non-roi bams  ___")
                     extractAllReadsfromROI(sortbyCoord, exonsnonroibed, nonroi)
                     #extractPairedReadfromROI(sortbyname, exonsnonroibed, nonroi)
                     # too slow:
@@ -1007,7 +1007,7 @@ def merge_pairs(bamsortfn):
     merge_bams(bamrepairedsortfn, bamrepaired2sortfn, bamrepairedfinalfn)
     sortBam(bamrepairedfinalfn, bamrepairedfinalsortfn, tmpbams_path)
     
-    print("___ removing repaired duplicates ___")
+    print(" ___ removing repaired duplicates ___")
     removeDupSambamba(bamrepairedfinalsortfn, tmpbams_path)
     sortBam(bamrepairedfinalmarkedfn, bamrepairedfinalsortmarkedfn, tmpbams_path)
 
@@ -1385,7 +1385,7 @@ def implement_cnv(chromosome_event):
       #              elif copy_number > 2:
        #                 event = 'amp'
 #
-                if event.startswith('amp') or event.startswith('gain') or event.startswith('loh'):
+                if event.startswith('amp') or event.startswith('gain') or event.startswith('loh') or event.startswith('loss'):
                     
                     bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
                     hap1_bamrepairedfinalsortmarkedfn = sub('.sorted.bam$', ".hap1_final.re_paired_final.marked.sorted.bam", bamsortfn)
@@ -1397,9 +1397,9 @@ def implement_cnv(chromosome_event):
                     #hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted.bam", bamsortfn)
                     #hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted.bam", bamsortfn)
                     #mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamrepairedsortfn)
-                    GAIN_FINAL1 = "/".join([tmpbams_path, str(chr).upper()+ str(event).upper()+ '_GAIN1.bam'])
-                    GAIN_FINAL2 = "/".join([tmpbams_path, str(chr).upper()+ str(event).upper()+ '_GAIN2.bam'])
-                    GAIN_FINAL = "/".join([finalbams_path, str(chr).upper()+ str(event).upper()+ '_GAIN.bam'])
+                    HAP1_FINAL = "/".join([tmpbams_path, str(chr).upper()+ str(event).upper()+ '_HAP1.bam'])
+                    HAP2_FINAL = "/".join([tmpbams_path, str(chr).upper()+ str(event).upper()+ '_HAP2.bam'])
+                    HAP12_FINAL = "/".join([finalbams_path, str(chr).upper()+ str(event).upper()+ '_HAP12.bam'])
 
                     if os.path.isfile(bamsortfn):
 
@@ -1408,9 +1408,9 @@ def implement_cnv(chromosome_event):
                         merge_bams(hap1_finalbamsortfn, hap1_bamrepairedfinalsortmarkedfn, hap1_final)
                         merge_bams(hap2_finalbamsortfn, hap2_bamrepairedfinalsortmarkedfn, hap2_final)
                         
-                        print("___ removing merged normal duplicates ___")
+                        print("___ removing hap1 merged normal duplicates ___")
                         removeDupSambamba(hap1_final, tmpbams_path)
-                        print("___ removing merged normal duplicates ___")
+                        print("___ removing hap2 merged normal duplicates ___")
                         removeDupSambamba(hap2_final, tmpbams_path)
                         
                         #coverageratio = (float(countReads(hap1_bamrepairedfinalsortmarkedfn))+ float(countReads(hap2_bamrepairedfinalsortmarkedfn))) / float(countReads(bamsortfn))
@@ -1444,8 +1444,8 @@ def implement_cnv(chromosome_event):
                                 return
                             coverageratio = float(countReads(hap1_finalmarked)) / float(countReads(hap1_finalbamsortfn))
                             samplerate1 = float((alleleA/coverageratio)+1) # 1 is random seed
-                            subsample(hap1_finalmarked, GAIN_FINAL1, str(samplerate1))
-                            sortBam(GAIN_FINAL1, GAIN_FINAL, tmpbams_path)
+                            subsample(hap1_finalmarked, HAP1_FINAL, str(samplerate1))
+                            sortBam(HAP1_FINAL, HAP12_FINAL, tmpbams_path)
                             success = True
                         
                         elif alleleA == 0:
@@ -1455,47 +1455,47 @@ def implement_cnv(chromosome_event):
                                 return
                             coverageratio = float(countReads(hap2_finalmarked)) / float(countReads(hap2_finalbamsortfn))
                             samplerate2 = float((alleleB/coverageratio)+1) # 1 is random seed
-                            subsample(hap2_finalmarked, GAIN_FINAL2, str(samplerate2))
-                            sortBam(GAIN_FINAL2, GAIN_FINAL, tmpbams_path)
+                            subsample(hap2_finalmarked, HAP2_FINAL, str(samplerate2))
+                            sortBam(HAP2_FINAL, HAP12_FINAL, tmpbams_path)
                             success = True
 
                         else:
-                            subsample(hap1_finalmarked, GAIN_FINAL1, str(samplerate1))
-                            subsample(hap2_finalmarked, GAIN_FINAL2, str(samplerate2))
-                            merge_bams(GAIN_FINAL1, GAIN_FINAL2, GAIN_FINAL)
+                            subsample(hap1_finalmarked, HAP1_FINAL, str(samplerate1))
+                            subsample(hap2_finalmarked, HAP2_FINAL, str(samplerate2))
+                            merge_bams(HAP1_FINAL, HAP2_FINAL, HAP12_FINAL)
                             success = True
 
-                elif event.startswith('loss'):
+                #elif event.startswith('loss'):
 
-                    inbam_deletion = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
+                #    inbam_deletion = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
 
-                    if os.path.isfile(bamsortfn):
+                #    if os.path.isfile(bamsortfn):
 
                         #mutate_reads(bamsortfn, chr, 'loss')
-                        split_hap(bamsortfn, chr, event)
+                #        split_hap(bamsortfn, chr, event)
                         #mergedsortfn = sub('.sorted.bam$', ".mutated_merged.sorted.bam", bamsortfn)
                         #mergedsortsampledfn = sub('.sorted.bam$', ".mutated_merged.sampled.sorted.bam", bamsortfn)
 
                         #ratio_kept = float(countReads(mergedsortfn)) / float(countReads(bamsortfn))
                         #samplerate = round(0.5 / ratio_kept, 2)
-                        LOSS_FINAL = "/".join([finalbams_path, str(chr).upper()+ str(event).upper()+ '_LOSS.bam'])
+                #        LOSS_FINAL = "/".join([finalbams_path, str(chr).upper()+ str(event).upper()+ '_LOSS.bam'])
                         #LOSS_FINAL = "/".join([finalbams_path, str(chr).upper() + '_LOSS.bam'])
                         
-                        alleleA = hap_type.count('A')
-                        alleleB = hap_type.count('B')
+                #        alleleA = hap_type.count('A')
+                #        alleleB = hap_type.count('B')
 
-                        if alleleA == 1 and alleleB == 0:
-                            sortBam(hap1_finalbamsortfn, LOSS_FINAL, tmpbams_path)
-                            success = True
+                #        if alleleA == 1 and alleleB == 0:
+                #            sortBam(hap1_finalbamsortfn, LOSS_FINAL, tmpbams_path)
+                #            success = True
                             #hap1_finalbamsortfn 
-                        elif alleleB == 1 and alleleA == 0:
-                            sortBam(hap2_finalbamsortfn, LOSS_FINAL, tmpbams_path)
-                            success = True
+                #        elif alleleB == 1 and alleleA == 0:
+                #            sortBam(hap2_finalbamsortfn, LOSS_FINAL, tmpbams_path)
+                #            success = True
                             #hap2_finalbamsortfn 
-                        else:
-                            logger.error('allelic ratio adds up incorrectly (correct: A is CNV=1)')
-			    success = False
-                            return
+                #        else:
+                #            logger.error('allelic ratio adds up incorrectly (correct: A is CNV=1)')
+		#	    success = False
+                #            return
                             
                       
                     
@@ -1531,7 +1531,7 @@ def implement_cnv(chromosome_event):
 
 
 def removeReadsOverlappingHetRegion(inbamfn, bedfn, outbamfn, path):
-    print "___ removing reads overlapping heterozygous region ___"
+    print " ___ removing reads overlapping heterozygous region ___"
     inbamsorted = sub('.bam$', '.sorted', inbamfn)
     pysam.sort(inbamfn, inbamsorted)
     pysam.index(inbamsorted + '.bam')

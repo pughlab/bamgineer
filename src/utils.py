@@ -333,10 +333,17 @@ def merge_bams(bamfn1, bamfn2, mergefn):
 
 def merge_final(mergefn, finalbamdir):
     java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
+    mergemarkedfn = sub('.bam$', ".marked.bam", mergefn)
     os.chdir(finalbamdir)
-    command = " ".join([sambamba_path, "merge", mergefn, "*.bam", "--nthreads", str(4)])
-    runCommand(command)
-
+    command1 = " ".join([sambamba_path, "merge", mergefn, "*.bam", "--nthreads", str(4)])
+    command2 = " ".join([sambamba_path, "markdup","--remove-duplicates", "--nthreads", str(4), mergefn, mergemarkedfn])
+    runCommand(command1)
+    print (" ___ removing merged duplicates near breakpoints ___ ")
+    runCommand(command2)
+    os.remove(mergefn)
+    os.remove(mergefn + '.bai')
+    os.rename(mergemarkedfn, mergefn)
+    os.rename(mergemarkedfn + '.bai', mergefn + '.bai')
 def mergeSortBamFiles(mergedBamfn, finalbamdir):
     java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     command = ""
@@ -552,7 +559,7 @@ def removeIfEmptyBed(cnvbedfn):
     	os.remove(cnvbedfn)	
 
 def generatePhasedBed(hap1vcffilteredtobed, hap2vcffilteredtobed, phased_bed):
-    print (" ___ generating phased Bed ___ ")
+    print (" ___ generating phased bed ___ ")
     df1 = pd.read_csv(hap1vcffilteredtobed, header=None, sep='\t')
     df2 = pd.read_csv(hap2vcffilteredtobed, header=None, sep='\t')
 
@@ -567,7 +574,7 @@ def generatePhasedBed(hap1vcffilteredtobed, hap2vcffilteredtobed, phased_bed):
 
 def filterColumns(inp, outp, cols):
 
-    print (" ___ filtering bed file columns for ___ " + os.path.basename(inp))
+    print (" ___ filtering bed file columns for " + os.path.basename(inp)+" ___")
     df1 = pd.read_csv(inp, header=None, sep='\t')
     last_col = len(df1.columns) - 1
     cols.append(last_col)
