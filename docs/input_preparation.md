@@ -13,9 +13,9 @@ wget https://my.pgp-hms.org/user_file/download/2312
 
 module load samtools/1.2
 
-mv 2312 chr21.bam\ 
-samtools index chr21.bam\ 
-samtools sort -n chr21.bam chr21.byname\ 
+mv 2312 chr21.bam  
+samtools index chr21.bam  
+samtools sort -n chr21.bam chr21.byname   
 
 ### 4. Create a directory called inputs; cd inputs
 
@@ -31,14 +31,14 @@ chr21   1       48129895
 
 ### 6. Download the VCF file
 
-wget https://my.pgp-hms.org/user_file/download/2291\
-mv AE7EZ7WG3KG-EXT.vcf.gz genome.vcf.gz\
+wget https://my.pgp-hms.org/user_file/download/2291  
+mv AE7EZ7WG3KG-EXT.vcf.gz genome.vcf.gz  
 gunzip genome.vcf.gz
 
 ### 7. Filter VCF for chr21
 
-bgzip genome.vcf\
-tabix genome.vcf.gz\
+bgzip genome.vcf  
+tabix genome.vcf.gz  
 tabix genome.vcf.gz chr21 > chr21.vcf
 
 ### 8. Extract heterozygous SNPs from VCF
@@ -47,10 +47,10 @@ grep "0/1" chr21.vcf > chr21_het.vcf
 
 ### 9. Remove indels
 
-zcat genome.vcf.gz | grep "^#" > header.txt\ 
+zcat genome.vcf.gz | grep "^#" > header.txt  
 cat header.txt chr21_het.vcf > chr21_het_genome.vcf
 
-vcftools --vcf chr21_het_genome.vcf --remove-indels --recode --recode-INFO-all --out snps_only\ 
+vcftools --vcf chr21_het_genome.vcf --remove-indels --recode --recode-INFO-all --out snps_only  
 mv snps_only.recode.vcf normal_het.vcf
 
 ### 10. Create an arbitrary bed file for desired CNVs. The format should be a tab-separated as follows:
