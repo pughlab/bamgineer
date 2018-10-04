@@ -45,23 +45,9 @@ def phaseVCF(vcfpath, phasevcfpath):
     return phasevcffn
 
 
-def create_chr_bam_list():
-    chrom_event = []
-
-    chr_list = ['chr' + str(x) for x in range(1, 23)]
-    chr_list.extend(['chrX', 'chrY'])
-
-    for c in chr_list:
-        for e in ['nonhet', 'mutated']:
-            chev = "_".join([str(c), e])
-            chrom_event.append(chev)
-    return chrom_event
-
-
 def gzipFile(filename):
     with open(filename, 'rb') as f_in, gzip.open(filename + '.gz', 'wb') as f_out:
         shutil.copyfileobj(f_in, f_out)
-
 
 def thinVCF(invcf, outvcf):
     java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
@@ -114,7 +100,6 @@ def removeDupPicard(bamrepairedfinalsortfn, tmpbams_path=''):
     markedmetricsfn = sub('.re_paired_final.sorted.bam$', ".marked_metrics.txt", bamrepairedfinalsortfn) 
     java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     command = " ".join([java_path, "-Xmx8g -jar", picard_path, "MarkDuplicates", "I=" + bamrepairedfinalsortfn, "O=" + bamrepairedfinalmarkedfn, "M=" + markedmetricsfn, "REMOVE_DUPLICATES=true", "ASSUME_SORTED=true"])
-    print("*****PICARD COMMAND****"+command)
     runCommand(command)
     return bamrepairedfinalmarkedfn
 
@@ -344,6 +329,7 @@ def merge_final(mergefn, finalbamdir):
     os.remove(mergefn + '.bai')
     os.rename(mergemarkedfn, mergefn)
     os.rename(mergemarkedfn + '.bai', mergefn + '.bai')
+
 def mergeSortBamFiles(mergedBamfn, finalbamdir):
     java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
     command = ""
