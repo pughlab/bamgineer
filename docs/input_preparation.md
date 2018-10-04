@@ -21,13 +21,13 @@ samtools sort -n chr21.bam chr21.byname
 
 ### 5. Create "exons.bed" file using whole genome coordinates of chr21 for hg19. The format should be tab-separated as follows: 
 
-chromosome	chr_start_position	chr_end_position
+chromosome     chr_start_position     chr_end_position
 
 For instance, navigate to inputs directory and create the following file and name it "exons.bed":
 
-chr21   1       48129895
+chr21     1     48129895
 
-***Note: the current algorithm performs uses whole genome for phasing purposes but phased exome data can be run and the exons.bed file will be the bed file used to generate the bam. Further updates will be made regarding phasing and bamgineering exomes.
+***Note: the current algorithm uses whole genome for phasing but phased exome data can be run and the exons.bed file in that case will be the bed file used to generate the bam. Further updates will be made regarding phasing and bamgineering exomes.
 
 ### 6. Download the VCF file
 
@@ -53,13 +53,13 @@ cat header.txt chr21_het.vcf > chr21_het_genome.vcf
 vcftools --vcf chr21_het_genome.vcf --remove-indels --recode --recode-INFO-all --out snps_only  
 mv snps_only.recode.vcf normal_het.vcf
 
-### 10. Create an arbitrary bed file for desired CNVs. The format should be a tab-separated as follows:
+### 10. Create a bed file for desired CNVs. The format should be tab-separated as follows:
 
-chromosome	start_cnv_position	stop_cnv_position	allelic_ratio	absolute_copy_number
+chromosome     start_cnv_position     stop_cnv_position     allelic_ratio     absolute_copy_number
 
 For instance, navigate to inputs directory and create the following file and name it "cnv.bed":
 
-chr21	30227447	47076809	AAB	3
+chr21     30227447     47076809     AAB     3
 
 ### 12. Create or edit config.cfg file
 
