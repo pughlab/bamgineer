@@ -1,7 +1,7 @@
 import os
 from helpers import parameters as params
 import logging.handlers
-from pathos.multiprocessing import ProcessingPool
+#from pathos.multiprocessing import ProcessingPool
 import multiprocessing
 import time
 from threading import Thread

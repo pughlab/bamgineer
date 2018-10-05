@@ -40,6 +40,12 @@ def GetBeaglePath():
     beagle_path = configReader.get('SOFTWARE', 'beagle_path')
     return beagle_path
   
+
+def GetPicardPath():
+    picard_path = configReader.get('SOFTWARE', 'picard_path')
+    return picard_path
+  
+
 def GetSamtoolsPath():
     try:    
         samtools_path = configReader.get('SOFTWARE', 'samtools_path')

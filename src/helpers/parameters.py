@@ -14,6 +14,7 @@ outbamfn = ''
 results_path = ''
 java_path = ''
 beagle_path = ''
+picard_path = ''
 samtools_path = ''
 bedtools_path = ''
 vcftools_path = ''
@@ -108,10 +109,15 @@ def SetBeaglePath(path):
     global java_path
     java_path = path
 
-
 def GetBeaglePath():
     return java_path
 
+def SetPicardPath(path):
+    global java_path
+    java_path = path
+
+def GetPicardPath():
+    return java_path
 
 def SetCNV(cnv):
     global cnv_bed
@@ -158,9 +164,10 @@ def SetXY(xy):
     singleXY = xy
 
 
-def SetSoftwarePath(j_path, b_path, s_path, bd_path, v_path, sb_path):
+def SetSoftwarePath(j_path, b_path, p_path, s_path, bd_path, v_path, sb_path):
     configReader.set('SOFTWARE', 'java_path', str(j_path))
     configReader.set('SOFTWARE', 'beagle_path', str(b_path))
+    configReader.set('SOFTWARE', 'picard_path', str(p_path))
     configReader.set('SOFTWARE', 'samtools_path', str(s_path))
     configReader.set('SOFTWARE', 'bedtools_path', str(bd_path))
     configReader.set('SOFTWARE', 'vcftools_path', str(v_path))
@@ -170,9 +177,10 @@ def SetSoftwarePath(j_path, b_path, s_path, bd_path, v_path, sb_path):
 def GetSoftwarePath():
     java_path = configReader.get('SOFTWARE', 'java_path')
     beagle_path = configReader.get('SOFTWARE', 'beagle_path')
+    picard_path = configReader.get('SOFTWARE', 'picard_path')
     samtools_path = configReader.get('SOFTWARE', 'samtools_path')
     bedtools_path = configReader.get('SOFTWARE', 'bedtools_path')
     vcftools_path = configReader.get('SOFTWARE', 'vcftools_path')
     sambamba_path = configReader.get('SOFTWARE', 'sambamba_path')
 
-    return java_path, beagle_path, samtools_path, bedtools_path, vcftools_path, sambamba_path
+    return java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path

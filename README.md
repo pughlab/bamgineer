@@ -37,17 +37,17 @@ Below is a general description of the file formats and prerequizites. For detail
                          
         
         arguments:
-           --inbam  INPUT_BAM ,         bam file from for input
-           --outbam OUTPUT_BAM,         bam file name for output
-           --config CONFIG_FILE,        configuration file including paths to executables and references
-           --cnvbed CNV_BED_FILE,       bed file name containing non-overlapping gain and loss regions
+           -inbam  INPUT_BAM ,         bam file from for input
+           -outbam OUTPUT_BAM,         bam file name for output
+           -config CONFIG_FILE,        configuration file including paths to executables and references
+           -cnv_bed CNV_BED_FILE,       bed file name containing non-overlapping gain and loss regions
            
         optional arguments:
-           --h, --help                  show this help message and exit
-           --cancertype CANCER_TYPE,    cancer type/acronym
-           --splitdir BAM_SPLIT_DIR,    input bam split by chromosomes
-           --p PHASE,                   whether SNP phasing should be applied
-           --ctdna CT_DNA,              whether simulation is on reads obtained from ctDNA sequencing data   
+           -h, -help                  show this help message and exit
+           -cancertype CANCER_TYPE,    cancer type/acronym
+           -splitdir BAM_SPLIT_DIR,    input bam split by chromosomes
+           -p PHASE,                   whether SNP phasing should be applied
+           -ctdna CT_DNA,              whether simulation is on reads obtained from ctDNA sequencing data   
 
 
 ### Prerequisites
