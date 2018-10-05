@@ -526,10 +526,12 @@ def rePair1(bamsortfn):
                 counter += 1
                 direction='forw'
                 readRef = itrA.next() 
+                chromosome = readRef.reference_name
+
                     # Defines the search space for the other read in the opposite splt
                 insert_size, minpos, maxpos = defineSearchSpace(readRef, strand, direction)
                 if (insert_size > 0 and insert_size < 1000):
-                    itrTarget = splt2.fetch("chr21", minpos, maxpos)
+                    itrTarget = splt2.fetch(chromosome, minpos, maxpos)
                         
                     listTarget = []
                     itrs_list = list(itrTarget)
@@ -604,10 +606,12 @@ def rePair2(bamsortfn):
                 counter += 1
                 direction='back'
                 readRef = itrB.next()
+                chromosome = readRef.reference_name
+
                     # Defines the search space for the other read in the opposite splt
                 insert_size, minpos, maxpos = defineSearchSpace(readRef, strand, direction)
                 if (insert_size > 0 and insert_size < 1000):
-                    itrTarget = splt1.fetch("chr21", minpos, maxpos)
+                    itrTarget = splt1.fetch(chromosome, minpos, maxpos)
                     listTarget = []
                     itrs_list = list(itrTarget)
     
