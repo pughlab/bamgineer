@@ -519,11 +519,11 @@ def rePair1(bamsortfn):
     for strand in strands:
         # Takes bamsortfn and splits it based on Read 1/2 and Strand
         read1fn, read2fn, itrA, itrB, splt1, splt2 = readBamStrand(bamsortfn, strand)
-        counter = 0 
+        #counter = 0 
         
         while (True):
             try:
-                counter += 1
+                #counter += 1
                 direction='forw'
                 readRef = itrA.next() 
                 chromosome = readRef.reference_name
@@ -549,9 +549,9 @@ def rePair1(bamsortfn):
                     # If the read IDs dont match, create a new read-pair by altering the description of the read and output
                         if readRef.qname != readTarget.qname:
                             tmpA, tmpB = generateReadPairs(readRef, readTarget, strand, direction)
-                            if counter % 2 != 0:
-                                outbam.write(tmpA)
-                                outbam.write(tmpB)
+                            #if counter % 2 != 0:
+                            outbam.write(tmpA)
+                            outbam.write(tmpB)
                 elif (insert_size < 0 or insert_size > 1000): 
                     errorbam.write(readRef)
 
@@ -599,11 +599,11 @@ def rePair2(bamsortfn):
     for strand in strands:
         # Takes bamsortfn and splits it based on Read 1/2 and Strand
         read1fn, read2fn, itrA, itrB, splt1, splt2 = readBamStrand(bamsortfn, strand)
-        counter = 0 
+        #counter = 0 
         
         while (True):
             try:
-                counter += 1
+                #counter += 1
                 direction='back'
                 readRef = itrB.next()
                 chromosome = readRef.reference_name
@@ -628,9 +628,9 @@ def rePair2(bamsortfn):
                         if readRef.qname != readTarget.qname:
                             tmpA, tmpB = generateReadPairs(readRef, readTarget, strand, direction)
                             
-                            if counter % 2 == 0:
-                                outbam2.write(tmpA)
-                                outbam2.write(tmpB)
+                            #if counter % 2 == 0:
+                            outbam2.write(tmpA)
+                            outbam2.write(tmpB)
 
                 elif (insert_size < 0 or insert_size > 1000): 
                     errorbam2.write(readRef)

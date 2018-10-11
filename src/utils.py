@@ -517,8 +517,22 @@ def createEventBedFiles(cnv_dir, bedfn):
             fn = 'amp7'+hap+str(start)+'.bed'
         elif cn == 8 and len(hap) == cn:
             fn = 'amp8'+hap+str(start)+'.bed'
-        elif cn > 8:
-            print('CNV number must be smaller than 8')
+        elif cn == 9 and len(hap) == cn:
+            fn = 'amp9'+hap+str(start)+'.bed'
+        elif cn == 10 and len(hap) == cn:
+            fn = 'amp10'+hap+str(start)+'.bed'
+        elif cn == 11 and len(hap) == cn:
+            fn = 'amp11'+hap+str(start)+'.bed'
+        elif cn == 12 and len(hap) == cn:
+            fn = 'amp12'+hap+str(start)+'.bed'
+        elif cn == 13 and len(hap) == cn:
+            fn = 'amp13'+hap+str(start)+'.bed'
+        elif cn == 14 and len(hap) == cn:
+            fn = 'amp14'+hap+str(start)+'.bed'
+        elif cn == 15 and len(hap) == cn:
+            fn = 'amp15'+hap+str(start)+'.bed'
+        elif cn > 15:
+            print('CNV number must be smaller than 15')
 	elif len != cn:
 	    print('Allelic ratio must match CNV# (i.e. AAB = CNV of 3)')
 
