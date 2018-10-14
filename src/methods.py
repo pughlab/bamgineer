@@ -462,13 +462,13 @@ def defineSearchSpace(readX, strand, direction):
     """
     if (strand == 'neg' and direction == 'back') or (strand == 'pos' and direction == 'forw'):
         insert_size = readX.tlen - readX.qlen
-        minpos = readX.pos + 75 + insert_size
-        maxpos = readX.pos + 150 + insert_size
+        minpos = readX.pos + (readX.qlen//2) + insert_size
+        maxpos = readX.pos + readX.qlen + insert_size
     
     elif (strand == 'pos' and direction == 'back') or (strand == 'neg' and direction == 'forw'):
         insert_size = abs(readX.tlen) - readX.qlen
-        maxpos = readX.pos - 75 - insert_size
-        minpos = readX.pos - 150 - insert_size
+        maxpos = readX.pos - (readX.qlen//2) - insert_size
+        minpos = readX.pos - readX.qlen - insert_size
     return insert_size, minpos, maxpos
 
 def generateReadPairs(tmpA, tmpB, strand, direction):
