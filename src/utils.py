@@ -24,6 +24,7 @@ from helpers import handlers as handle
 from threading import Thread
 from helpers import parameters as params
 import pandas as pd
+from collections import defaultdict
 
 
 
@@ -591,3 +592,21 @@ def splitBed(bedfn, postfix):
         outfilename = str(chr) + postfix + '.bed'
         outp = '/'.join([path, outfilename])
         df[df[0] == chr].to_csv(outp, sep='\t', header=None, encoding='utf-8', index=False)
+
+def read_pair_generator(bam, chromosome, start_position, end_position):
+    read_dict = defaultdict(lambda: [None, None])
+    for read in bam.fetch(chromosome, start_position, end_position):
+        if not read.is_paired:
+            continue
+        qname = read.query_name
+        if qname not in read_dict:
+            if read.is_read1:
+                read_dict[qname][0] = read
+            else:
+                read_dict[qname][1] = read
+        else:
+            if read.is_read1:
+                yield read, read_dict[qname][1]
+            else:
+                yield read_dict[qname][0], read
+            del read_dict[qname]

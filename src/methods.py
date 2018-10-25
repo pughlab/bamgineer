@@ -324,7 +324,6 @@ def split_hap(bamsortfn, chr, event):
     hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted", bamsortfn)
     hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted", bamsortfn)
 
-
     if not terminating.is_set():
         if not os.path.isfile(bamsortfn):
             raise ValueError('Could not find file bamsortfn')
@@ -335,6 +334,7 @@ def split_hap(bamsortfn, chr, event):
 
             samfile = pysam.Samfile(bamsortfn, "rb")
             alignmentfile = pysam.AlignmentFile(bamsortfn, "rb")
+            alignmentfile2 = pysam.AlignmentFile(bamsortfn, "rb")
             outbam1 = pysam.Samfile(hap1_bamfn, 'wb', template=samfile)
             outbam2 = pysam.Samfile(hap2_bamfn, 'wb', template=samfile)
 
@@ -356,11 +356,23 @@ def split_hap(bamsortfn, chr, event):
                     copy_number = int(c[7])
                 else:
                     continue
+                
+                range_start = start-500
+                range_end = end+500
         
                 readmappings = alignmentfile.fetch(chr2, start, end)
 
                 for shortread in readmappings:
                     shortreadid = shortread.qname 
+
+                    for read1, read2 in read_pair_generator(alignmentfile2, chr2, range_start, range_end):
+                        if shortread == read1 and read2 is not None:
+                            shortread_mate = read2
+                            shortread_mateid = shortread_mate.qname
+                        elif shortread == read2 and read1 is not None:
+                            shortread_mate = read1
+                            shortread_mateid = shortread_mate.qname
+
                     if shortread.is_read1 and shortreadid not in readids1 or shortread.is_read2 and shortreadid not in readids2:  
 
                         problem_with_read = False
@@ -373,17 +385,23 @@ def split_hap(bamsortfn, chr, event):
 
                             if shortread.is_read1 and shortreadid not in readids1:
                                 readids1.add(shortreadid)
+                                readids2.add(shortread_mateid)
                             elif shortread.is_read2 and shortreadid not in readids2:
                                 readids2.add(shortreadid)
+                                readids1.add(shortread_mateid)
              
                             if tmpread_index == altbase and haplotype == "hap1":
                                 outbam1.write(shortread)
+                                outbam1.write(shortread_mate)
                             elif tmpread_index == refbase and haplotype == "hap1":
                                 outbam2.write(shortread)
+                                outbam2.write(shortread_mate)
                             elif tmpread_index == altbase and haplotype == "hap2":
                                 outbam2.write(shortread)
+                                outbam2.write(shortread_mate)
                             elif tmpread_index == refbase and haplotype == "hap2":
                                 outbam1.write(shortread)
+                                outbam1.write(shortread_mate)
                             else: 
                                 problem_with_read = True
                  
@@ -392,7 +410,7 @@ def split_hap(bamsortfn, chr, event):
                         except Exception as e:
                             problem_with_read = True
                             pass
-                         
+
             outbam1.close()
             outbam2.close() 
 
@@ -770,9 +788,8 @@ def implement_cnv(chromosome_event):
                     copy_number = int(fn[0][7])
                     hap_type = str(fn[0][6])
 
-                if event.startswith('amp') or event.startswith('gain') or event.startswith('loh') or event.startswith('loss'):
+                if event.startswith('amp') or event.startswith('gain') or event.startswith('loh'):
                     
-                    bamrepairedsortfn = sub('.sorted.bam$', ".re_paired.sorted.bam", bamsortfn)
                     hap1_bamrepairedfinalsortmarkedfn = sub('.sorted.bam$', ".hap1_final.re_paired_final.marked.sorted.bam", bamsortfn)
                     hap2_bamrepairedfinalsortmarkedfn = sub('.sorted.bam$', ".hap2_final.re_paired_final.marked.sorted.bam", bamsortfn)
                     hap1_final = sub('.sorted.bam$', ".hap1_FINAL.sorted.bam", bamsortfn)
@@ -847,6 +864,33 @@ def implement_cnv(chromosome_event):
                             subsample(hap1_finalmarked, HAP1_FINAL, str(samplerate1))
                             subsample(hap2_finalmarked, HAP2_FINAL, str(samplerate2))
                             merge_bams(HAP1_FINAL, HAP2_FINAL, HAP12_FINAL)
+                            success = True
+
+                elif event.startswith('loss'):
+
+                    hap1_finalbamsortfn = sub('.sorted.bam$', ".hap1_final.sorted.bam", bamsortfn)
+                    hap2_finalbamsortfn = sub('.sorted.bam$', ".hap2_final.sorted.bam", bamsortfn)
+                    HAP1_FINAL = "/".join([finalbams_path, str(chr).upper()+ str(event).upper()+ '_HAP1.bam'])
+                    HAP2_FINAL = "/".join([finalbams_path, str(chr).upper()+ str(event).upper()+ '_HAP2.bam'])
+
+                    if os.path.isfile(bamsortfn):
+
+                        split_hap(bamsortfn, chr, event)
+                        
+                        alleleA = hap_type.count('A')
+                        alleleB = hap_type.count('B')
+
+                        if alleleA + alleleB != copy_number:
+                            logger.error('allelic ratio adds up incorrectly (correct: AAB is CN=3)')
+                            success = False
+                            return
+			
+                        elif alleleB == 0:
+                            sortBam(hap1_finalbamsortfn, HAP1_FINAL, tmpbams_path)
+                            success = True
+
+                        elif alleleA == 0:
+                            sortBam(hap2_finalbamsortfn, HAP2_FINAL, tmpbams_path)
                             success = True
 
             
