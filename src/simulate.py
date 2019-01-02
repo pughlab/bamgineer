@@ -36,12 +36,13 @@ def main(args):
     sambamba_path = bamhelp.GetSambambaPath()
     params.SetSoftwarePath(java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path)
 
-    if args.phase:
-        run_pipeline(results_path)
+    #if args.phase:
+    #    run_pipeline(results_path)
 
-    else:
-        print('Please provide costume phasing algorithm')
-
+    #else:
+    #    print('Please provide costume phasing algorithm')
+    
+    run_pipeline(results_path)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(

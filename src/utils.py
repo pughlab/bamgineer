@@ -122,25 +122,29 @@ def getVCFHaplotypes(phasedvcf, hap1, hap2):
 
     if phasedvcf.endswith('.vcf.gz'):
         vcfh = gzip.GzipFile(phasedvcf, 'rb')
+    else:
+        vcfh = open(phasedvcf, 'r')
 
-        for line in vcfh:
-            c = line.strip('\n').split("\t")
-            if (len(c) == 10):
-                if (c[9] == '0|1:1'):
-                    out_hap1.write(line)
-                    continue
-                elif (c[9] == '1|0:1'):
-                    out_hap2.write(line)
-                    continue
-
-            elif (line.startswith('#')):
+    for line in vcfh:
+        c = line.strip('\n').split("\t")
+        if (len(c) == 10):
+            if '0|1' in c[9]:
+            #if (c[9] == '0|1:1'):
                 out_hap1.write(line)
+                continue
+            elif '1|0' in c[9]:
+            #elif (c[9] == '1|0:1'):
                 out_hap2.write(line)
                 continue
+          
+        elif (line.startswith('#')):
+            out_hap1.write(line)
+            out_hap2.write(line)
+            continue
 
     out_hap1.close()
     out_hap2.close()
-
+    vcfh.close()
 
 def convertvcftobed(vcf, bed):
     vcfh = open(vcf, 'r')
@@ -155,6 +159,7 @@ def convertvcftobed(vcf, bed):
                 c[4]) + '\n')  # chr start stop ref alt
 
     bedh.close()
+    vcfh.close()
 
 
 # report exon bedfiles that are within the defined CNV region

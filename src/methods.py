@@ -34,26 +34,29 @@ def initialize0(results_path, cancer_dir_path):
         bedtools_path = bamhelp.GetBedtoolsPath()
         vpath, vcf = os.path.split(vcf_path)
 
-        if params.GetPhase():
-            phasedvcf = "/".join([results_path, sub('.vcf$', '_phased.vcf.gz', vcf)])
-            vcftobed = "/".join([results_path, sub('.vcf$', '.bed', vcf)])
-            hap1vcf = "/".join([results_path, "hap1_het.vcf"])
-            hap2vcf = "/".join([results_path, "hap2_het.vcf"])
-            hap1vcffiltered = "/".join([results_path, "hap1_het_filtered"])
-            hap2vcffiltered = "/".join([results_path, "hap2_het_filtered"])
-            hap1vcffilteredtobed = "/".join([results_path, "hap1_het_filtered.bed"])
-            hap2vcffilteredtobed = "/".join([results_path, "hap2_het_filtered.bed"])
-            phased_bed = "/".join([results_path, "PHASED.BED"])
+        phasedvcf = "/".join([results_path, sub('.vcf$', '_phased.vcf.gz', vcf)])
+        vcftobed = "/".join([results_path, sub('.vcf$', '.bed', vcf)])
+        hap1vcf = "/".join([results_path, "hap1_het.vcf"])
+        hap2vcf = "/".join([results_path, "hap2_het.vcf"])
+        hap1vcffiltered = "/".join([results_path, "hap1_het_filtered"])
+        hap2vcffiltered = "/".join([results_path, "hap2_het_filtered"])
+        hap1vcffilteredtobed = "/".join([results_path, "hap1_het_filtered.bed"])
+        hap2vcffilteredtobed = "/".join([results_path, "hap2_het_filtered.bed"])
+        phased_bed = "/".join([results_path, "PHASED.BED"])
 
+        if params.GetPhase():
             phaseVCF(vcf_path, phasedvcf)
             getVCFHaplotypes(phasedvcf, hap1vcf, hap2vcf)
-            convertvcftobed(hap1vcf, hap1vcffilteredtobed)
-            convertvcftobed(hap2vcf, hap2vcffilteredtobed)
-            generatePhasedBed(hap1vcffilteredtobed, hap2vcffilteredtobed, phased_bed)
+        else:
+            getVCFHaplotypes(vcf_path, hap1vcf, hap2vcf)
+
+        convertvcftobed(hap1vcf, hap1vcffilteredtobed)
+        convertvcftobed(hap2vcf, hap2vcffilteredtobed)
+        generatePhasedBed(hap1vcffilteredtobed, hap2vcffilteredtobed, phased_bed)
 
     except:
 
-        logger.exception("Initialization error !")
+        logger.exception("Initialization error!")
         raise
 
     return
