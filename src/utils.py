@@ -11,8 +11,8 @@ from itertools import izip
 import gzip
 import shutil
 import traceback
-import multiprocessing
-from multiprocessing import Pool
+import multiprocess
+from multiprocess import Pool
 from contextlib import closing
 #from pathos.multiprocessing import ProcessingPool
 import signal

@@ -990,7 +990,7 @@ def run_pipeline(results_path):
     for cnv_path in cnv_list:
         initialize_pipeline(phase_path, haplotype_path, cnv_path)
 
-    pool1 = multiprocessing.Pool(processes=12, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating])
+    pool1 = multiprocess.Pool(processes=12, initializer=initPool, initargs=[logQueue, logger.getEffectiveLevel(), terminating])
     try:
 
         if not params.GetSplitBamsPath():
