@@ -2,10 +2,10 @@ import os
 from helpers import parameters as params
 import logging.handlers
 #from pathos.multiprocessing import ProcessingPool
-import multiprocessing
+import multiprocess
 import time
 from threading import Thread
-import multiprocessing, threading, logging, sys, traceback, StringIO, Queue
+import multiprocess, threading, logging, sys, traceback, StringIO, Queue
 
 
 def createDirectory(path):
@@ -36,10 +36,10 @@ def GetProjectPaths(results_path):
 
 
 def GetLoggings(logfile):
-    terminating = multiprocessing.Event()
+    terminating = multiprocess.Event()
     logger = logging.getLogger('')
     logger.setLevel(logging.DEBUG)
-    logQueue = multiprocessing.Queue(16)
+    logQueue = multiprocess.Queue(16)
     filehandler = MultiProcessingLogHandler(logging.FileHandler(logfile), logQueue)
     logger.addHandler(filehandler)
     filehandler.setLevel(logging.DEBUG)
