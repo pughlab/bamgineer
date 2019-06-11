@@ -6,7 +6,7 @@ Soroush Samadian
 
 
 ## Maintainer
-Soroush Samadian <soroush.samadian@uhnresearch.ca>
+Suluxan Mohanraj <suluxan.mohanraj@uhnresearch.ca>
 
 ## Description
 Bamgineer is a tool that can be used to introduce user-defined haplotype-phased allele-specific copy number variations (CNV) into an 
