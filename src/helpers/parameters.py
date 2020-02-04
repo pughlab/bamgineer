@@ -32,10 +32,22 @@ def GetConfigReader():
     """return the configreader"""
     return configReader
 
+def GetVCFPath():
+    return vcf_path
+
+def SetVCFPath(path):
+    global vcf_path
+    vcf_path = path
+
+def GetExonsPath():
+    return exons_path
+
+def SetExonsPath(path):
+    global exons_path
+    exons_path = path
 
 def GetResultsPath():
     return results_path
-
 
 def SetResultsPath(path):
     global results_path

@@ -28,9 +28,9 @@ def initialize0(results_path, cancer_dir_path):
     Phasing is also performed if requested by user.
     """
     try:
-        vcf_path = bamhelp.GetVCF()
-        exons_path = bamhelp.GetExons()
-        reference_path = bamhelp.GetRef()
+        vcf_path = params.GetVCFPath()
+        exons_path = params.GetExonsPath()
+        #reference_path = bamhelp.GetRef()
         bedtools_path = bamhelp.GetBedtoolsPath()
         vpath, vcf = os.path.split(vcf_path)
 
@@ -66,7 +66,7 @@ def initialize_pipeline(phase_path, haplotype_path, cnv_path):
     """
     Intersect CNV region with exons and then intersect with phased VCF bed.
     """
-    exons_path = bamhelp.GetExons()
+    exons_path = params.GetExonsPath()
     cnv_bed = params.GetCNV()
 
     event, extension = os.path.splitext(os.path.basename(cnv_path))

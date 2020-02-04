@@ -10,4 +10,6 @@ python /bamgineer/src/simulate.py \
 -splitbamdir ${PDIR}/splitbams \
 -outbam tumor.bam \
 -cancertype LUAC1 \
--phase
+-results ${PDIR}/outputs \
+-vcf ${PDIR}/inputs/normal_het.vcf \
+-exons ${PDIR}/inputs/exons.bed \

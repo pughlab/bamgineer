@@ -8,6 +8,7 @@ def main(args):
     outbamfn = args.outBamFile
     configReader = params.GetConfigReader()
     params.InitConfigReader(args.configfile)
+    params.SetResultsPath(args.outputDir)
     params.SetCancerType(args.cancerType)
     params.SetOutputFileName(args.outBamFile)
     params.SetSplitBamsPath(args.splitbams)
@@ -15,8 +16,11 @@ def main(args):
     params.SetctDNA(args.ctDNA)
     params.SetXY(args.singleXY)
     params.SetCNV(args.cnvBed)
+    params.SetResultsPath(args.outputDir)
+    params.SetVCFPath(args.vcf)
+    params.SetExonsPath(args.exons)
 
-    results_path = configReader.get('RESULTS', 'results_path')
+    results_path = params.GetResultsPath()
 
     cnvdir = "/".join([results_path, "cnv_dir"])
 
@@ -64,8 +68,15 @@ if __name__ == '__main__':
                         help='list of chromosomes to process')
     parser.add_argument('-cancertype', dest='cancerType', required=False,
                         help='acronym for cancer type')
+    parser.add_argument('-results', dest='outputDir', required=False,
+                        help='path to output directory')
+    parser.add_argument('-vcf', dest='vcf', required=False,
+                        help='path to output directory')
+    parser.add_argument('-exons', dest='exons', required=False,
+                        help='path to output directory')
 
     args = parser.parse_args()
+    print("OPTIONS:",args)
 
     t0 = time.time()
     main(args)
