@@ -30,7 +30,7 @@ tar xjf splitbams.tar.bz2
 # start of bamgineer command
 docker run --rm \
 -v $(pwd):/src \
--it bamgineer-v2 \
+-it suluxan/bamgineer-v2 \
 -config /src/inputs/config.cfg \
 -splitbamdir src/splitbams \
 -cnv_bed /src/inputs/cnv.bed \
