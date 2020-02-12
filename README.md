@@ -4,53 +4,59 @@ Introduces simulated allele-specific copy number variants into exome and targete
 ## Author
 Soroush Samadian
 
-
 ## Maintainer
 Suluxan Mohanraj <suluxan.mohanraj@uhnresearch.ca>
 
 ## Description
-Bamgineer is a tool that can be used to introduce user-defined haplotype-phased allele-specific copy number variations (CNV) into an 
-existing Binary Alignment Mapping (BAM) file and demonstrated applicability to simulate somatic cancer CNVs in exome and targeted cell-
-free DNA sequencing data sets. This is done by introducing new read pairs sampled from existing reads, thereby retaining biases of the 
-original data such as local coverage, strand bias, and insert size. As input, Bamgineer requires a BAM file and two lists of non-
-overlapping genomic coordinates to introduce allele-specific gains and losses. The user may explicitly provide known haplotypes or chose 
-to use the BEAGLE phasing module that is already incorporated within Bamgineer. We implemented parallelization of the Bamgineer 
-algorithm for both standalone and high performance computing cluster environments, significantly improving the scalability of the 
-algorithm.Bamgineer has been extensively tested on whole exome sequencing and targeted gene panel applied to cell-free DNA sequencing 
-data.
+Bamgineer is a tool that can be used to introduce user-defined haplotype-phased allele-specific copy number variations (CNV) into an existing Binary Alignment Mapping (BAM) file with demonstrated applicability to simulate somatic cancer CNVs in phased whole-genome sequencing datsets. This is done by introducing new read pairs sampled from existing reads, thereby retaining biases of the original data such as local coverage, strand bias, and insert size. As input, Bamgineer requires a BAM file and a list of non-overlapping genomic coordinates to introduce allele-specific gains and losses. We implemented parallelization of the Bamgineer algorithm for both standalone and high performance computing cluster environments, significantly improving the scalability of the algorithm. Bamgineer has been extensively tested on phased, whole-genome sequencing samples.
 
-*Quick start: [Quick start](https://github.com/pughlab/bamgineer/blob/master/docs/quick_start.md)* 
+## Contact
+If you have any questions with the package, please feel free to email Suluxan at <suluxan.mohanraj@uhnresearch.ca>.
 
-## Google User Group (Q&A)
-If you have any questions with the package, please feel free to post in our Google user group 
-https://groups.google.com/d/forum/bamgineer or email us at bamgineer@googlegroups.com. We will try our best to reply as soon as 
-possible.
+## Running example Bamgineer workflow with Docker
+### Please see bamgineer/docs/input_preparation for preparing your own files 
 
-## Using Bamgineer
-Below is a general description of the file formats and prerequizites. For details on usage and example, please follow our detailed guide in [Quick start](https://github.com/pughlab/bamgineer/blob/master/docs/quick_start.md)
+#### CHR21 bam files for NA12878 10X can be found here:
+https://drive.google.com/file/d/1km9gupGi7W6aUE9XqBsiamGnwTpDrGpZ/view?usp=sharing
 
-### Running options:
+Tested with Docker version 17.05.0-ce, build 89658be
 
-        usage: python simulate.py [-h] [--inbam INPUT_BAM] [--outbam OUTPUT_BAM]
-                         [--cnvgain CNV_GAIN_FILE] [--cnvloss CNV_LOSS_FILE] [--splitdir BAM_SPLIT_DIR] 
-                         [--config CONFIG_FILE] [--cancer CANCER_TYPE][--phase PHASE] [--ctdna CT_DNA]
-                         
-        
+```sh
+docker pull suluxan/bamgineer-v2
+git clone https://github.com/pughlab/bamgineer.git
+cd bamgineer/docker-example
+# download google drive file (link above) and move into this directory
+tar xjf splitbams.tar.bz2 
+# start of bamgineer command
+docker run --rm \
+-v $(pwd):/src \
+-it bamgineer-v2 \
+-config /src/inputs/config.cfg \
+-splitbamdir src/splitbams \
+-cnv_bed /src/inputs/cnv.bed \
+-vcf src/inputs/normal_het.vcf \
+-exons src/inputs/exons.bed \
+-outbam tumour.bam \
+-results src/outputs \
+-cancertype LUAC1 
+```
+
+### Running without Docker:
+
+        usage: python bamgineer/src/simulate.py 
+      
         arguments:
-           -inbam  INPUT_BAM ,         bam file from for input
+           -config CONFIG_FILE,        configuration file including paths to tools/executables
+           -splitdir SPLIT_BAMS_DIR,   input bam split by chromosomes
+           -cnv_bed CNV_BED_FILE,      bed file containing non-overlapping CNVs following template
+           -vcf FILTERED_VCF_FILE,     phased vcf file with indels removed 
+           -exons COORDINATES_BED      bed file of whole genome coordinates or exons
            -outbam OUTPUT_BAM,         bam file name for output
-           -config CONFIG_FILE,        configuration file including paths to executables and references
-           -cnv_bed CNV_BED_FILE,       bed file name containing non-overlapping gain and loss regions
-           
-        optional arguments:
-           -h, -help                  show this help message and exit
-           -cancertype CANCER_TYPE,    cancer type/acronym
-           -splitdir BAM_SPLIT_DIR,    input bam split by chromosomes
-           -p PHASE,                   whether SNP phasing should be applied
-           -ctdna CT_DNA,              whether simulation is on reads obtained from ctDNA sequencing data   
+           -results RESULTS_DIR,       output directory for final simulated bam results
+           -cancertype CANCER_TYPE,    cancer type/acronym (OPTIONAL)
 
 
-### Prerequisites
+### Prerequisites - NOTE: many dependencies are outdated but will be continuously updated throughout the bamgineer development, docker image and docker workflow outlined above is ideal for ease-of-use
 
 ***General NGS tools*** 
 
@@ -65,18 +71,3 @@ Below is a general description of the file formats and prerequizites. For detail
 Note: the latest version of pysam (0.9.0) is not backward compatible with Samtools1.2 \
 *pyVCF [pyvcf](https://pypi.python.org/pypi/PyVCF)* \
 *pyBedTools [pybedtools](https://pypi.python.org/pypi/pybedtools)*
-
-
-***Input parameters***
-
--inbam: input sorted and indexed normal bam file \
--cnv_amp: bed file for allele-specific and cancer-specific CNV amplifications (null is not specified) \
--cnv_del: bed file for allele-specific and cancer-specific CNV deletions (null is not specified) \
--vcf: normal heterozygous vcf file (could be from HaplotypeCaller output, not including indels and homozygous loci) \
--target_region: bed file containing the target regions (exons or any user-specified region) \ 
--phased(optional): Binary flag to perform phasing (BEAGLE) of SNPs prior to spiking CNV's
-
-
-***Output***
-
--outbam: output engineered, sorted bam file 
