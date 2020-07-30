@@ -90,7 +90,7 @@ def dedupBam(inbamfn, outbamfn):
 def removeDupSambamba(bamrepairedfinalsortfn, tmpbams_path=''):
     bamrepairedfinalmarkedfn = sub('.sorted.bam$', ".marked.bam", bamrepairedfinalsortfn)
     java_path, beagle_path, picard_path, samtools_path, bedtools_path, vcftools_path, sambamba_path = params.GetSoftwarePath()
-    command = " ".join([sambamba_path, "markdup","--remove-duplicates", "--nthreads", str(4), bamrepairedfinalsortfn, bamrepairedfinalmarkedfn])
+    command = " ".join([sambamba_path, "markdup","--remove-duplicates", "--overflow-list-size", str(600000), "--nthreads", str(4), bamrepairedfinalsortfn, bamrepairedfinalmarkedfn])
     runCommand(command)
     return bamrepairedfinalmarkedfn
 
@@ -325,7 +325,7 @@ def merge_final(mergefn, finalbamdir):
     mergemarkedfn = sub('.bam$', ".marked.bam", mergefn)
     os.chdir(finalbamdir)
     command1 = " ".join([sambamba_path, "merge", mergefn, "*.bam", "--nthreads", str(4)])
-    command2 = " ".join([sambamba_path, "markdup","--remove-duplicates", "--nthreads", str(4), mergefn, mergemarkedfn])
+    command2 = " ".join([sambamba_path, "markdup","--remove-duplicates", "--overflow-list-size", str(600000), "--nthreads", str(4), mergefn, mergemarkedfn])
     runCommand(command1)
     print (" ___ removing merged duplicates near breakpoints ___ ")
     runCommand(command2)
